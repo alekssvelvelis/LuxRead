@@ -14,6 +14,28 @@ export const Colors = {
     icon: '#687076',
     tabIconDefault: '#687076',
     tabIconSelected: tintColorLight,
+
+    default: {
+      text: 'red',
+      background: '#fff',
+      tint: '#0a7ea4',
+    },
+    ruby: {
+      text: '#333',
+      background: '#f7f7f7',
+      tint: '#0a7ea4',
+    },
+    aquamarine: {
+      text: '#666',
+      background: '#efefef',
+      tint: '#0a7ea4',
+    },
+    citrine: {
+      text: '#999',
+      background: '#eeffee',
+      tint: '#0a7ea4',
+    }
+
   },
   dark: {
     text: '#ECEDEE',
@@ -22,5 +44,27 @@ export const Colors = {
     icon: '#9BA1A6',
     tabIconDefault: '#9BA1A6',
     tabIconSelected: tintColorDark,
+
+    default: {
+      text: 'red',
+      background: '#000',
+      tint: '#fff',
+    },
+    ruby: {
+      text: '#ddd',
+      background: '#222',
+      tint: '#fff',
+    },
+    aquamarine: {
+      text: '#ddd',
+      background: '#333',
+      tint: '#fff',
+    },
+    citrine: {
+      text: '#ccc',
+      background: '#444',
+      tint: '#fff',
+    },
+
   },
 };
