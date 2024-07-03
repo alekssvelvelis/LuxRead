@@ -37,9 +37,11 @@ export function useThemeColor(
  */
 
 export function useSubThemeColor(
+  primaryTheme: 'light' | 'dark',
   subTheme: 'default' | 'ruby' | 'aquamarine' | 'citrine',
   colorName: keyof typeof Colors.light.default
 ): string {
-  const theme = useColorScheme() ?? 'light';
+  const systemTheme = useColorScheme();
+  const theme = primaryTheme ?? systemTheme ?? 'light';
   return Colors[theme][subTheme][colorName];
 }

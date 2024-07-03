@@ -1,17 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Text, View, useColorScheme } from 'react-native';
-import { Colors } from '@/constants/Colors';
+import { Text, View } from 'react-native';
 import { getUserTheme, saveUserTheme } from '@/utils/asyncStorage';
 import ThemeSelector from '@/components/ThemeSelector';
-
-const useSubThemeColor = (theme: string, subTheme: string, colorName: string) => {
-  const [primaryTheme, subThemeName] = theme.split('-');
-  return Colors[primaryTheme][subThemeName][colorName];
-};
+import { useSubThemeColor } from '@/hooks/useThemeColor';
 
 export default function Index() {
-  const systemTheme = useColorScheme() ?? 'light';
-  const [theme, setTheme] = useState<string>(`${systemTheme}-default`);
+  const [theme, setTheme] = useState<string>('dark-default'); // Default to dark-default
 
   useEffect(() => {
     const loadTheme = async () => {
@@ -23,15 +17,16 @@ export default function Index() {
     loadTheme();
   }, []);
 
-  const primaryTextColor = useSubThemeColor(theme, 'default', 'text');
-  const primaryBackgroundColor = useSubThemeColor(theme, 'default', 'background');
+  const [primaryTheme, subThemeName] = theme.split('-') as ['light' | 'dark', 'default' | 'ruby' | 'aquamarine' | 'citrine'];
+  const primaryTextColor = useSubThemeColor(primaryTheme, subThemeName, 'text');
+  const primaryBackgroundColor = useSubThemeColor(primaryTheme, subThemeName, 'background');
 
   return (
     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: primaryBackgroundColor }}>
       <Text>Edit app/index.tsx to edit this screen.</Text>
       <Text style={{ color: primaryTextColor }}>This is a primary themed text</Text>
-      <Text>The primary text color is: {primaryTextColor}</Text>
-      <Text>The primary background color is: {primaryBackgroundColor}</Text>
+      <Text>The primary theme name is: {primaryTheme}</Text>
+      <Text>The subtheme nameis: {subThemeName}</Text>
       <ThemeSelector onThemeChange={setTheme} />
     </View>
   );
