@@ -31,7 +31,7 @@ export function useThemeColor(
 /**
  * This function returns a color from a specific sub-theme based on the current color scheme (light or dark mode).
  * It does not allow for color overrides via props and directly accesses the Colors object.
- * @param subTheme - The sub-theme to retrieve the color from (e.g., 'primary', 'secondary', 'tertiary').
+ * @param subTheme - The sub-theme to retrieve the color from (e.g., 'default', 'ruby', 'aquamarine' and so on).
  * @param colorName - The name of the color in the sub-theme.
  * @returns The color value based on the current theme and sub-theme.
  */
