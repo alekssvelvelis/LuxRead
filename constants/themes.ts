@@ -1,30 +1,44 @@
 // src/constants/themes.ts
 import { MD3LightTheme as LightTheme, MD3DarkTheme as DarkTheme } from 'react-native-paper';
 
-export const lightTheme = {
+
+export type Theme = {
+  colors: {
+    primary: string;
+    accent: string;
+    background: string;
+    text: string;
+    test: string;
+    // Add other custom colors as needed
+  };
+  // Add other theme properties here
+};
+
+export const lightTheme: Theme = {
   ...LightTheme,
-  roundness: 2,
   colors: {
     ...LightTheme.colors,
     primary: '#6200ee',
     accent: '#03dac4',
-    background: '#ffffff', // Default background color for light theme
-    text: '#000000', // Default text color for light theme
+    background: '#ffffff', // Default background color for light theme // Default text color for light theme
     // Define your light theme colors here
+    text: '#000000', // Default text color for dark theme
+    test: '#68DDDD',
   },
 };
 
-export const darkTheme = {
+export const darkTheme: Theme = {
   ...DarkTheme,
-  roundness: 2,
   colors: {
     ...DarkTheme.colors,
     primary: '#bb86fc',
     accent: '#03dac4',
     background: '#484848', // Default background color for dark theme
     text: '#ffffff', // Default text color for dark theme
+    test: '#68DDDD',
   },
 };
+
 
 export const subThemes = {
     ruby: {

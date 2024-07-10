@@ -1,14 +1,15 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
-
+import { StyleSheet } from 'react-native';
 import { CommonActions } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Text, BottomNavigation } from 'react-native-paper';
+import { BottomNavigation } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
+import Settings from '@/app/settings';
+import Library from '@/app/library';
 
 const Tab = createBottomTabNavigator();
-
 export default function Footer() {
+  
   return (
     <Tab.Navigator
       screenOptions={{
@@ -59,7 +60,7 @@ export default function Footer() {
         name="Home"
         component={HomeScreen}
         options={{
-          tabBarLabel: 'Home',
+          tabBarLabel: 'Library',
           tabBarIcon: ({ color, size }) => {
             return <Ionicons name="book" size={size} color={color} />;
           },
@@ -81,14 +82,13 @@ export default function Footer() {
 
 function HomeScreen() {
   return (
-    <Text>test</Text>
+    <Library/>
   );
 }
 
 function SettingsScreen() {
   return (
-    <View>
-    </View> 
+      <Settings/>
   );
 }
 
