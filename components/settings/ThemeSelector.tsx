@@ -1,6 +1,5 @@
 import React from 'react';
-import { View, Button } from 'react-native';
-import { saveUserTheme } from '@/utils/asyncStorage';
+import { View, Button, Text } from 'react-native';
 
 const ThemeSelector = ({ onThemeChange }: { onThemeChange: (theme: string) => void }) => {
   const themes = ['light-default', 'light-ruby', 'light-aquamarine', 'light-citrine', 'dark-default', 'dark-ruby', 'dark-aquamarine', 'dark-citrine'];
@@ -8,14 +7,13 @@ const ThemeSelector = ({ onThemeChange }: { onThemeChange: (theme: string) => vo
   return (
     <View>
       {themes.map(theme => (
-        <Button
-          key={theme}
-          title={`Select ${theme}`}
-          onPress={() => {
-            saveUserTheme(theme);
-            onThemeChange(theme);
-          }}
-        />
+        <View key={theme}>
+          <Text>{theme}</Text>
+          <Button
+            title={`Select ${theme}`}
+            onPress={() => onThemeChange(theme)}
+          />
+        </View>
       ))}
     </View>
   );

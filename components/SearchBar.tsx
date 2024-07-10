@@ -2,15 +2,8 @@ import * as React from 'react';
 import { View } from 'react-native';
 import { Searchbar } from 'react-native-paper';
 
-interface SearchBarProps {
-  theme: {
-    colors: {
-      text: string;
-    };
-  };
-}
 
-const SearchBar: React.FC<SearchBarProps> = ({ theme }) => {
+const SearchBar = () => {
   const [searchQuery, setSearchQuery] = React.useState('');
 
   return (
