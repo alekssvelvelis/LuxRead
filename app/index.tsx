@@ -1,24 +1,28 @@
-import React from 'react';
-import { View, StyleSheet } from 'react-native';
-import { Provider as PaperProvider } from 'react-native-paper';
+import React, { useState } from 'react';
+import { View, StyleSheet, StatusBar } from 'react-native';
+import { PaperProvider } from 'react-native-paper';
 import { ThemeProvider, useThemeContext } from '@/contexts/ThemeContext';
+import { NovelRowsProvider } from '@/contexts/NovelRowsContext';
 import Footer from '@/components/Footer';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 export default function Index() {
   return (
     <ThemeProvider>
+      <NovelRowsProvider>
       <AppContent />
+      </NovelRowsProvider>
     </ThemeProvider>
   );
 }
 
 function AppContent() {
-  const { appliedTheme } = useThemeContext();
-
+  const { theme, appliedTheme } = useThemeContext();
+  // const barStyle = theme.startsWith('dark') ? 'light-content' : 'dark-content';
   return (
     <PaperProvider theme={appliedTheme}>
-      <SafeAreaProvider style={{ flex: 1, backgroundColor: appliedTheme.colors.background }}>
+      <SafeAreaProvider>
+      {/* <StatusBar backgroundColor={appliedTheme.colors.background} barStyle={barStyle}/> */}
         <View style={styles.container}>
           <Footer />
         </View>

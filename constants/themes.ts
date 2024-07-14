@@ -7,11 +7,31 @@ export type Theme = {
     primary: string;
     accent: string;
     background: string;
+    onSecondary: string;
+    secondary: string;
+    surfaceVariant: string;
+    onSurfaceVariant: string;
+    secondaryContainer: string;
+    onTertiary: string;
     text: string;
     test: string;
     // Add other custom colors as needed
   };
   // Add other theme properties here
+};
+
+type SubTheme = {
+  colors: {
+    primary: string;
+    [key: string]: string;
+  };
+};
+
+export type SubThemesType = {
+  default: SubTheme;
+  ruby: SubTheme;
+  aquamarine: SubTheme;
+  citrine: SubTheme;
 };
 
 export const lightTheme: Theme = {
@@ -20,7 +40,7 @@ export const lightTheme: Theme = {
     ...LightTheme.colors,
     primary: '#6200ee',
     accent: '#03dac4',
-    background: '#ffffff', // Default background color for light theme // Default text color for light theme
+    background: '#f5f5ff', // Default background color for light theme // Default text color for light theme
     // Define your light theme colors here
     text: '#000000', // Default text color for dark theme
     test: '#68DDDD',
@@ -41,6 +61,11 @@ export const darkTheme: Theme = {
 
 
 export const subThemes = {
+    default: {
+      colors: {
+          primary: '#bb86fc',
+      },
+    },
     ruby: {
       colors: {
           primary: '#e63946',
