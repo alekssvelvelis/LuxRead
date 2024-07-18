@@ -10,11 +10,11 @@ export default function Settings() {
     return (
         <View style={[styles.container, { backgroundColor: appliedTheme.colors.background }]}>
             <View style={{height: '60%', width: '95%'}}>
-                <Text style={{color: appliedTheme.colors.primary, marginTop: 32, marginHorizontal: 12}}>Appearance</Text>
+                <Text style={{color: appliedTheme.colors.primary, marginTop: 32, marginHorizontal: 8, fontSize: 24}}>Appearance</Text>
                 <ThemeSelector onThemeChange={setTheme} />
             </View>
             <View style={{ width: '95%', height: '60%'}}>
-                <Text style={{color: appliedTheme.colors.primary, marginTop: 32, marginHorizontal: 12}}>Display</Text>
+                <Text style={{color: appliedTheme.colors.primary, marginTop: 32, marginHorizontal: 8, fontSize: 24}}>Display</Text>
                 <Display onNovelRowsChange ={setValue}/>
             </View>
         </View>
