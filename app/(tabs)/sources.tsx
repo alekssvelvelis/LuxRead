@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity } from "react-native";
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { Entypo } from '@expo/vector-icons';
@@ -31,7 +31,7 @@ export default function Sources() {
                     return(
                         <TouchableOpacity key={index} onPress={() => handleSourcePress(source)} style={[styles.sourceContainer, {backgroundColor: appliedTheme.colors.elevation.level2}]}>
                             <Image style={styles.sourceImage} source={{uri : source.imageUrl}}></Image>
-                            <Text style={{color: appliedTheme.colors.text, fontSize: 24, paddingHorizontal: 12}}>{source.sourceName}</Text>
+                            <Text style={[styles.sourceText, {color: appliedTheme.colors.text}]}>{source.sourceName}</Text>
                             <Entypo style={[styles.bookmark, {}]} size={40} name="bookmarks" color={appliedTheme.colors.onSurfaceVariant}/>
                         </TouchableOpacity>
                     );
@@ -71,8 +71,12 @@ const styles = StyleSheet.create({
         objectFit: 'cover',
         borderRadius: 8,
     },
+    sourceText: {
+        fontSize: 24,
+        paddingHorizontal: 12,
+    },
     bookmark: {
         position: 'absolute',
         right: 8,
-    }
+    },
   });

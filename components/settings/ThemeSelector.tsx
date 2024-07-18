@@ -3,15 +3,12 @@ import { View, Text, StyleSheet, Dimensions, ScrollView, TouchableOpacity } from
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { subThemes, SubThemesType, darkTheme, lightTheme } from '@/constants/themes';
 
-
 const ThemeSelector = ({ onThemeChange }: { onThemeChange: (theme: string) => void }) => {
     const { theme, appliedTheme } = useThemeContext();
-    
     const [activeTheme, setActiveTheme] = useState<string>(theme);
     const themes: string[] = ['light-default', 'light-ruby', 'light-aquamarine', 'light-citrine', 'dark-default', 'dark-ruby', 'dark-aquamarine', 'dark-citrine'];
     const screenWidth: number = Dimensions.get('screen').width;
     
-    // Separate themes into light and dark
     const lightThemes = themes.filter(theme => theme.startsWith('light'));
     const darkThemes = themes.filter(theme => theme.startsWith('dark'));
 
@@ -41,9 +38,9 @@ const ThemeSelector = ({ onThemeChange }: { onThemeChange: (theme: string) => vo
                                 <View style={{width: '30%', backgroundColor: primaryColor, borderRadius: 50, height: 16, top: 8, left: 24}}></View>
                                 <View style={{width: '50%', backgroundColor: lightTheme.colors.secondary, borderRadius: 50, height: 16, bottom: 8, right: 20}}></View>
                                 <View style={{width: '100%', backgroundColor: lightTheme.colors.surfaceVariant, position: 'absolute', bottom: 0, height: 18, display: 'flex', justifyContent: 'space-evenly', alignItems: 'center', flexDirection: 'row',}}>
-                                    <View style={{width: 14, height: 14, backgroundColor: lightTheme.colors.onSurfaceVariant, borderRadius: 100}}></View>
-                                    <View style={{width: 14, height: 14, backgroundColor: lightTheme.colors.onSurfaceVariant, borderRadius: 100}}></View>
-                                    <View style={{width: 14, height: 14, backgroundColor: lightTheme.colors.onSurfaceVariant, borderRadius: 100}}></View>
+                                    <View style={[styles.tabNavigatorExample,{backgroundColor: lightTheme.colors.onSurfaceVariant}]}></View>
+                                    <View style={[styles.tabNavigatorExample,{backgroundColor: lightTheme.colors.onSurfaceVariant}]}></View>
+                                    <View style={[styles.tabNavigatorExample,{backgroundColor: lightTheme.colors.onSurfaceVariant}]}></View>
                                 </View>
                             </TouchableOpacity>
                             <Text style={{color: appliedTheme.colors.text, textTransform: 'capitalize'}}>{subThemeName}</Text>
@@ -71,9 +68,9 @@ const ThemeSelector = ({ onThemeChange }: { onThemeChange: (theme: string) => vo
                                 <View style={{width: '30%', backgroundColor: primaryColor, borderRadius: 50, height: 16, top: 8, left: 24}}></View>
                                 <View style={{width: '50%', backgroundColor: darkTheme.colors.secondary, borderRadius: 50, height: 16, bottom: 8, right: 20}}></View>
                                 <View style={{width: '100%', backgroundColor: darkTheme.colors.surfaceVariant, position: 'absolute', bottom: 0, height: 18, display: 'flex', justifyContent: 'space-evenly', alignItems: 'center', flexDirection: 'row',}}>
-                                    <View style={{width: 14, height: 14, backgroundColor: darkTheme.colors.onSurfaceVariant, borderRadius: 100}}></View>
-                                    <View style={{width: 14, height: 14, backgroundColor: darkTheme.colors.onSurfaceVariant, borderRadius: 100}}></View>
-                                    <View style={{width: 14, height: 14, backgroundColor: darkTheme.colors.onSurfaceVariant, borderRadius: 100}}></View>
+                                <View style={[styles.tabNavigatorExample,{backgroundColor: darkTheme.colors.onSurfaceVariant}]}></View>
+                                    <View style={[styles.tabNavigatorExample,{backgroundColor: darkTheme.colors.onSurfaceVariant}]}></View>
+                                    <View style={[styles.tabNavigatorExample,{backgroundColor: darkTheme.colors.onSurfaceVariant}]}></View>
                                 </View>
                             </TouchableOpacity>
                             <Text style={{color: appliedTheme.colors.text, textTransform: 'capitalize'}}>{subThemeName}</Text>
@@ -120,4 +117,9 @@ const styles = StyleSheet.create({
     activeTheme: {
         borderWidth: 2,
     },
+    tabNavigatorExample: {
+        width: 14,
+        height: 14,
+        borderRadius: 100,
+    }
 });
