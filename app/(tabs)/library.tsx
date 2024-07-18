@@ -1,31 +1,38 @@
 import React from 'react';
-import { StyleSheet, View, Text, ScrollView, Image, Dimensions } from 'react-native';
+import { StyleSheet, View, Text, ScrollView, Image, Dimensions, TouchableOpacity } from 'react-native';
 import SearchBar from '@/components/SearchBar';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { useNovelRowsContext } from '@/contexts/NovelRowsContext';
+import { useNavigation } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
 
 const novels = [
   {
+    id: 1,
     title: 'Lord of the Mysteries',
     chapters: 1451,
     imageUrl: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRPI9FaQTXTWjl3k_PCKvDr5-E2hGyvuYjAmg&s'
   },
   {
+    id: 2,
     title: 'Shadow Slave',
     chapters: 456,
     imageUrl: 'https://m.media-amazon.com/images/I/41ZnppX1ytL.jpg'
   },
   {
+    id: 3,
     title: 'Beginning After the End',
     chapters: 456,
     imageUrl: 'https://preview.redd.it/mark-my-words-tbate-anime-is-in-production-and-it-will-be-v0-wit4340w4f1b1.jpg?auto=webp&s=8d8d6f25a8f88adf255cf336c2d0678cdac027ca'
   },
   {
+    id: 4,
     title: 'The Second Coming of Gluttony',
     chapters: 551,
     imageUrl: 'https://static.wikia.nocookie.net/the-second-coming-of-avarice/images/2/2e/Seol_Jihu.jpg/revision/latest/scale-to-width-down/1200?cb=20191018051451'
   },
   {
+    id: 5,
     title: 'Omniscient Readers Viewpoint',
     chapters: 554,
     imageUrl: 'https://preview.redd.it/ive-to-say-orv-is-really-boring-and-gets-dragged-out-sm-its-v0-8kv0xkz6bi6a1.jpg?auto=webp&s=d34afbb151bc7259eebed00c4307c7e6c1ecb848'
@@ -35,11 +42,13 @@ const novels = [
 export default function Library() {
   const { appliedTheme } = useThemeContext();
   const { value: novelRows } = useNovelRowsContext();
+  const router = useRouter();
+  const navigate = useNavigation();
 
   const getNovelContainerStyle = () => {
     const novelsInSingleRow = parseInt(novelRows, 10);
     const screenWidth = Dimensions.get('window').width;
-    const novelWidth = screenWidth / novelsInSingleRow - 24; // Subtracting gap to account for spacing
+    const novelWidth = screenWidth / novelsInSingleRow - 24;
     let novelHeight;
     switch (novelsInSingleRow) {
       case 1:
@@ -62,6 +71,10 @@ export default function Library() {
     };
   };
 
+  const handleNovelPress = (novel: any) => {
+    router.navigate({ pathname: `novel/[id]`, params: novel });
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: appliedTheme.colors.background }]}>
       <View style={styles.header}>
@@ -72,12 +85,10 @@ export default function Library() {
           {novels.map((novel, index) => {
             const novelStyle = getNovelContainerStyle();
             return (
-              <View key={index} style={[styles.novelContainer, { width: novelStyle.width }]}>
+              <TouchableOpacity key={index} onPress={() => handleNovelPress(novel)} style={[styles.novelContainer, { width: novelStyle.width }]}>
                 <Image
                   style={[styles.novelLogo, { height: novelStyle.height }]}
-                  source={{
-                    uri: novel.imageUrl,
-                  }}
+                  source={{ uri: novel.imageUrl }}
                 />
                 <Text numberOfLines={2} style={{ color: appliedTheme.colors.text, fontFamily: 'Montserrat_400Regular', fontSize: 12 }}>
                   {novel.title}
@@ -85,7 +96,7 @@ export default function Library() {
                 <View style={[styles.chaptersRemain, { backgroundColor: appliedTheme.colors.primary }]}>
                   <Text style={{ color: appliedTheme.colors.text }}>{novel.chapters}</Text>
                 </View>
-              </View>
+              </TouchableOpacity>
             );
           })}
         </View>

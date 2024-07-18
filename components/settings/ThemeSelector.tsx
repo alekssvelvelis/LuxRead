@@ -93,7 +93,7 @@ const styles = StyleSheet.create({
         justifyContent: 'flex-start',
     },
     header: {
-        fontSize: 24,
+        fontSize: 16,
         paddingLeft: 8,
         marginBottom: 10,
     },
