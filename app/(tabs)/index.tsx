@@ -2,7 +2,6 @@ import React from 'react';
 import { View, StyleSheet, StatusBar } from 'react-native';
 import { PaperProvider } from 'react-native-paper';
 import { useThemeContext } from '@/contexts/ThemeContext';
-
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import Library from './library';
 
