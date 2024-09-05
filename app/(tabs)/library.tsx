@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { StyleSheet, View, Text, ScrollView, Image, Dimensions, TouchableOpacity } from 'react-native';
 import SearchBar from '@/components/SearchBar';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { useNovelRowsContext } from '@/contexts/NovelRowsContext';
 import { useRouter } from 'expo-router';
-
+import popularNovels from '@/sources/allnovelfull';
 const novels = [
   {
     id: 1,
@@ -54,6 +54,7 @@ const novels = [
 ];
 
 export default function Library() {
+  popularNovels(1);
   const { appliedTheme } = useThemeContext();
   const { value: novelRows } = useNovelRowsContext();
   const router = useRouter();
