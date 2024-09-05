@@ -64,7 +64,10 @@ const SearchBar = () => {
           setIsModalVisible(false);
           toggleRotation();
         }} 
-      />
+        
+      >
+        <Text>test</Text>
+        </PullUpModal>
     </View>
   );
 };
