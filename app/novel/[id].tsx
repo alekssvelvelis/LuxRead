@@ -16,12 +16,12 @@ const Synopsis = () => {
       useNativeDriver: true,
     }).start();
     setIsRotated(!isRotated);
-    setIsModalVisible(!isModalVisible); // Toggle modal visibility
+    setIsModalVisible(!isModalVisible);
   };
 
   const rotateInterpolate = rotation.interpolate({
     inputRange: [0, 1],
-    outputRange: ['180deg', '0deg'],
+    outputRange: ['0deg', '180deg'],
   });
 
   const animatedStyle = {
@@ -35,6 +35,21 @@ const Synopsis = () => {
   const [showFullDescription, setShowFullDescription] = useState(false);
   const toggleDescription = () => {
     setShowFullDescription(!showFullDescription);
+  };
+
+  const renderChapters = (numberOfChapters) => {
+    const chapters = [];
+    for (let i = 1; i <= numberOfChapters; i++) {
+      chapters.push(
+        <TouchableOpacity key={i} style={[styles.chapterContainer, { marginLeft: 8, paddingVertical: 12 }]}>
+          <Text style={{ fontSize: 16, color: appliedTheme.colors.text }}>
+            {`Chapter ${i}: Prologue`}
+          </Text>
+          <MaterialIcons size={36} name="download" color={appliedTheme.colors.text} style={{zIndex: 3}} />
+        </TouchableOpacity>
+      );
+    }
+    return chapters;
   };
 
   return (
@@ -91,12 +106,19 @@ const Synopsis = () => {
       </View>
       <View style={{ flexDirection: 'row'}}>
         <View style={[styles.chapterContainer, {}]}>
-          <Text style={[styles.totalChapters, styles.moveRight, { color: appliedTheme.colors.text }]}>Chapters: 100</Text>
+          <Text style={[styles.totalChapters, styles.moveRight, { color: appliedTheme.colors.text }]}>Chapters: 30</Text>
           <TouchableOpacity onPress={toggleRotation}>
             <Animated.View style={[animatedStyle]}>
-              <MaterialIcons size={36} name="keyboard-double-arrow-down" color={appliedTheme.colors.text}/>  
+              <MaterialIcons size={36} name="keyboard-double-arrow-down" color={appliedTheme.colors.text}/> 
             </Animated.View>
           </TouchableOpacity>
+        </View>
+      </View>
+      <View style={{ flexDirection: 'row', marginTop: 12}}>
+        <View style={[styles.chapterContainer, { flexDirection: 'column' }]}>
+          
+          {renderChapters(30)}
+          
         </View>
       </View>
       <PullUpModal 
