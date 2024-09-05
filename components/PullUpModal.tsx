@@ -18,9 +18,11 @@ const { height } = Dimensions.get('window');
 interface PullUpModalProps {
     visible: boolean;
     onClose: () => void;
+    children?: React.ReactNode;
+
 }
 
-export function PullUpModal({ visible, onClose }: PullUpModalProps) {
+export function PullUpModal({ visible, onClose, children }: PullUpModalProps) {
     const { theme, appliedTheme } = useThemeContext();
     const [slideAnimation] = useState(new Animated.Value(height)); // Initial position off-screen
     const [fadeAnimation] = useState(new Animated.Value(0)); // Initial opacity
@@ -75,6 +77,7 @@ export function PullUpModal({ visible, onClose }: PullUpModalProps) {
                         <Animated.View style={[styles.modalContainer, { transform: [{ translateY: slideAnimation }], backgroundColor: appliedTheme.colors.surfaceVariant }]}>
                             <SafeAreaView style={styles.container}>
                                 <Text style={[styles.text, { color: appliedTheme.colors.text }]}>This is the pull-up modal content.</Text>
+                                {children}
                             </SafeAreaView>
                         </Animated.View>
                     </TouchableWithoutFeedback>
@@ -100,6 +103,7 @@ const styles = StyleSheet.create({
     overlayContent: {
         flex: 1,
         justifyContent: 'flex-end',
+        
     },
     modalContainer: {
         borderTopLeftRadius: 20,
