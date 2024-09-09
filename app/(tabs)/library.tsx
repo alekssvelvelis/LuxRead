@@ -8,7 +8,7 @@ import popularNovels from '@/sources/allnovelfull';
 const novels = [
   {
     id: 1,
-    title: 'Lord of the Mysteries',
+    title: 'Lord of the MysteriesLord of the MysteriesLord of the MysteriesLord of the MysteriesLord of the MysteriesLord of the MysteriesLord of the Mysteries',
     author: 'Cuttlefish That Loves Diving',
     chapters: 1451,
     imageUrl: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRPI9FaQTXTWjl3k_PCKvDr5-E2hGyvuYjAmg&s',
@@ -54,7 +54,7 @@ const novels = [
 ];
 
 export default function Library() {
-  popularNovels(1);
+  // popularNovels(1);
   const { appliedTheme } = useThemeContext();
   const { value: novelRows } = useNovelRowsContext();
   const router = useRouter();
