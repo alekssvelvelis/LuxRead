@@ -1,10 +1,11 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { View, Pressable, TextInput, StyleSheet, Text, Animated } from 'react-native';
-import { Entypo, Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { PullUpModal } from './PullUpModal'; // Adjust the import path as necessary
+import { router, usePathname } from 'expo-router';
 
-const SearchBar = () => {
+const SearchBar = ({ onSearchChange }) => {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const { appliedTheme } = useThemeContext();
   const [isRotated, setIsRotated] = useState<boolean>(false);
@@ -18,11 +19,12 @@ const SearchBar = () => {
       useNativeDriver: true,
     }).start();
     setIsRotated(!isRotated);
-    setIsModalVisible(!isModalVisible); // Toggle modal visibility
+    setIsModalVisible(!isModalVisible);
   };
 
   const clearSearch = () => {
     setSearchQuery('');
+    onSearchChange(''); // Clear the search query in the parent component as well
   };
 
   const rotateInterpolate = rotation.interpolate({
@@ -33,20 +35,33 @@ const SearchBar = () => {
   const animatedStyle = {
     transform: [{ rotate: rotateInterpolate }],
   };
+  const pathname = usePathname();
+  const isCoreTab = pathname === '/library' || pathname === '/sources';
+
+  const handleBackPress = () => {
+    if (!isCoreTab) {
+      router.back(); // Navigate back to the previous page
+    }
+  };
+
+  const handleChangeQuery = (query) => {
+    setSearchQuery(query); // Update the search query state
+    onSearchChange(query); // Call the callback function with the new search text
+  };
 
   return (
     <View style={{ flex: 1, display: 'flex', alignItems: 'center', marginTop: 28 }}>
       <View style={[styles.searchbarContainer, { backgroundColor: appliedTheme.colors.elevation.level2 }]}>
         <Pressable style={styles.searchbar} onPress={toggleRotation}>
           <Text>
-            <Entypo name="magnifying-glass" size={26} color={appliedTheme.colors.onSurfaceVariant} />
+            <Ionicons name={isCoreTab ? 'search-outline' : 'chevron-back'} size={26} color={appliedTheme.colors.onSurfaceVariant} onPress={handleBackPress} />
           </Text>
           <TextInput
             placeholder='Search'
             placeholderTextColor={appliedTheme.colors.text}
             style={[styles.textInput, { color: appliedTheme.colors.text }]}
             value={searchQuery}
-            onChangeText={setSearchQuery}
+            onChangeText={handleChangeQuery}
           />
           {searchQuery.length > 0 && (
             <Pressable onPress={clearSearch}>
@@ -64,10 +79,9 @@ const SearchBar = () => {
           setIsModalVisible(false);
           toggleRotation();
         }} 
-        
       >
         <Text>test</Text>
-        </PullUpModal>
+      </PullUpModal>
     </View>
   );
 };
@@ -88,7 +102,7 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 8,
+    paddingHorizontal: 12,
   },
   textInput: {
     flex: 1,

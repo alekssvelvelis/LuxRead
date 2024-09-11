@@ -3,12 +3,12 @@ import { StyleSheet, View, Text, ScrollView, Image, Dimensions, TouchableOpacity
 import SearchBar from '@/components/SearchBar';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { useNovelRowsContext } from '@/contexts/NovelRowsContext';
-import { useRouter } from 'expo-router';
-import popularNovels from '@/sources/allnovelfull';
+import { useRouter, usePathname } from 'expo-router';
+
 const novels = [
   {
     id: 1,
-    title: 'Lord of the MysteriesLord of the MysteriesLord of the MysteriesLord of the MysteriesLord of the MysteriesLord of the MysteriesLord of the Mysteries',
+    title: 'Lord of the Mysteries',
     author: 'Cuttlefish That Loves Diving',
     chapters: 1451,
     imageUrl: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRPI9FaQTXTWjl3k_PCKvDr5-E2hGyvuYjAmg&s',
@@ -20,7 +20,7 @@ const novels = [
     title: 'Shadow Slave',
     author: 'Guiltythree',
     chapters: 456,
-    imageUrl: 'https://m.media-amazon.com/images/I/41ZnppX1ytL.jpg',
+    imageUrl: 'https://allnovelfull.net/uploads/thumbs/shadow-slave-47e5476795-407d99aa9604e941b427980e8b50c4a1.jpg',
     description: `Growing up in poverty, Sunny never expected anything good from life. However, even he did not anticipate being chosen by the Nightmare Spell and becoming one of the Awakened - an elite group of people gifted with supernatural powers. Transported into a ruined magical world, he found himself facing against terrible monsters - and other Awakened - in a deadly battle of survival. What's worse, the shadow powers he received happened to possess a small, but potentially fatal side effect...`,
     genres: 'Fantasy, Action, Adventure, Mystery, Supernatural, Tragedy',
   },
@@ -58,6 +58,7 @@ export default function Library() {
   const { appliedTheme } = useThemeContext();
   const { value: novelRows } = useNovelRowsContext();
   const router = useRouter();
+  const pathname = usePathname();
 
   const getNovelContainerStyle = () => {
     const novelsInSingleRow = parseInt(novelRows, 10);
