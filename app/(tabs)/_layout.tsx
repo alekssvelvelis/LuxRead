@@ -41,13 +41,6 @@ export default () => {
                 }}
             />
             <Tabs.Screen name="list" options={{headerShown: false}}/>
-            <Tabs.Screen
-                name="index"
-                options={{
-                    href: null,
-                    headerShown: false,
-                }}
-            />
         </Tabs>
     );
 }

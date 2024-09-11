@@ -103,7 +103,6 @@ const styles = StyleSheet.create({
     overlayContent: {
         flex: 1,
         justifyContent: 'flex-end',
-        
     },
     modalContainer: {
         borderTopLeftRadius: 20,
