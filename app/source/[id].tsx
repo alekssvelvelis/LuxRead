@@ -1,46 +1,59 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, Dimensions, FlatList } from 'react-native';
-import { useThemeContext } from '@/contexts/ThemeContext';
+
+import { createShimmerPlaceholder } from 'react-native-shimmer-placeholder'
 import { useLocalSearchParams, Stack } from 'expo-router';
-import { popularNovels, searchNovels } from '@/sources/allnovelfull';
+import { LinearGradient } from 'expo-linear-gradient';
+
+import { useThemeContext } from '@/contexts/ThemeContext';
+import  { popularNovels, searchNovels } from '@/sources/allnovelfull';
 import SearchBar from '@/components/SearchBar';
 
 const SourceList = () => {
   const { appliedTheme } = useThemeContext();
   const source = useLocalSearchParams();
-  
-  // State to store novels
   const [novels, setNovels] = useState([]);
-  const [originalNovels, setOriginalNovels] = useState([]); // Store pre-search novels
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
+  const ShimmerPlaceholder = createShimmerPlaceholder(LinearGradient)
+
   const [hasMore, setHasMore] = useState(true);
+
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchPage, setSearchPage] = useState(1); // Track search page
 
   const handleSearchQuery = (query) => {
     setSearchQuery(query);
+    setSearchPage(1); // Reset search page when a new search starts
   };
 
-  // Fetch novels based on the current page and search query
-  const fetchNovels = useCallback(async (pageNumber, searchQuery) => {
+  const fetchNovels = useCallback(async (pageNumber = 1, searchQuery = null) => {
     setLoading(true);
-    const fetchFunction = searchQuery ? searchNovels : popularNovels;
-    
-    try {
-      const novelsData = await fetchFunction(searchQuery || pageNumber);
+    // await new Promise(resolve => setTimeout(resolve, 20000)); //skeleton testing hehe
 
+    const fetchFunction = searchQuery ? searchNovels : popularNovels;
+    try {
+      const novelsData = await fetchFunction(searchQuery || pageNumber, pageNumber); // Pass page number for both cases
       if (searchQuery) {
-        // When searching, we do not want to append but replace with search results
-        setNovels(novelsData);
-      } else {
-        if (novelsData.length > 0) {
-          setNovels(prevNovels => [...prevNovels, ...novelsData]);
-          setHasMore(true);
+        
+        if (pageNumber === 1) {
+          // On a new search, replace existing novels
+          setNovels(novelsData);
         } else {
-          setHasMore(false);
+          // Append search results if it's a subsequent page
+          setNovels(prevNovels => [...prevNovels, ...novelsData]);
+        }
+      } else {
+
+        if (pageNumber === 1) {
+          // For popular novels, replace existing on first page load
+          setNovels(novelsData);
+        } else {
+          // Append popular novels for more pages
+          setNovels(prevNovels => [...prevNovels, ...novelsData]);
         }
       }
-
+      setHasMore(novelsData.length === 20); 
     } catch (error) {
       console.error("Error fetching novels:", error);
     } finally {
@@ -48,36 +61,34 @@ const SourceList = () => {
     }
   }, []);
 
+  // Use effect to trigger fetch based on page or search query
   useEffect(() => {
-    // Handle search query change
     if (searchQuery) {
-      // Save the current novels before the search, if it's not already saved
-      if (originalNovels.length === 0) {
-        setOriginalNovels(novels);  // Memorize the current set of novels
-      }
-
-      // Fetch novels based on the search query
-      fetchNovels(1, searchQuery);
+      fetchNovels(searchPage, searchQuery); // Fetch search results with searchPage
     } else {
-      // If search query is cleared, restore the original novels
-      setNovels(originalNovels);
-      setOriginalNovels([]);  // Clear the memorized novels after restoring them
+      fetchNovels(page); // Fetch popular novels with normal page
     }
-  }, [searchQuery, fetchNovels]);
+  }, [page, searchPage, searchQuery, fetchNovels]);
 
-  // Fetch more novels when page changes
-  useEffect(() => {
-    if (!searchQuery) {
-      fetchNovels(page, '');  // Fetch only if not searching
+  useEffect(()=>{
+    if(!searchQuery){
+      setNovels([]);
+      setPage(1);
     }
-  }, [page, fetchNovels]);
+  }, [searchQuery])
 
   const handleLoadMore = () => {
-    if (!loading && hasMore && !searchQuery) {
-      setPage(prevPage => prevPage + 1); // Load more novels only in the non-search case
+    if (!loading && hasMore) {
+      if (searchQuery) {
+        setSearchPage(prevPage => prevPage + 1); // Load more search results
+      } else {
+        setPage(prevPage => prevPage + 1); // Load more popular novels
+      }
     }
   };
 
+  const screenWidth = Dimensions.get('window').width;
+  const novelWidth = screenWidth / 2 - 24;
   const renderItem = ({ item }) => (
     <TouchableOpacity style={[styles.novelItem, { width: novelWidth }]}>
       <Image 
@@ -85,14 +96,26 @@ const SourceList = () => {
         style={[styles.novelLogo, { height: 250 }]} 
         resizeMode="contain"
       />
-      <Text numberOfLines={2} style={{ color: appliedTheme.colors.text, fontFamily: 'Montserrat_400Regular', fontSize: 12 }}>
+      <Text numberOfLines={2} style={{ color: appliedTheme.colors.text, fontSize: 12 }}>
         {item.title}
       </Text>
     </TouchableOpacity>
   );
 
-  const screenWidth = Dimensions.get('window').width;
-  const novelWidth = screenWidth / 2 - 24;
+  const Skeleton = () => (
+    <View style={[styles.novelItem, { width: novelWidth }]}>
+    <ShimmerPlaceholder
+      shimmerColors={[appliedTheme.colors.elevation.level3, appliedTheme.colors.elevation.level1, appliedTheme.colors.elevation.level3]} //maybe use #5c5b5b for shimmer, replace elevation.level1
+      style={[styles.novelLogo, { height: 250 }]}
+    >
+    </ShimmerPlaceholder>
+    <ShimmerPlaceholder
+      shimmerColors={[appliedTheme.colors.elevation.level3, appliedTheme.colors.elevation.level1, appliedTheme.colors.elevation.level3]} //read 6 lines up
+      style={[styles.novelLogo, { height: 24, marginTop: 6 }]}
+    >
+    </ShimmerPlaceholder>
+  </View>
+  );
 
   return (
     <View style={[styles.container, { backgroundColor: appliedTheme.colors.background }]}>
@@ -112,7 +135,9 @@ const SourceList = () => {
         contentContainerStyle={styles.scrollViewContent}
         onEndReached={handleLoadMore}
         onEndReachedThreshold={0.5}
-        ListFooterComponent={loading ? <Text style={{color: appliedTheme.colors.text}}>Loading more...</Text> : null}
+        ListFooterComponent={loading ? 
+          <Skeleton/>
+          : null}
       />
     </View>
   );
