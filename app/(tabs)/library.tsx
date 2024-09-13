@@ -4,7 +4,6 @@ import SearchBar from '@/components/SearchBar';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { useNovelRowsContext } from '@/contexts/NovelRowsContext';
 import { useRouter, usePathname } from 'expo-router';
-
 const novels = [
   {
     id: 1,
@@ -54,7 +53,6 @@ const novels = [
 ];
 
 export default function Library() {
-  // popularNovels(1);
   const { appliedTheme } = useThemeContext();
   const { value: novelRows } = useNovelRowsContext();
   const router = useRouter();
@@ -105,7 +103,7 @@ export default function Library() {
                   style={[styles.novelLogo, { height: novelStyle.height }]}
                   source={{ uri: novel.imageUrl }}
                 />
-                <Text numberOfLines={2} style={{ color: appliedTheme.colors.text, fontFamily: 'Montserrat_400Regular', fontSize: 12 }}>
+                <Text numberOfLines={2} style={{ color: appliedTheme.colors.text, fontSize: 12 }}>
                   {novel.title}
                 </Text>
                 <View style={[styles.chaptersRemain, { backgroundColor: appliedTheme.colors.primary }]}>

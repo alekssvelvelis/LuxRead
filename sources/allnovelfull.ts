@@ -32,8 +32,8 @@ const popularNovels = async (pageNumber: number) => {
     return novels;
 };
 
-const searchNovels = async (novelName: string) => {
-    const url = `${sourceURL}/search?keyword=${novelName}`;
+const searchNovels = async (novelName: string, pageNumber: number) => {
+    const url = `${sourceURL}/search?keyword=${novelName}&page=${pageNumber}`;
     const result = await fetch(url);
     const body = await result.text();
 

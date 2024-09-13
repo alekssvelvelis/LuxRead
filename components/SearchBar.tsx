@@ -78,7 +78,7 @@ const SearchBar = ({ onSearchChange }) => {
         onClose={() => {
           setIsModalVisible(false);
           toggleRotation();
-        }} 
+        }}
       >
         <Text>test</Text>
       </PullUpModal>
