@@ -2,11 +2,11 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, Dimensions, FlatList } from 'react-native';
 
 import { createShimmerPlaceholder } from 'react-native-shimmer-placeholder'
-import { useLocalSearchParams, Stack } from 'expo-router';
+import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 
 import { useThemeContext } from '@/contexts/ThemeContext';
-import  { popularNovels, searchNovels } from '@/sources/allnovelfull';
+import  { popularNovels, searchNovels, fetchSingleNovel } from '@/sources/allnovelfull';
 import SearchBar from '@/components/SearchBar';
 
 const SourceList = () => {
@@ -15,7 +15,8 @@ const SourceList = () => {
   const [novels, setNovels] = useState([]);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
-  const ShimmerPlaceholder = createShimmerPlaceholder(LinearGradient)
+  const ShimmerPlaceholder = createShimmerPlaceholder(LinearGradient);
+  const router = useRouter(); // Import and use router
 
   const [hasMore, setHasMore] = useState(true);
 
@@ -48,6 +49,8 @@ const SourceList = () => {
         if (pageNumber === 1) {
           // For popular novels, replace existing on first page load
           setNovels(novelsData);
+          // console.log(JSON.stringify(novelsData, null, 2));
+
         } else {
           // Append popular novels for more pages
           setNovels(prevNovels => [...prevNovels, ...novelsData]);
@@ -89,18 +92,39 @@ const SourceList = () => {
 
   const screenWidth = Dimensions.get('window').width;
   const novelWidth = screenWidth / 2 - 24;
-  const renderItem = ({ item }) => (
-    <TouchableOpacity style={[styles.novelItem, { width: novelWidth }]}>
-      <Image 
-        source={{ uri: item.imageURL }} 
-        style={[styles.novelLogo, { height: 250 }]} 
-        resizeMode="contain"
-      />
-      <Text numberOfLines={2} style={{ color: appliedTheme.colors.text, fontSize: 12 }}>
-        {item.title}
-      </Text>
-    </TouchableOpacity>
-  );
+
+  const handleNavigateToNovel = async (novelPageURL) => {
+    try {
+      const novelData = await fetchSingleNovel(novelPageURL);
+      // console.log(JSON.stringify(novelData, null, 2) + ' inside of [id].tsx/source');
+      router.navigate({ 
+        pathname: `novel/[id]`, 
+        params: {
+          ...novelData,
+          chapters: JSON.stringify(novelData.chapters),
+        },
+      });
+      // params: { title: novelData.title, description: novelData.description, author: novelData.author, genres: novelData.genres, imageURL: novelData.imageURL, url: novelData.url, chapters: novelData.chapters } 
+    } catch (error) {
+      console.error("Error fetching single novel:", error);
+    }
+  };
+
+  const renderItem = ({ item }) => {
+    return (
+      <TouchableOpacity style={[styles.novelItem, { width: novelWidth }]} onPress={() => handleNavigateToNovel(item.novelPageURL)}>
+        <Image 
+          source={{ uri: item.imageURL }} 
+          style={[styles.novelLogo, { height: 250 }]} 
+          resizeMode="contain"
+        />
+        <Text numberOfLines={2} style={{ color: appliedTheme.colors.text, fontSize: 12 }}>
+          {item.title}
+        </Text>
+      </TouchableOpacity>
+    );
+  };
+  
 
   const Skeleton = () => (
     <View style={[styles.novelItem, { width: novelWidth }]}>

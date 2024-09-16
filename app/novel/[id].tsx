@@ -1,14 +1,22 @@
-import React, { useState, useRef } from 'react';
-import { ScrollView, View, Text, Image, StyleSheet, TouchableOpacity, Animated } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import { ScrollView, View, Text, Image, StyleSheet, TouchableOpacity, Animated, FlatList, ActivityIndicator } from 'react-native';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { useLocalSearchParams, Stack } from 'expo-router';
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { PullUpModal } from '@/components/PullUpModal';
+import { fetchChapters } from '@/sources/allnovelfull'; // Ensure fetchChapters is imported
+
 const Synopsis = () => {
   const { appliedTheme } = useThemeContext();
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
   const [isRotated, setIsRotated] = useState<boolean>(false);
   const rotation = useRef(new Animated.Value(0)).current;
+
+  const [chapterList, setChapterList] = useState([]); // Holds the loaded chapters
+  const [loading, setLoading] = useState(false); // Loading state
+  const [page, setPage] = useState(1); // Page for chapter pagination
+  const [hasMoreChapters, setHasMoreChapters] = useState(true); // Track if more chapters exist
+
   const toggleRotation = () => {
     Animated.timing(rotation, {
       toValue: isRotated ? 0 : 1,
@@ -28,54 +36,69 @@ const Synopsis = () => {
     transform: [{ rotate: rotateInterpolate }],
   };
 
-  const novel = useLocalSearchParams();
-  const imageUrl = typeof novel.imageUrl === 'string' ? novel.imageUrl : '';
-  const genresArray = novel.genres.split(',').map(genre => genre.trim());
+  const novelData = useLocalSearchParams();
+  const genresArray = novelData.genres.split(',').map(genre => genre.trim());
 
   const [showFullDescription, setShowFullDescription] = useState(false);
   const toggleDescription = () => {
     setShowFullDescription(!showFullDescription);
   };
 
-  const renderChapters = (numberOfChapters) => {
-    const chapters = [];
-    for (let i = 1; i <= numberOfChapters; i++) {
-      chapters.push(
-        <TouchableOpacity key={i} style={[styles.chapterContainer, { marginLeft: 8, paddingVertical: 12 }]}>
-          <Text style={{ fontSize: 16, color: appliedTheme.colors.text }}>
-            {`Chapter ${i}: Prologue`}
-          </Text>
-          <MaterialIcons size={36} name="download" color={appliedTheme.colors.text} style={{zIndex: 3}} />
-        </TouchableOpacity>
-      );
+  const loadChapters = async () => {
+    if (!hasMoreChapters || loading) return;
+    setLoading(true);
+
+    try {
+      const newChapters = await fetchChapters(novelData.url, page); // Fetch chapters for the current page
+      if (newChapters.length > 0) {
+        setChapterList(prevChapters => [...prevChapters, ...newChapters]); // Append new chapters
+        setPage(prevPage => prevPage + 1); // Increment page
+      } else {
+        setHasMoreChapters(false); // No more chapters to load
+      }
+    } catch (error) {
+      console.error("Error loading chapters:", error);
+    } finally {
+      setLoading(false);
     }
-    return chapters;
   };
 
+  useEffect(() => {
+    loadChapters(); // Load the initial chapters
+  }, []);
+  useEffect(() => {
+    console.log(chapterList.length); // Load the initial chapters
+  }, [chapterList]);
+
+  const renderChapterItem = ({ item, index }) => (
+    <TouchableOpacity key={index} style={[styles.chapterContainer, { marginLeft: 8, paddingVertical: 12 }]}>
+      <Text style={{ fontSize: 16, color: appliedTheme.colors.text, maxWidth: '90%', }} numberOfLines={1} ellipsizeMode='tail'>
+        {item.title}
+      </Text>
+      <MaterialIcons size={36} name="download" color={appliedTheme.colors.text} style={{ zIndex: 3 }} />
+    </TouchableOpacity>
+  );
+
   return (
-    <ScrollView contentContainerStyle={[styles.container, { backgroundColor: appliedTheme.colors.background }]}>
-      <Stack.Screen 
+    <ScrollView contentContainerStyle={[styles.container, {backgroundColor: appliedTheme.colors.background}]}>
+      <Stack.Screen
         options={{
-          headerTitle: `${novel.title}`,
-          headerStyle:  {backgroundColor: appliedTheme.colors.elevation.level2},
+          headerTitle: `${novelData.title}`,
+          headerStyle: { backgroundColor: appliedTheme.colors.elevation.level2 },
           headerTintColor: appliedTheme.colors.text,
         }}
       />
-      <View style={{ flexDirection: 'row',}}>
+      <View style={{ flexDirection: 'row' }}>
         <View style={[styles.textContainer, { marginVertical: 24 }]}>
-          <Text style={[styles.title, styles.moveRight, { color: appliedTheme.colors.text }]}>{novel.title}</Text>
+          <Text style={[styles.title, styles.moveRight, { color: appliedTheme.colors.text }]}>{novelData.title}</Text>
           <View style={{ flexDirection: 'row' }}>
             <Ionicons size={20} name="person-outline" style={styles.moveRight} color={appliedTheme.colors.text} />
-            <Text style={[styles.chapters, { color: appliedTheme.colors.text }]}>{novel.author}</Text>  
+            <Text style={[styles.chapters, { color: appliedTheme.colors.text }]}>{novelData.author}</Text>
           </View>
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false} 
-            style={styles.genreScrollView}
-          >
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.genreScrollView}>
             <View style={styles.genreContainer}>
               {genresArray.map((genre, index) => (
-                <View key={index} style={[styles.genrePill, {backgroundColor: appliedTheme.colors.elevation.level2}]}>
+                <View key={index} style={[styles.genrePill, { backgroundColor: appliedTheme.colors.elevation.level2 }]}>
                   <Text style={[styles.genreText, { color: appliedTheme.colors.text }]}>{genre}</Text>
                 </View>
               ))}
@@ -83,15 +106,12 @@ const Synopsis = () => {
           </ScrollView>
         </View>
         <View style={styles.imageContainer}>
-          <Image source={{ uri: imageUrl }} style={[styles.image]} />
+          <Image source={{ uri: novelData.imageURL }} style={[styles.image]} />
         </View>
       </View>
       <View style={styles.descriptionContainer}>
-        <Text 
-          style={[styles.description, { color: appliedTheme.colors.text }]} 
-          numberOfLines={showFullDescription ? undefined : 3}
-        >
-          {novel.description}
+        <Text style={[styles.description, { color: appliedTheme.colors.text }]} numberOfLines={showFullDescription ? undefined : 3}>
+          {novelData.description}
         </Text>
         <TouchableOpacity onPress={toggleDescription} style={styles.toggleButton}>
           <Text style={[styles.toggleButtonText, { color: appliedTheme.colors.primary }]}>
@@ -99,38 +119,35 @@ const Synopsis = () => {
           </Text>
         </TouchableOpacity>
       </View>
-      <View style={[styles.readingButton, { backgroundColor: appliedTheme.colors.primary, justifyContent: 'center', alignItems: 'center' }]}>
-        <Text style={[styles.readingButtonText, { color: appliedTheme.colors.text }]} numberOfLines={1} ellipsizeMode='tail'>
-          Start reading Chapter 1: Prologue
-        </Text>
-      </View>
-      <View style={{ flexDirection: 'row'}}>
-        <View style={[styles.chapterContainer, {}]}>
-          <Text style={[styles.totalChapters, styles.moveRight, { color: appliedTheme.colors.text }]}>Chapters: 30</Text>
-          <TouchableOpacity onPress={toggleRotation}>
-            <Animated.View style={[animatedStyle]}>
-              <MaterialIcons size={36} name="keyboard-double-arrow-down" color={appliedTheme.colors.text}/> 
-            </Animated.View>
-          </TouchableOpacity>
+      {chapterList.length > 0 && (
+        <View style={[styles.readingButton, { backgroundColor: appliedTheme.colors.primary, justifyContent: 'center', alignItems: 'center' }]}>
+          <Text style={[styles.readingButtonText, { color: appliedTheme.colors.text }]} numberOfLines={1} ellipsizeMode='tail'>
+            Start reading {chapterList[0].title}
+          </Text>
         </View>
+      )}
+      {/* FlatList wrapped in View */}
+      <View style={{ flex: 1 }}>
+        <FlatList
+          data={chapterList}
+          renderItem={renderChapterItem}
+          keyExtractor={(item, index) => `${item.url}-${index}`}
+          onEndReached={loadChapters}
+          onEndReachedThreshold={0.05} // Fetch when 20% away from the end
+          ListFooterComponent={loading ? <ActivityIndicator size="large" color={appliedTheme.colors.text} /> : null} // Show loading indicator when fetching
+          scrollEnabled={false} // Disable internal scrolling
+        />
       </View>
-      <View style={{ flexDirection: 'row', marginTop: 12}}>
-        <View style={[styles.chapterContainer, { flexDirection: 'column' }]}>
-          
-          {renderChapters(30)}
-          
-        </View>
-      </View>
-      <PullUpModal 
-        visible={isModalVisible} 
+
+      <PullUpModal
+        visible={isModalVisible}
         onClose={() => {
           setIsModalVisible(false);
           toggleRotation();
-        }} 
-        
+        }}
       >
         <Text>abcdefg</Text>
-        </PullUpModal>
+      </PullUpModal>
     </ScrollView>
   );
 };
@@ -220,10 +237,10 @@ const styles = StyleSheet.create({
   },
   chapterContainer: {
     flex: 1,
-    flexDirection:'row',
-    justifyContent: 'space-between'
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
   totalChapters: {
-    fontSize: 24
-  }
+    fontSize: 24,
+  },
 });
