@@ -4,13 +4,13 @@ import SearchBar from '@/components/SearchBar';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { useNovelRowsContext } from '@/contexts/NovelRowsContext';
 import { useRouter, usePathname } from 'expo-router';
-const novels = [
+const novelData = [
   {
     id: 1,
     title: 'Lord of the Mysteries',
     author: 'Cuttlefish That Loves Diving',
     chapters: 1451,
-    imageUrl: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRPI9FaQTXTWjl3k_PCKvDr5-E2hGyvuYjAmg&s',
+    imageURL: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRPI9FaQTXTWjl3k_PCKvDr5-E2hGyvuYjAmg&s',
     description: `In the waves of steam and machinery, who could achieve extraordinary? In the fogs of history and darkness, who was whispering? I woke up from the realm of mysteries and opened my eyes to the world. Firearms, cannons, battleships, airships, and difference machines. Potions, divination, curses, hanged-man, and sealed artifacts… The lights shone brightly, yet the secrets of the world were never far away. This was a legend of the “fool”.'`,
     genres: 'Fantasy, Action, Adventure, Mystery, Supernatural, Tragedy',
   },
@@ -19,7 +19,7 @@ const novels = [
     title: 'Shadow Slave',
     author: 'Guiltythree',
     chapters: 456,
-    imageUrl: 'https://allnovelfull.net/uploads/thumbs/shadow-slave-47e5476795-407d99aa9604e941b427980e8b50c4a1.jpg',
+    imageURL: 'https://allnovelfull.net/uploads/thumbs/shadow-slave-47e5476795-407d99aa9604e941b427980e8b50c4a1.jpg',
     description: `Growing up in poverty, Sunny never expected anything good from life. However, even he did not anticipate being chosen by the Nightmare Spell and becoming one of the Awakened - an elite group of people gifted with supernatural powers. Transported into a ruined magical world, he found himself facing against terrible monsters - and other Awakened - in a deadly battle of survival. What's worse, the shadow powers he received happened to possess a small, but potentially fatal side effect...`,
     genres: 'Fantasy, Action, Adventure, Mystery, Supernatural, Tragedy',
   },
@@ -28,7 +28,7 @@ const novels = [
     title: 'Beginning After the End',
     author: 'Turtleme93',
     chapters: 456,
-    imageUrl: 'https://preview.redd.it/mark-my-words-tbate-anime-is-in-production-and-it-will-be-v0-wit4340w4f1b1.jpg?auto=webp&s=8d8d6f25a8f88adf255cf336c2d0678cdac027ca',
+    imageURL: 'https://preview.redd.it/mark-my-words-tbate-anime-is-in-production-and-it-will-be-v0-wit4340w4f1b1.jpg?auto=webp&s=8d8d6f25a8f88adf255cf336c2d0678cdac027ca',
     description: `King Grey has unrivaled strength, wealth, and prestige in a world governed by martial ability. However, solitude lingers closely behind those with great power. Beneath the glamorous exterior of a powerful king lurks the shell of man, devoid of purpose and will. Reincarnated into a new world filled with magic and monsters, the king has a second chance to relive his life. Correcting the mistakes of his past will not be his only challenge, however. Underneath the peace and prosperity of the new world is an undercurrent threatening to destroy everything he has worked for, questioning his role and reason for being born again.`,
     genres: 'Fantasy, Action, Adventure, Mystery, Supernatural, Tragedy',
   },
@@ -37,7 +37,7 @@ const novels = [
     title: 'The Second Coming of Gluttony',
     author: 'Ro Yu-jin',
     chapters: 551,
-    imageUrl: 'https://static.wikia.nocookie.net/the-second-coming-of-avarice/images/2/2e/Seol_Jihu.jpg/revision/latest/scale-to-width-down/1200?cb=20191018051451',
+    imageURL: 'https://static.wikia.nocookie.net/the-second-coming-of-avarice/images/2/2e/Seol_Jihu.jpg/revision/latest/scale-to-width-down/1200?cb=20191018051451',
     description: `He was an addict, a loser, a despicable human being. But, one fleeting dream that may not have been a dream at all reawakens his once-lost senses. Possessing a very unique ability, he would use that, and the dream, to forge his path in the world now known as the Lost Paradise. “The son of god Gula has returned.” I was lost in the world of gambling. I turned my back on my family and even betrayed my lover. I wasted every day of my life. It was a life of trash. The reality told me thus: That I would amount to nothing no matter what I did. In order to change my pathetic life, I chose fantasy, instead. Even then, it was the same story. I wondered if salvation would come at the end of the long road. But, I was forced to kneel down in defeat in front of a powerful entity. The tower I built up with my own hands crumbled into nothingness. Just for once, I dearly wished to know the truth about myself.  – Come closer, my child… I will not hold back this time.`,
     genres: 'Fantasy, Action, Adventure, Mystery, Supernatural, Tragedy',
   },
@@ -46,7 +46,7 @@ const novels = [
     title: 'Omniscient Readers Viewpoint',
     author: 'Sing-Shong',
     chapters: 554,
-    imageUrl: 'https://preview.redd.it/ive-to-say-orv-is-really-boring-and-gets-dragged-out-sm-its-v0-8kv0xkz6bi6a1.jpg?auto=webp&s=d34afbb151bc7259eebed00c4307c7e6c1ecb848',
+    imageURL: 'https://preview.redd.it/ive-to-say-orv-is-really-boring-and-gets-dragged-out-sm-its-v0-8kv0xkz6bi6a1.jpg?auto=webp&s=d34afbb151bc7259eebed00c4307c7e6c1ecb848',
     description: `Only I know the end of this world. One day our MC finds himself stuck in the world of his favorite webnovel. What does he do to survive? It is a world struck by catastrophe and danger all around. His edge? He knows the plot of the story to end. Because he was the sole reader that stuck with it. Read his story to see how he survives!`,
     genres: 'Fantasy, Action, Adventure, Mystery, Supernatural, Tragedy',
   }
@@ -85,7 +85,7 @@ export default function Library() {
   };
 
   const handleNovelPress = (novel: any) => {
-    router.navigate({ pathname: `novel/[id]`, params: novel });
+    router.navigate({ pathname: `novel/[id]`, params: novelData });
   };
 
   return (
@@ -95,13 +95,13 @@ export default function Library() {
       </View>
       <ScrollView contentContainerStyle={styles.scrollViewContent} style={styles.scrollView}>
         <View style={styles.novelScrollView}>
-          {novels.map((novel, index) => {
+          {novelData.map((novel, index) => {
             const novelStyle = getNovelContainerStyle();
             return (
               <TouchableOpacity key={index} onPress={() => handleNovelPress(novel)} style={[styles.novelContainer, { width: novelStyle.width }]}>
                 <Image
                   style={[styles.novelLogo, { height: novelStyle.height }]}
-                  source={{ uri: novel.imageUrl }}
+                  source={{ uri: novel.imageURL }}
                 />
                 <Text numberOfLines={2} style={{ color: appliedTheme.colors.text, fontSize: 12 }}>
                   {novel.title}
