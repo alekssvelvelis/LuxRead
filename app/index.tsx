@@ -14,11 +14,12 @@ export default function Index() {
 function AppContent() {
   const { theme, appliedTheme } = useThemeContext();
   const barStyle = theme.startsWith('dark') ? 'light-content' : 'dark-content';
+  console.log(barStyle);
   return (
     <PaperProvider theme={appliedTheme}>
       <SafeAreaProvider>
-      <StatusBar backgroundColor={appliedTheme.colors.background} barStyle={barStyle}/>
         <View style={styles.container}>
+        <StatusBar backgroundColor={appliedTheme.colors.primary} barStyle={'dark-content'}/>
           <Redirect href="/(tabs)/library"/>
         </View>
       </SafeAreaProvider>

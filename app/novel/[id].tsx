@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity, Animated, FlatList, ActivityIndicator } from 'react-native';
 import { useThemeContext } from '@/contexts/ThemeContext';
-import { useLocalSearchParams, Stack } from 'expo-router';
+import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { PullUpModal } from '@/components/PullUpModal';
 import { fetchChapters } from '@/sources/allnovelfull'; // Ensure fetchChapters is imported
@@ -16,6 +16,8 @@ const Synopsis = () => {
   const [loading, setLoading] = useState(false); // Loading state
   const [page, setPage] = useState(1); // Page for chapter pagination
   const [hasMoreChapters, setHasMoreChapters] = useState(true); // Track if more chapters exist
+
+  const router = useRouter();
 
   const toggleRotation = () => {
     Animated.timing(rotation, {
@@ -50,6 +52,8 @@ const Synopsis = () => {
     }
   };
 
+  
+
   const loadChapters = useCallback(async (pageNumber = 1) => {
     setLoading(true);
 
@@ -74,9 +78,22 @@ const Synopsis = () => {
     loadChapters(page); // Load the initial chapters
   }, [page]);
 
+  const handleNavigateToChapter = async (chapterPageURL) => {
+    try {
+      router.navigate({ 
+        pathname: `chapter/[id]`, 
+        params: {
+          chapterPageURL: chapterPageURL,
+        },
+      });
+    } catch (error) {
+      console.error("Error fetching single novel:", error);
+    }
+  };
+
   const renderChapterItem = ({ item, index }) => (
-    <TouchableOpacity key={index} style={[styles.chapterContainer, { marginLeft: 8, paddingVertical: 12, width: '98%' }]}>
-      <Text style={{ fontSize: 16, color: appliedTheme.colors.text, maxWidth: '90%' }} numberOfLines={1} ellipsizeMode='tail'>
+    <TouchableOpacity key={index} style={[styles.chapterContainer, { paddingVertical: 12,}]} onPress={() => handleNavigateToChapter(item.url)}>
+      <Text style={{ fontSize: 16, color: appliedTheme.colors.text, width: '90%' }} numberOfLines={1} ellipsizeMode='tail'>
         {item.title}
       </Text>
       <MaterialIcons size={36} name="download" color={appliedTheme.colors.text} style={{ zIndex: 3 }} />
@@ -84,7 +101,7 @@ const Synopsis = () => {
   );
 
   const renderListHeader = () => (
-    <View>
+    <View style={{minWidth: '100%'}}>
       <Stack.Screen
         options={{
           headerTitle: `${novelData.title}`,
@@ -93,7 +110,7 @@ const Synopsis = () => {
         }}
       />
       <View style={{ flexDirection: 'row' }}>
-        <View style={[styles.textContainer, { marginVertical: 24 }]}>
+        <View style={[styles.textContainer, { marginVertical: 24, }]}>
           <Text style={[styles.title, styles.moveRight, { color: appliedTheme.colors.text }]}>{novelData.title}</Text>
           <View style={{ flexDirection: 'row' }}>
             <Ionicons size={20} name="person-outline" style={styles.moveRight} color={appliedTheme.colors.text} />
@@ -104,6 +121,7 @@ const Synopsis = () => {
             horizontal
             keyExtractor={(item, index) => index.toString()}
             showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ width: '100%' }}
             renderItem={({ item }) => (
               <View style={[styles.genrePill, { backgroundColor: appliedTheme.colors.elevation.level2 }]}>
                 <Text style={[styles.genreText, { color: appliedTheme.colors.text }]}>{item}</Text>
@@ -135,7 +153,7 @@ const Synopsis = () => {
       )}
        <View style={{ flexDirection: 'row'}}>
         <View style={[styles.chapterContainer, {}]}>
-          <Text style={[styles.totalChapters, styles.moveRight, { color: appliedTheme.colors.text }]}>Chapters: {novelData.chapterCount}</Text>
+          <Text style={[styles.totalChapters, { color: appliedTheme.colors.text }]}>Chapters: {novelData.chapterCount}</Text>
           <TouchableOpacity onPress={toggleRotation}>
             <Animated.View style={[animatedStyle]}>
               <MaterialIcons size={36} name="keyboard-double-arrow-down" color={appliedTheme.colors.text}/> 
@@ -147,7 +165,7 @@ const Synopsis = () => {
   );
 
   return (
-    <View style={[styles.container, { backgroundColor: appliedTheme.colors.background }]}>
+    <View style={[styles.container, {backgroundColor: appliedTheme.colors.background}]}>
       <FlatList
         data={chapterList}
         renderItem={renderChapterItem}
@@ -156,9 +174,9 @@ const Synopsis = () => {
         onEndReachedThreshold={0.2}
         ListFooterComponent={
           loading ? (
-            <ActivityIndicator size="large" color={appliedTheme.colors.text} />
+            <ActivityIndicator size="large" color={appliedTheme.colors.primary} />
           ) : !hasMoreChapters ? (
-            <Text style={{ textAlign: 'center', color: appliedTheme.colors.text }}>No more chapters</Text>
+            <Text style={{ textAlign: 'center', color: appliedTheme.colors.text, marginTop: 24 }}>No more chapters</Text>
           ) : null
         }
         ListHeaderComponent={renderListHeader}

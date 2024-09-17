@@ -5,7 +5,7 @@ const NUMBER_KEY = 3;
 export const saveUserTheme = async (theme: string) => {
   try {
     await AsyncStorage.setItem(THEME_KEY, theme);
-    console.log('Theme saved successfully');
+    console.log('Theme saved successfully1');
   } catch (error) {
     console.error('Error saving theme', error);
   }

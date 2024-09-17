@@ -135,4 +135,32 @@ const fetchChapters = async (novelPageURL: string, page: number) => {
     }
 };
 
-export { popularNovels, searchNovels, fetchSingleNovel, fetchChapters };
+const fetchChapterContent = async (chapterPageURL: string) => {
+    try {
+        // Fetch the page content
+        const url = `${chapterPageURL}`;
+        const result = await fetch(url);
+        const body = await result.text();
+        const loadedCheerio = cheerio.load(body);
+
+        // Initialize the object to store chapter content
+        const chapterContent: { title: string; content: string[] } = {
+            title: '',
+            content: [],
+        };
+
+        const chapterTitle = loadedCheerio('.chapter-title').text();
+        chapterContent.title = chapterTitle;
+        
+        loadedCheerio('#chapter-content p').each((i, el) => {
+            chapterContent.content.push(loadedCheerio(el).text().trim());
+        });
+
+        return chapterContent;
+    } catch (error) {
+        console.error('Error fetching chapters:', error);
+        return { title: '', content: [] }; // Return an empty array on error
+    }
+};
+
+export { popularNovels, searchNovels, fetchSingleNovel, fetchChapters, fetchChapterContent };

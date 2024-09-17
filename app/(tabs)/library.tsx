@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { StyleSheet, View, Text, ScrollView, Image, Dimensions, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, Text, ScrollView, Image, Dimensions, TouchableOpacity, StatusBar } from 'react-native';
 import SearchBar from '@/components/SearchBar';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { useNovelRowsContext } from '@/contexts/NovelRowsContext';
@@ -90,6 +90,7 @@ export default function Library() {
 
   return (
     <View style={[styles.container, { backgroundColor: appliedTheme.colors.background }]}>
+      <StatusBar backgroundColor={appliedTheme.colors.primary} barStyle={'dark-content'}/>
       <View style={styles.header}>
         <SearchBar />
       </View>
