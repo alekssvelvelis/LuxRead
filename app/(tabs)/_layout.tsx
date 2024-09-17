@@ -1,15 +1,9 @@
 import { Tabs } from "expo-router";
 import { useThemeContext } from "@/contexts/ThemeContext";
 import { Ionicons } from "@expo/vector-icons";
-import { StatusBar } from "react-native";
 export default () => {
-    const { theme, appliedTheme } = useThemeContext();
-    // const barStyle = theme.startsWith('dark') ? 'dark-content' : 'light-content';
-    const barStyle = theme.split('-')[0]+'-content';
-    console.log(barStyle);
+    const { appliedTheme } = useThemeContext();
     return (
-        <>
-        <StatusBar backgroundColor={appliedTheme.colors.background} barStyle={'dark-content'} hidden={false}/>
         <Tabs screenOptions={{ 
             tabBarActiveTintColor: appliedTheme.colors.primary, 
             tabBarStyle: {
@@ -48,6 +42,5 @@ export default () => {
             />
             <Tabs.Screen name="list" options={{headerShown: false}}/>
         </Tabs>
-        </>
     );
 }

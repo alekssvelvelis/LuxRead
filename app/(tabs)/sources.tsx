@@ -13,16 +13,12 @@ export default function Sources() {
             sourceName: 'AllNovelFull',
             imageUrl: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTyjJn_YwCifVmvArmnCMIVroxl61obyCE5WQ&s',
         },
-        // {
-        //     id: 2,
-        //     sourceName: 'LightNovelPub',
-        //     imageUrl: 'https://i.redd.it/ui97q7ehwqsa1.jpg',
-        // }
     ];
 
     const handleSourcePress = (sourceId: any) => {
         router.navigate({ pathname: `source/[id]`, params: sourceId });
-      };
+    };
+
     return (
         <View style={[styles.container, {backgroundColor: appliedTheme.colors.background}]}>
             <View style={styles.header}><SearchBar/></View>

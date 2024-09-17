@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, StatusBar } from 'react-native';
 import { PaperProvider } from 'react-native-paper';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -12,9 +12,13 @@ export default function Index() {
 
 function AppContent() {
   const { theme, appliedTheme } = useThemeContext();
+    // const barStyle = theme.startsWith('dark') ? 'dark-content' : 'light-content';
+    const barStyle = theme.split('-')[0];
+    console.log(barStyle);
   return (
     <PaperProvider theme={appliedTheme}>
       <SafeAreaProvider>
+        <StatusBar backgroundColor={appliedTheme.colors.background} barStyle={`light-content`}/>
         <View style={styles.container}>
           <Redirect href="/(tabs)/library"/>
         </View>

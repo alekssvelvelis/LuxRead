@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, Dimensions, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, Dimensions, ScrollView, TouchableOpacity, StatusBar } from 'react-native';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { subThemes, SubThemesType, darkTheme, lightTheme } from '@/constants/themes';
 
@@ -8,7 +8,7 @@ const ThemeSelector = ({ onThemeChange }: { onThemeChange: (theme: string) => vo
     const [activeTheme, setActiveTheme] = useState<string>(theme);
     const themes: string[] = ['light-default', 'light-ruby', 'light-aquamarine', 'light-citrine', 'dark-default', 'dark-ruby', 'dark-aquamarine', 'dark-citrine'];
     const screenWidth: number = Dimensions.get('screen').width;
-    
+
     const lightThemes = themes.filter(theme => theme.startsWith('light'));
     const darkThemes = themes.filter(theme => theme.startsWith('dark'));
 
@@ -17,33 +17,45 @@ const ThemeSelector = ({ onThemeChange }: { onThemeChange: (theme: string) => vo
         onThemeChange(theme);
     };
 
+    // Adjust the StatusBar content based on the active theme
+    useEffect(() => {
+        if (activeTheme.startsWith('light')) {
+            StatusBar.setBarStyle('dark-content', true); // Light theme, so dark content on the status bar
+        } else if (activeTheme.startsWith('dark')) {
+            StatusBar.setBarStyle('light-content', true); // Dark theme, so light content on the status bar
+        }
+    }, [activeTheme]); // Re-run the effect when the activeTheme changes
+
     return (
         <View style={[styles.container, { width: screenWidth - 20 }]}>
             <Text style={[styles.header, { color: appliedTheme.colors.text }]}>Light Themes</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.themesContainer}>
-            {lightThemes.map(theme => {
+                {lightThemes.map(theme => {
                     const subThemeName = theme.split('-')[1] as keyof SubThemesType;
                     const primaryColor = subThemes[subThemeName]?.colors.primary;
-                    return(
+                    return (
                         <View key={theme} style={styles.themeSingleContainer}>
                             <TouchableOpacity
                                 style={[
                                     styles.themePreviewContainer,
                                     activeTheme === theme && styles.activeTheme,
-                                    {borderColor: appliedTheme.colors.primary, backgroundColor: lightTheme.colors.onSecondary}
+                                    { borderColor: appliedTheme.colors.primary, backgroundColor: lightTheme.colors.onSecondary }
                                 ]}
                                 onPress={() => handleThemeChange(theme)}
                             >
-                                <View style={{width: '80%', backgroundColor: lightTheme.colors.surfaceVariant, height: 16, borderRadius: 50, marginTop: 4}}></View>
-                                <View style={{width: '30%', backgroundColor: primaryColor, borderRadius: 50, height: 16, top: 8, left: 24}}></View>
-                                <View style={{width: '50%', backgroundColor: lightTheme.colors.secondary, borderRadius: 50, height: 16, bottom: 8, right: 20}}></View>
-                                <View style={{width: '100%', backgroundColor: lightTheme.colors.surfaceVariant, position: 'absolute', bottom: 0, height: 18, display: 'flex', justifyContent: 'space-evenly', alignItems: 'center', flexDirection: 'row',}}>
-                                    <View style={[styles.tabNavigatorExample,{backgroundColor: lightTheme.colors.onSurfaceVariant}]}></View>
-                                    <View style={[styles.tabNavigatorExample,{backgroundColor: lightTheme.colors.onSurfaceVariant}]}></View>
-                                    <View style={[styles.tabNavigatorExample,{backgroundColor: lightTheme.colors.onSurfaceVariant}]}></View>
+                                <View style={{ width: '80%', backgroundColor: lightTheme.colors.surfaceVariant, height: 16, borderRadius: 50, marginTop: 4 }}></View>
+                                <View style={{ width: '30%', backgroundColor: primaryColor, borderRadius: 50, height: 16, top: 8, left: 24 }}></View>
+                                <View style={{ width: '50%', backgroundColor: lightTheme.colors.secondary, borderRadius: 50, height: 16, bottom: 8, right: 20 }}></View>
+                                <View style={{
+                                    width: '100%', backgroundColor: lightTheme.colors.surfaceVariant, position: 'absolute', bottom: 0, height: 18, display: 'flex',
+                                    justifyContent: 'space-evenly', alignItems: 'center', flexDirection: 'row',
+                                }}>
+                                    <View style={[styles.tabNavigatorExample, { backgroundColor: lightTheme.colors.onSurfaceVariant }]}></View>
+                                    <View style={[styles.tabNavigatorExample, { backgroundColor: lightTheme.colors.onSurfaceVariant }]}></View>
+                                    <View style={[styles.tabNavigatorExample, { backgroundColor: lightTheme.colors.onSurfaceVariant }]}></View>
                                 </View>
                             </TouchableOpacity>
-                            <Text style={{color: appliedTheme.colors.text, textTransform: 'capitalize'}}>{subThemeName}</Text>
+                            <Text style={{ color: appliedTheme.colors.text, textTransform: 'capitalize' }}>{subThemeName}</Text>
                         </View>
                     );
                 })}
@@ -54,26 +66,29 @@ const ThemeSelector = ({ onThemeChange }: { onThemeChange: (theme: string) => vo
                 {darkThemes.map(theme => {
                     const subThemeName = theme.split('-')[1] as keyof SubThemesType;
                     const primaryColor = subThemes[subThemeName]?.colors.primary;
-                    return(
+                    return (
                         <View key={theme} style={styles.themeSingleContainer}>
                             <TouchableOpacity
                                 style={[
                                     styles.themePreviewContainer,
                                     activeTheme === theme && styles.activeTheme,
-                                    {borderColor: appliedTheme.colors.primary, backgroundColor: darkTheme.colors.onSecondary}
+                                    { borderColor: appliedTheme.colors.primary, backgroundColor: darkTheme.colors.onSecondary }
                                 ]}
                                 onPress={() => handleThemeChange(theme)}
                             >
-                                <View style={{width: '80%', backgroundColor: darkTheme.colors.surfaceVariant, height: 16, borderRadius: 50, marginTop: 4}}></View>
-                                <View style={{width: '30%', backgroundColor: primaryColor, borderRadius: 50, height: 16, top: 8, left: 24}}></View>
-                                <View style={{width: '50%', backgroundColor: darkTheme.colors.secondary, borderRadius: 50, height: 16, bottom: 8, right: 20}}></View>
-                                <View style={{width: '100%', backgroundColor: darkTheme.colors.surfaceVariant, position: 'absolute', bottom: 0, height: 18, display: 'flex', justifyContent: 'space-evenly', alignItems: 'center', flexDirection: 'row',}}>
-                                <View style={[styles.tabNavigatorExample,{backgroundColor: darkTheme.colors.onSurfaceVariant}]}></View>
-                                    <View style={[styles.tabNavigatorExample,{backgroundColor: darkTheme.colors.onSurfaceVariant}]}></View>
-                                    <View style={[styles.tabNavigatorExample,{backgroundColor: darkTheme.colors.onSurfaceVariant}]}></View>
+                                <View style={{ width: '80%', backgroundColor: darkTheme.colors.surfaceVariant, height: 16, borderRadius: 50, marginTop: 4 }}></View>
+                                <View style={{ width: '30%', backgroundColor: primaryColor, borderRadius: 50, height: 16, top: 8, left: 24 }}></View>
+                                <View style={{ width: '50%', backgroundColor: darkTheme.colors.secondary, borderRadius: 50, height: 16, bottom: 8, right: 20 }}></View>
+                                <View style={{
+                                    width: '100%', backgroundColor: darkTheme.colors.surfaceVariant, position: 'absolute', bottom: 0, height: 18, display: 'flex',
+                                    justifyContent: 'space-evenly', alignItems: 'center', flexDirection: 'row',
+                                }}>
+                                    <View style={[styles.tabNavigatorExample, { backgroundColor: darkTheme.colors.onSurfaceVariant }]}></View>
+                                    <View style={[styles.tabNavigatorExample, { backgroundColor: darkTheme.colors.onSurfaceVariant }]}></View>
+                                    <View style={[styles.tabNavigatorExample, { backgroundColor: darkTheme.colors.onSurfaceVariant }]}></View>
                                 </View>
                             </TouchableOpacity>
-                            <Text style={{color: appliedTheme.colors.text, textTransform: 'capitalize'}}>{subThemeName}</Text>
+                            <Text style={{ color: appliedTheme.colors.text, textTransform: 'capitalize' }}>{subThemeName}</Text>
                         </View>
                     );
                 })}
