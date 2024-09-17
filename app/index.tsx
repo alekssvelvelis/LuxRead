@@ -1,10 +1,9 @@
 import React from 'react';
-import { View, StyleSheet, StatusBar } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { PaperProvider } from 'react-native-paper';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Redirect } from "expo-router";
-
 export default function Index() {
   return (
       <AppContent />
@@ -13,13 +12,10 @@ export default function Index() {
 
 function AppContent() {
   const { theme, appliedTheme } = useThemeContext();
-  const barStyle = theme.startsWith('dark') ? 'light-content' : 'dark-content';
-  console.log(barStyle);
   return (
     <PaperProvider theme={appliedTheme}>
       <SafeAreaProvider>
         <View style={styles.container}>
-        <StatusBar backgroundColor={appliedTheme.colors.background} barStyle={barStyle}/>
           <Redirect href="/(tabs)/library"/>
         </View>
       </SafeAreaProvider>
