@@ -1,20 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Alert, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Alert, TouchableOpacity, StatusBar } from 'react-native';
 import { useLocalSearchParams, Stack } from 'expo-router';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { fetchChapterContent } from '@/sources/allnovelfull';
-
+import { Ionicons } from '@expo/vector-icons';
 const ChapterPage = () => {
   const [content, setContent] = useState({ title: '', content: [] }); // Ensure content is an object with content as an array
   const [loading, setLoading] = useState(false);
-  const { appliedTheme } = useThemeContext();
+  const { theme, appliedTheme } = useThemeContext();
   const propData = useLocalSearchParams();
-
-  const [headerVisibility, setHeaderVisibility] = useState(true);
-
-  const handleScroll = () => {
-    setHeaderVisibility(false);
-  };
 
   const loadChapterContent = useCallback(async () => {
     setLoading(true);
@@ -54,14 +48,16 @@ const ChapterPage = () => {
   };
 
   const overlayBase = appliedTheme.colors.elevation.level2;
-  const overlayBackgroundColor = rgbToRgba(overlayBase, 0.7);
+  const overlayBackgroundColor = rgbToRgba(overlayBase, 0.9);
 
   return (
     <View style={{ flex: 1 }}>
-      <View style={[styles.header, { backgroundColor: overlayBackgroundColor }]} />
+      <View style={[styles.header, { backgroundColor: overlayBackgroundColor, flexDirection: 'row', }]}>
+          <Ionicons name={'arrow-back'} size={32} color={appliedTheme.colors.text} />
+          <Text style={{color: appliedTheme.colors.text, fontSize: 20, marginBottom: 4, marginLeft: 12}} numberOfLines={1}>{content.title}</Text>
+      </View>
       <ScrollView
         contentContainerStyle={[styles.container, { backgroundColor: appliedTheme.colors.background }]}
-        onScroll={handleScroll}
       >
         <Stack.Screen
           options={{
@@ -91,7 +87,11 @@ const ChapterPage = () => {
         </TouchableOpacity>
       </ScrollView>
       <View style={[styles.footer, { backgroundColor: overlayBackgroundColor }]}>
-
+        <View style={{width: '90%', flexDirection: 'row', justifyContent: 'space-between',}}>
+          <Ionicons name={'chevron-back'} size={32} color={appliedTheme.colors.text} />
+          <Ionicons name={'cog'} size={32} color={appliedTheme.colors.text} />
+          <Ionicons name={'chevron-forward'} size={32} color={appliedTheme.colors.text} />
+        </View>
       </View>
     </View>
   );
@@ -121,15 +121,17 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    height: 50, // Set the desired height for your header
+    height: 60, // Set the desired height for your header
     zIndex: 1, // Ensure it is above other content
+    justifyContent: 'flex-start',
+    alignItems: 'flex-end'
   },
   footer: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    height: 60, // Set the desired height for your footer
+    height: 50, // Set the desired height for your footer
     zIndex: 1, // Ensure it is above other content
     justifyContent: 'center',
     alignItems: 'center',
@@ -143,5 +145,11 @@ const styles = StyleSheet.create({
   },
   readingButtonText: {
     fontSize: 16,
+  },
+  overlayContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end'
   },
 });

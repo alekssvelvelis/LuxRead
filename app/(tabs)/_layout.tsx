@@ -1,8 +1,17 @@
+import React, { useEffect } from 'react';
+import { StatusBar } from 'react-native';
 import { Tabs } from "expo-router";
 import { useThemeContext } from "@/contexts/ThemeContext";
 import { Ionicons } from "@expo/vector-icons";
 export default () => {
-    const { appliedTheme } = useThemeContext();
+    const { theme, appliedTheme } = useThemeContext();
+    useEffect(() => {
+        if (theme.startsWith('light')) {
+          StatusBar.setBarStyle('dark-content', true); // Light theme: dark-content for status bar
+        } else if (theme.startsWith('dark')) {
+          StatusBar.setBarStyle('light-content', true); // Dark theme: light-content for status bar
+        }
+      }, [theme]); // Re-run this when the theme changes
     return (
         <Tabs screenOptions={{ 
             tabBarActiveTintColor: appliedTheme.colors.primary, 

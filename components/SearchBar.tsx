@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { View, Pressable, TextInput, StyleSheet, Text, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useThemeContext } from '@/contexts/ThemeContext';
@@ -54,7 +54,7 @@ const SearchBar = ({ onSearchChange }) => {
       <View style={[styles.searchbarContainer, { backgroundColor: appliedTheme.colors.elevation.level2 }]}>
         <Pressable style={styles.searchbar} onPress={toggleRotation}>
           <Text>
-            <Ionicons name={isCoreTab ? 'search-outline' : 'chevron-back'} size={26} color={appliedTheme.colors.onSurfaceVariant} onPress={handleBackPress} />
+            <Ionicons name={isCoreTab ? 'search-outline' : 'arrow-back'} size={26} color={appliedTheme.colors.onSurfaceVariant} onPress={handleBackPress} />
           </Text>
           <TextInput
             placeholder='Search'

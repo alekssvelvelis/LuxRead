@@ -52,8 +52,6 @@ const Synopsis = () => {
     }
   };
 
-  
-
   const loadChapters = useCallback(async (pageNumber = 1) => {
     setLoading(true);
 
