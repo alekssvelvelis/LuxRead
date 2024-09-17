@@ -19,7 +19,7 @@ function AppContent() {
     <PaperProvider theme={appliedTheme}>
       <SafeAreaProvider>
         <View style={styles.container}>
-        <StatusBar backgroundColor={appliedTheme.colors.primary} barStyle={'dark-content'}/>
+        <StatusBar backgroundColor={appliedTheme.colors.background} barStyle={barStyle}/>
           <Redirect href="/(tabs)/library"/>
         </View>
       </SafeAreaProvider>
