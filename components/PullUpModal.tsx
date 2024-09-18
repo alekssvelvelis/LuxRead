@@ -66,7 +66,7 @@ export function PullUpModal({ visible, onClose, children }: PullUpModalProps) {
         ]).start(() => setIsVisible(false));
     };
     return (
-        <Modal animationType="fade" transparent={true} visible={isVisible} >
+        <Modal animationType="fade" transparent={true} visible={isVisible}  style={{position: 'absolute', top: 0, right: 0, left: 0, bottom: 0, backgroundColor: 'rgba(255,0,0,1)'}}>
             <AnimatedPressable style={[styles.overlay, { opacity: fadeAnimation }]} onPress={onClose}>
                 <View style={styles.overlayContent}>
                     <TouchableWithoutFeedback>

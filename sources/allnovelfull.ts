@@ -59,7 +59,7 @@ const searchNovels = async (novelName: string, pageNumber: number) => {
         const novels = [];
 
         const novelList = loadedCheerio('.list .row');
-        const promises = novelList.map(async (index: number, element: CheerioElement) => {
+        const promises = novelList.map(async (index: number, element: string) => {
             const title = loadedCheerio(element).find('.truyen-title a').text().trim();
             const author = loadedCheerio(element).find('.author').text().trim();
             const image = loadedCheerio(element).find('img').attr('src');
@@ -75,9 +75,9 @@ const searchNovels = async (novelName: string, pageNumber: number) => {
                     novelPageURL,
                 };
             }
-        }).get(); // Convert Cheerio to array
+        }).get();
 
-        return Promise.all(promises).then(results => results.filter(Boolean)); // Filter out undefined values
+        return Promise.all(promises).then(results => results.filter(Boolean));
     } catch (error) {
         console.error('Error searching novels:', error);
         return [];
@@ -137,30 +137,50 @@ const fetchChapters = async (novelPageURL: string, page: number) => {
 
 const fetchChapterContent = async (chapterPageURL: string) => {
     try {
-        // Fetch the page content
         const url = `${chapterPageURL}`;
         const result = await fetch(url);
         const body = await result.text();
         const loadedCheerio = cheerio.load(body);
 
-        // Initialize the object to store chapter content
-        const chapterContent: { title: string; content: string[] } = {
+        const chapterContent = {
             title: '',
             content: [],
+            closeChapters: {},
         };
 
         const chapterTitle = loadedCheerio('.chapter-title').text();
         chapterContent.title = chapterTitle;
-        
+
         loadedCheerio('#chapter-content p').each((i, el) => {
             chapterContent.content.push(loadedCheerio(el).text().trim());
         });
 
+        // Add next chapter
+        const nextChapterElement = loadedCheerio('#next_chap');
+        if (nextChapterElement.length && !nextChapterElement.hasClass('disabled')) {
+            const nextChapter = nextChapterElement.attr('href');
+            const nextChapterURL = `${sourceURL}${nextChapter}`;
+            if (nextChapter) {
+                chapterContent.closeChapters['nextChapter'] = nextChapterURL;
+            }
+        }
+
+        // Add previous chapter
+        const prevChapterElement = loadedCheerio('#prev_chap');
+        if (prevChapterElement.length && !prevChapterElement.hasClass('disabled')) {
+            const prevChapter = prevChapterElement.attr('href');
+            const prevChapterURL = `${sourceURL}${prevChapter}`;
+            if (prevChapter) {
+                chapterContent.closeChapters['prevChapter'] = prevChapterURL;
+            }
+        }
+
         return chapterContent;
     } catch (error) {
         console.error('Error fetching chapters:', error);
-        return { title: '', content: [] }; // Return an empty array on error
+        return { title: '', content: [], closeChapters: {} };
     }
 };
+
 
 export { popularNovels, searchNovels, fetchSingleNovel, fetchChapters, fetchChapterContent };

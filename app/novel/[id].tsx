@@ -76,7 +76,7 @@ const Synopsis = () => {
     loadChapters(page); // Load the initial chapters
   }, [page]);
 
-  const handleNavigateToChapter = async (chapterPageURL) => {
+  const handleNavigateToChapter = async (chapterPageURL: string) => {
     try {
       router.navigate({ 
         pathname: `chapter/[id]`, 
