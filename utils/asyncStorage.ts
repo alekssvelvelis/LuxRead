@@ -2,6 +2,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const THEME_KEY = 'userTheme';
 const NUMBER_KEY = 3;
+const READER_OPTIONS_KEY = 'readerOptions';
+
 export const saveUserTheme = async (theme: string) => {
   try {
     await AsyncStorage.setItem(THEME_KEY, theme);
@@ -42,4 +44,22 @@ export const getNovelRows = async (key: string): Promise<string | null> => {
     console.error('Failed to retrieve the number', e);
   }
   return null;
+};
+
+export const saveReaderOptions = async (options: string[]) => {
+  try {
+    await AsyncStorage.setItem(READER_OPTIONS_KEY, JSON.stringify(options));
+  } catch (error) {
+    console.error('Error saving reader options', error);
+  }
+};
+
+export const getReaderOptions = async (READER_KEY: string): Promise<string | null> => {
+  try {
+    const readerOptions = await AsyncStorage.getItem(READER_KEY);
+    return readerOptions;
+  } catch (error) {
+    console.error('Error retrieving reader options', error);
+    return null;
+  }
 };

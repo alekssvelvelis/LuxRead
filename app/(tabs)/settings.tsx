@@ -1,33 +1,37 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { useNovelRowsContext } from '@/contexts/NovelRowsContext';
 import ThemeSelector from '@/components/settings/ThemeSelector';
 import Display from '@/components/settings/Display';
+import ReaderOptions from '@/components/settings/ReaderOptions';
 export default function Settings() {
     const { setTheme, appliedTheme } = useThemeContext();
     const { setValue } = useNovelRowsContext();
     return (
-        <View style={[styles.container, { backgroundColor: appliedTheme.colors.background }]}>
-            <View style={styles.infoContainer}>
+        <ScrollView contentContainerStyle={[styles.container, { backgroundColor: appliedTheme.colors.background }]}>
+            <View style={[styles.infoContainer]}>
                 <Text style={{color: appliedTheme.colors.primary, marginTop: 32, marginHorizontal: 8, fontSize: 24}}>Appearance</Text>
                 <ThemeSelector onThemeChange={setTheme} />
             </View>
-            <View style={styles.infoContainer}>
+            <View style={[styles.infoContainer]}>
                 <Text style={{color: appliedTheme.colors.primary, marginTop: 32, marginHorizontal: 8, fontSize: 24}}>Display</Text>
                 <Display onNovelRowsChange ={setValue}/>
             </View>
-        </View>
+            <View style={[styles.infoContainer]}>
+                <Text style={{color: appliedTheme.colors.primary, marginTop: 32, marginHorizontal: 8, fontSize: 24}}>Reader Options</Text>
+                <ReaderOptions/>
+            </View>
+        </ScrollView>
     );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flexGrow: 1,
     alignItems: 'center',
   },
   infoContainer: {
     width: '95%',
-    height: '60%'
   }
 });

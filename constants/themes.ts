@@ -40,7 +40,7 @@ export const lightTheme: Theme = {
     ...LightTheme.colors,
     primary: '#6200ee',
     accent: '#03dac4',
-    background: '#f5f5ff', // Default background color for light theme // Default text color for light theme
+    background: '#f3f3f3', // Default background color for light theme // Default text color for light theme
     // Define your light theme colors here
     text: '#000000', // Default text color for dark theme
     test: '#68DDDD',
