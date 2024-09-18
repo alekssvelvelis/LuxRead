@@ -9,7 +9,6 @@ import {
     SafeAreaView,
     Pressable,
     TouchableWithoutFeedback,
-    StatusBar
 } from 'react-native';
 import { useThemeContext } from '@/contexts/ThemeContext';
 
@@ -66,17 +65,13 @@ export function PullUpModal({ visible, onClose, children }: PullUpModalProps) {
             })
         ]).start(() => setIsVisible(false));
     };
-    const barStyle = theme.startsWith('dark') ? 'light-content' : 'dark-content';
-    //statusBarTranslucent to modal element
     return (
         <Modal animationType="fade" transparent={true} visible={isVisible} >
-            <StatusBar backgroundColor={appliedTheme.colors.background} barStyle={barStyle} />
             <AnimatedPressable style={[styles.overlay, { opacity: fadeAnimation }]} onPress={onClose}>
                 <View style={styles.overlayContent}>
                     <TouchableWithoutFeedback>
                         <Animated.View style={[styles.modalContainer, { transform: [{ translateY: slideAnimation }], backgroundColor: appliedTheme.colors.surfaceVariant }]}>
                             <SafeAreaView style={styles.container}>
-                                <Text style={[styles.text, { color: appliedTheme.colors.text }]}>This is the pull-up modal content.</Text>
                                 {children}
                             </SafeAreaView>
                         </Animated.View>
@@ -91,7 +86,6 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 const styles = StyleSheet.create({
     overlay: {
-        flex: 1,
         backgroundColor: '#000000AA',
         justifyContent: 'flex-end',
         position: 'absolute',
@@ -113,6 +107,7 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         alignItems: 'center',
+        
     },
     text: {
         fontSize: 20,
