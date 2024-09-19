@@ -5,12 +5,19 @@ import { useThemeContext } from '@/contexts/ThemeContext';
 import { PullUpModal } from './PullUpModal'; // Adjust the import path as necessary
 import { router, usePathname } from 'expo-router';
 
-const SearchBar = ({ onSearchChange }) => {
-  const [searchQuery, setSearchQuery] = useState<string>('');
+interface SearchBarProps {
+  onSearchChange: (query: string) => void; // onSearchChange takes a string and returns nothing (void)
+}
+
+const SearchBar: React.FC<SearchBarProps> = ({ onSearchChange }) => {
+  const [searchQuery, setSearchQuery] = useState('');
   const { appliedTheme } = useThemeContext();
-  const [isRotated, setIsRotated] = useState<boolean>(false);
+  const [isRotated, setIsRotated] = useState(false);
   const rotation = useRef(new Animated.Value(0)).current;
-  const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  
+  const pathname = usePathname();
+  const isCoreTab = pathname === '/library' || pathname === '/sources';
 
   const toggleRotation = () => {
     Animated.timing(rotation, {
@@ -22,9 +29,19 @@ const SearchBar = ({ onSearchChange }) => {
     setIsModalVisible(!isModalVisible);
   };
 
+  const handleBackPress = () => {
+    if (!isCoreTab) {
+      router.back();
+    }
+  };
+
   const clearSearch = () => {
     setSearchQuery('');
-    onSearchChange(''); // Clear the search query in the parent component as well
+    onSearchChange('');
+  };
+
+  const handleSearchSubmit = () => {
+    onSearchChange(searchQuery);
   };
 
   const rotateInterpolate = rotation.interpolate({
@@ -32,47 +49,36 @@ const SearchBar = ({ onSearchChange }) => {
     outputRange: ['180deg', '0deg'],
   });
 
-  const animatedStyle = {
-    transform: [{ rotate: rotateInterpolate }],
-  };
-  const pathname = usePathname();
-  const isCoreTab = pathname === '/library' || pathname === '/sources';
-
-  const handleBackPress = () => {
-    if (!isCoreTab) {
-      router.back(); // Navigate back to the previous page
-    }
-  };
-
-  const handleChangeQuery = (query) => {
-    setSearchQuery(query); // Update the search query state
-    onSearchChange(query); // Call the callback function with the new search text
-  };
-
   return (
-    <View style={{ flex: 1, display: 'flex', alignItems: 'center', marginTop: 28 }}>
+    <View style={{ flex: 1, alignItems: 'center', marginTop: 28 }}>
       <View style={[styles.searchbarContainer, { backgroundColor: appliedTheme.colors.elevation.level2 }]}>
-        <Pressable style={styles.searchbar} onPress={toggleRotation}>
-          <Text>
-            <Ionicons name={isCoreTab ? 'search-outline' : 'arrow-back'} size={26} color={appliedTheme.colors.onSurfaceVariant} onPress={handleBackPress} />
-          </Text>
+        <Pressable style={styles.searchbar}>
+          <Ionicons 
+            name={isCoreTab ? 'search-outline' : 'arrow-back'} 
+            size={26} 
+            color={appliedTheme.colors.onSurfaceVariant} 
+            onPress={handleBackPress} 
+          />
           <TextInput
             placeholder='Search'
             placeholderTextColor={appliedTheme.colors.text}
             style={[styles.textInput, { color: appliedTheme.colors.text }]}
             value={searchQuery}
-            onChangeText={handleChangeQuery}
+            onChangeText={setSearchQuery} // Set query as user types
+            onSubmitEditing={handleSearchSubmit}
+            onBlur={handleSearchSubmit}
           />
           {searchQuery.length > 0 && (
             <Pressable onPress={clearSearch}>
-              <Ionicons name="close-outline" size={32} color={appliedTheme.colors.onSurfaceVariant} style={styles.icon} />
+              <Ionicons name="close-outline" size={32} color={appliedTheme.colors.onSurfaceVariant} />
             </Pressable>
           )}
-          <Animated.View style={[animatedStyle, styles.icon]}>
-            <Ionicons name="triangle-outline" size={26} color={appliedTheme.colors.onSurfaceVariant} />
+          <Animated.View style={[{ transform: [{ rotate: rotateInterpolate }] }, styles.icon]}>
+            <Ionicons name="triangle-outline" size={26} color={appliedTheme.colors.onSurfaceVariant} onPress={toggleRotation} />
           </Animated.View>
         </Pressable>
       </View>
+      
       <PullUpModal 
         visible={isModalVisible} 
         onClose={() => {
@@ -94,15 +100,14 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     minHeight: 52,
     borderRadius: 50,
-    overflow: 'hidden',
-    zIndex: 1,
     width: '90%',
   },
   searchbar: {
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     paddingHorizontal: 12,
+    flex: 1,
   },
   textInput: {
     flex: 1,
@@ -111,9 +116,5 @@ const styles = StyleSheet.create({
   },
   icon: {
     marginHorizontal: 8,
-  },
-  searchIconContainer: {
-    borderRadius: 50,
-    overflow: 'hidden',
   },
 });

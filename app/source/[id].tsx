@@ -57,7 +57,6 @@ const SourceList = () => {
         }
       }
       setHasMore(novelsData.length === 20); 
-      console.log(JSON.stringify(novelsData, null, 2));
     } catch (error) {
       console.error("Error fetching novels:", error);
     } finally {

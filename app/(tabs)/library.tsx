@@ -10,6 +10,15 @@ import  { fetchSingleNovel } from '@/sources/allnovelfull';
 import { useRouter } from 'expo-router';
 import { getAllLibraryNovels, deleteLibraryNovel, } from '@/database/ExpoDB';
 
+interface Data{
+    id: string | number;
+    title: string;
+    author: string;
+    chapterCount: number;
+    imageURL: string;
+    novelPageURL: string;
+}
+
 export default function Library() {
   const { appliedTheme } = useThemeContext();
   const { value: novelRows } = useNovelRowsContext();
@@ -28,7 +37,18 @@ export default function Library() {
     };
     fetchNovels();
   }, []);
-  console.log(JSON.stringify(novelsData, null, 2));
+  
+  const handleDeleteNovel = async (novelId: number) => {
+    try {
+      await deleteLibraryNovel(novelId);
+      // Fetch the updated list of novels
+      const updatedNovelsData = await getAllLibraryNovels('libraryNovels');
+      setNovelsData(updatedNovelsData);
+    } catch (error) {
+      console.error("Error deleting novel:", error);
+    }
+  };
+  
   
   const getNovelContainerStyle = () => {
     const novelsInSingleRow = parseInt(novelRows, 10);
@@ -83,7 +103,7 @@ export default function Library() {
           {novelsData.map((novel, index) => {
             const novelStyle = getNovelContainerStyle();
             return (
-              <TouchableOpacity key={index} style={[styles.novelContainer, { width: novelStyle.width }]} onPress={() => handleNavigateToNovel(novel.novelPageURL)} onLongPress={() => deleteLibraryNovel(novel.id)}>
+              <TouchableOpacity key={index} style={[styles.novelContainer, { width: novelStyle.width }]} onPress={() => handleNavigateToNovel(novel.novelPageURL)} onLongPress={() => handleDeleteNovel(novel.id)}>
                 <Image
                   style={[styles.novelLogo, { height: novelStyle.height }]}
                   source={{ uri: novel.imageURL }}
@@ -92,7 +112,7 @@ export default function Library() {
                   {novel.title}
                 </Text>
                 <View style={[styles.chaptersRemain, { backgroundColor: appliedTheme.colors.primary }]}>
-                  <Text style={{ color: appliedTheme.colors.text }}>{novel.chapters}</Text>
+                  <Text style={{ color: appliedTheme.colors.text }}>{novel.chapterCount}</Text>
                 </View>
               </TouchableOpacity>
             );

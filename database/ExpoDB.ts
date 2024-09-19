@@ -23,7 +23,9 @@ async function setupLibraryNovelsTable(){
 }
 
 async function insertLibraryNovel(title: string, author: string, chapterCount: number, imageURL: string, novelPageURL: string) {
-    const db = await SQLite.openDatabaseAsync('luxreadDatabase');
+    const db = await SQLite.openDatabaseAsync('luxreadDatabase', {
+        useNewConnection: true
+    });
     try {
         await db.runAsync(
           `INSERT INTO libraryNovels (title, author, chapterCount, imageURL, novelPageURL) VALUES (?, ?, ?, ?, ?)`,
@@ -39,11 +41,20 @@ async function insertLibraryNovel(title: string, author: string, chapterCount: n
     }
 }
 
+interface NovelRow {
+    id: number | string;
+    title: string;
+    author: string;
+    chapterCount: number;
+    imageURL: string;
+    novelPageURL: string;
+}
+
 async function getAllLibraryNovels(tableName: string) {
     try {
         const db = await SQLite.openDatabaseAsync('luxreadDatabase');
-        const allRows = await db.getAllAsync(`SELECT * FROM ${tableName}`);
-        const librarySavedNovels = [];
+        const allRows: NovelRow[] = await db.getAllAsync(`SELECT * FROM ${tableName}`);
+        const librarySavedNovels = []
 
         for (const row of allRows) {
             librarySavedNovels.push({

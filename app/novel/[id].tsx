@@ -6,13 +6,17 @@ import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { PullUpModal } from '@/components/PullUpModal';
 import { fetchChapters } from '@/sources/allnovelfull'; // Ensure fetchChapters is imported
 
+interface Chapter {
+  title: string;
+}
+
 const Synopsis = () => {
   const { appliedTheme } = useThemeContext();
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
   const [isRotated, setIsRotated] = useState<boolean>(false);
   const rotation = useRef(new Animated.Value(0)).current;
 
-  const [chapterList, setChapterList] = useState([]); // Holds the loaded chapters
+  const [chapterList, setChapterList] = useState<Chapter[]>([]); // Holds the loaded chapters
   const [loading, setLoading] = useState(false); // Loading state
   const [page, setPage] = useState(1); // Page for chapter pagination
   const [hasMoreChapters, setHasMoreChapters] = useState(true); // Track if more chapters exist
@@ -40,6 +44,7 @@ const Synopsis = () => {
 
   const novelData = useLocalSearchParams();
   const genresArray = novelData.genres.split(',').map(genre => genre.trim());
+  const imageURL = Array.isArray(novelData.imageURL) ? novelData.imageURL[0] : novelData.imageURL;
 
   const [showFullDescription, setShowFullDescription] = useState(false);
   const toggleDescription = () => {
@@ -89,15 +94,14 @@ const Synopsis = () => {
     }
   };
 
-  const renderChapterItem = ({ item, index }) => (
-    <TouchableOpacity key={index} style={[styles.chapterContainer, { paddingVertical: 12,}]} onPress={() => handleNavigateToChapter(item.url)}>
+  const renderChapterItem = ({ item }: { item: Chapter }) => (
+    <TouchableOpacity key={item.title} style={[styles.chapterContainer, { paddingVertical: 12 }]} onPress={() => handleNavigateToChapter(item.url)}>
       <Text style={{ fontSize: 16, color: appliedTheme.colors.text, width: '90%' }} numberOfLines={1} ellipsizeMode='tail'>
         {item.title}
       </Text>
       <MaterialIcons size={36} name="download" color={appliedTheme.colors.text} style={{ zIndex: 3 }} />
     </TouchableOpacity>
   );
-
   const renderListHeader = () => (
     <View style={{minWidth: '100%'}}>
       <Stack.Screen
@@ -119,17 +123,16 @@ const Synopsis = () => {
             horizontal
             keyExtractor={(item, index) => index.toString()}
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ width: '100%' }}
+            contentContainerStyle={[styles.genreContainer, {width: '100%'} ]}
             renderItem={({ item }) => (
               <View style={[styles.genrePill, { backgroundColor: appliedTheme.colors.elevation.level2 }]}>
                 <Text style={[styles.genreText, { color: appliedTheme.colors.text }]}>{item}</Text>
               </View>
             )}
-            contentContainerStyle={styles.genreContainer}
           />
         </View>
         <View style={styles.imageContainer}>
-          <Image source={{ uri: novelData.imageURL }} style={[styles.image]} />
+          <Image source={{ uri: imageURL }} style={[styles.image]} />
         </View>
       </View>
       <View style={styles.descriptionContainer}>

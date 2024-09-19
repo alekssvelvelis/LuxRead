@@ -1,5 +1,5 @@
 import { View } from 'react-native';
-import cheerio from 'react-native-cheerio';
+import cheerio from 'react-native-cheerio'; //ignore ts error
 
 const sourceName = 'AllNovelFull';
 const sourceURL = `https://allnovelfull.net`;
@@ -25,7 +25,7 @@ const popularNovels = async (pageNumber: number) => {
         const loadedCheerio = cheerio.load(body);
 
         const novelList = loadedCheerio('.list .row');
-        const promises = novelList.map(async (index: number, element: CheerioElement) => {
+        const promises = novelList.map(async (index: number, element: cheerio.Element) => {
             const title = loadedCheerio(element).find('.truyen-title a').text().trim();
             const author = loadedCheerio(element).find('.author').text().trim();
             const chapterCountText = loadedCheerio(element).find('.text-info .chapter-text').text();
@@ -63,7 +63,8 @@ const searchNovels = async (novelName: string, pageNumber: number) => {
         const promises = novelList.map(async (index: number, element: string) => {
             const title = loadedCheerio(element).find('.truyen-title a').text().trim();
             const author = loadedCheerio(element).find('.author').text().trim();
-            const image = loadedCheerio(element).find('img').attr('src');
+            const chapterCountText = loadedCheerio(element).find('.text-info .chapter-text').text();
+            const chapterCount = parseInt(chapterCountText.match(/\d+/)?.[0] || '0', 10);
             const novelPageHREF = loadedCheerio(element).find('.truyen-title a').attr('href');
             const novelPageURL = `${sourceURL}${novelPageHREF}`;
 
@@ -72,6 +73,7 @@ const searchNovels = async (novelName: string, pageNumber: number) => {
                 return {
                     title,
                     author,
+                    chapterCount,
                     imageURL,
                     novelPageURL,
                 };
@@ -97,8 +99,8 @@ const fetchSingleNovel = async (novelPageURL: string) => {
         const description = loadedCheerio('.desc-text p').text().trim();
         const author = loadedCheerio('.info h3:contains("Author:")').next('a').text().trim();
         const chapterCount = loadedCheerio('.l-chapters a').text().match(/\d+/)?.[0] || '0';
-        const genres = loadedCheerio('.info h3:contains("Genre:")').nextAll('a').map((i, el) => loadedCheerio(el).text().trim()).get();
-        const chapters = loadedCheerio('.list-chapter li a').map((i, el) => ({
+        const genres = loadedCheerio('.info h3:contains("Genre:")').nextAll('a').map((i: number, el: cheerio.Element) => loadedCheerio(el).text().trim()).get();
+        const chapters = loadedCheerio('.list-chapter li a').map((i: number, el: cheerio.Element) => ({
             title: loadedCheerio(el).text().trim(),
             url: `${sourceURL}${loadedCheerio(el).attr('href')}`,
         })).get();
@@ -126,7 +128,7 @@ const fetchChapters = async (novelPageURL: string, page: number) => {
         const body = await result.text();
         const loadedCheerio = cheerio.load(body);
 
-        return loadedCheerio('.list-chapter li a').map((i, el) => ({
+        return loadedCheerio('.list-chapter li a').map((i: number, el: cheerio.Element) => ({
             title: loadedCheerio(el).text().trim(),
             url: `${sourceURL}${loadedCheerio(el).attr('href')}`,
         })).get();
@@ -143,7 +145,13 @@ const fetchChapterContent = async (chapterPageURL: string) => {
         const body = await result.text();
         const loadedCheerio = cheerio.load(body);
 
-        const chapterContent = {
+        interface ChapterContent {
+            title: string;
+            content: string[];
+            closeChapters: { [chapterTitle: string]: string};
+        }
+
+        const chapterContent: ChapterContent = {
             title: '',
             content: [],
             closeChapters: {},
@@ -152,7 +160,7 @@ const fetchChapterContent = async (chapterPageURL: string) => {
         const chapterTitle = loadedCheerio('.chapter-title').text();
         chapterContent.title = chapterTitle;
 
-        loadedCheerio('#chapter-content p').each((i, el) => {
+        loadedCheerio('#chapter-content p').each((i: number, el: cheerio.Element) => {
             chapterContent.content.push(loadedCheerio(el).text().trim());
         });
 
