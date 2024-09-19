@@ -23,12 +23,13 @@ const popularNovels = async (pageNumber: number) => {
         const result = await fetch(url);
         const body = await result.text();
         const loadedCheerio = cheerio.load(body);
-        const novels = [];
 
         const novelList = loadedCheerio('.list .row');
         const promises = novelList.map(async (index: number, element: CheerioElement) => {
             const title = loadedCheerio(element).find('.truyen-title a').text().trim();
             const author = loadedCheerio(element).find('.author').text().trim();
+            const chapterCountText = loadedCheerio(element).find('.text-info .chapter-text').text();
+            const chapterCount = parseInt(chapterCountText.match(/\d+/)?.[0] || '0', 10);
             const novelPageHREF = loadedCheerio(element).find('.truyen-title a').attr('href');
             const novelPageURL = `${sourceURL}${novelPageHREF}`;
 
@@ -37,6 +38,7 @@ const popularNovels = async (pageNumber: number) => {
                 return {
                     title,
                     author,
+                    chapterCount,
                     imageURL,
                     novelPageURL,
                 };
@@ -56,7 +58,6 @@ const searchNovels = async (novelName: string, pageNumber: number) => {
         const result = await fetch(url);
         const body = await result.text();
         const loadedCheerio = cheerio.load(body);
-        const novels = [];
 
         const novelList = loadedCheerio('.list .row');
         const promises = novelList.map(async (index: number, element: string) => {

@@ -2,16 +2,16 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, Dimensions, FlatList } from 'react-native';
 
 import { createShimmerPlaceholder } from 'react-native-shimmer-placeholder'
-import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 
 import { useThemeContext } from '@/contexts/ThemeContext';
 import  { popularNovels, searchNovels, fetchSingleNovel } from '@/sources/allnovelfull';
+import { insertLibraryNovel } from '@/database/ExpoDB';
 import SearchBar from '@/components/SearchBar';
 
 const SourceList = () => {
   const { appliedTheme } = useThemeContext();
-  const source = useLocalSearchParams();
   const [novels, setNovels] = useState([]);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -57,6 +57,7 @@ const SourceList = () => {
         }
       }
       setHasMore(novelsData.length === 20); 
+      console.log(JSON.stringify(novelsData, null, 2));
     } catch (error) {
       console.error("Error fetching novels:", error);
     } finally {
@@ -112,7 +113,7 @@ const SourceList = () => {
 
   const renderItem = ({ item }) => {
     return (
-      <TouchableOpacity style={[styles.novelItem, { width: novelWidth }]} onPress={() => handleNavigateToNovel(item.novelPageURL)}>
+      <TouchableOpacity style={[styles.novelItem, { width: novelWidth }]} onPress={() => handleNavigateToNovel(item.novelPageURL)} onLongPress={() => insertLibraryNovel(item.title, item.author, item.chapterCount, item.imageURL, item.novelPageURL)}>
         <Image 
           source={{ uri: item.imageURL }} 
           style={[styles.novelLogo, { height: 250 }]} 

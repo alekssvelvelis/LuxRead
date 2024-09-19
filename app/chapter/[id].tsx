@@ -25,7 +25,7 @@ const ChapterPage = () => {
 
   const { appliedTheme } = useThemeContext();
   const propData = useLocalSearchParams();
-  let chapterPageURL: string | undefined = propData.chapterPageURL;
+  let chapterPageURL: string = propData.chapterPageURL;
   const router = useRouter();
 
   // State for text settings
