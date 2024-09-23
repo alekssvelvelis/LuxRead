@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Pressable } from 'react-native';
 import { useLocalSearchParams, Stack, useRouter, useFocusEffect } from 'expo-router';
 import { useThemeContext } from '@/contexts/ThemeContext';
@@ -75,14 +75,12 @@ const ChapterPage = () => {
     }
   }, [chapterPageURL]);
 
-  const [readerProgress, setReaderProgress] = useState(0);
   useFocusEffect(
     useCallback(() => {
       const fetchNovels = async () => {
         try {
           const data = await getAllNovelChapters(propData.id);
-          console.log(JSON.stringify(data, null, 2));
-          setReaderProgress(data.readerProgress);
+          console.log(JSON.stringify(data, null ,2));
         } catch (error) {
           console.error("Failed to fetch novels:", error);
         }
@@ -154,6 +152,7 @@ const ChapterPage = () => {
   };
 
   const scrollPercentage = contentHeight > 0 ? ((scrollOffset / (contentHeight - scrollViewHeight)) * 100).toFixed(1) : 0;
+  // ((contentHeight-scrollViewHeight)/100)*readerProgress) is used to calculate where it should autoscroll when opening a chapter
   const chapterNumber = content.title.match(/\d/);
   const chapterIndex = chapterNumber ? parseInt(chapterNumber[0], 10) : null;
   const handleSaveChapterData = async (novel_id: number, scrollPercentage: number, chapterIndex: number) => {
@@ -164,15 +163,8 @@ const ChapterPage = () => {
     } catch (error) {
       console.error('Error saving chapter:', error);
     }
+   
   }
-  const scrollViewRef = useRef<ScrollView>(null);
-  useEffect(() => {
-    if(!loading){
-      const scrollToY = ((contentHeight - scrollViewHeight) / 100) * readerProgress;
-      scrollViewRef.current.scrollTo({ y: scrollToY, animated: true });
-    }
-  }, [contentHeight, scrollViewHeight, readerProgress]);
-
   if (loading) {
     return (
       <View style={{ flex: 1, backgroundColor: appliedTheme.colors.background }}>
@@ -190,7 +182,6 @@ const ChapterPage = () => {
         </View>
       )}
       <ScrollView
-        ref={scrollViewRef}
         contentContainerStyle={[styles.container, { backgroundColor: appliedTheme.colors.background }]}
         onLayout={handleLayout}
         onContentSizeChange={handleContentSizeChange}

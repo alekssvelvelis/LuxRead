@@ -5,11 +5,17 @@ import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { PullUpModal } from '@/components/PullUpModal';
 import { fetchChapters } from '@/sources/allnovelfull'; // Ensure fetchChapters is imported
-
+import { getAllNovelChapters } from '@/database/ExpoDB';
 interface Chapter {
   title: string;
+  url: string;
 }
-
+interface novelProgress{
+  id: number;
+  novelId: number;
+  readerProgress: number;
+  chapterIndex: number;
+}
 const Synopsis = () => {
   const { appliedTheme } = useThemeContext();
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
@@ -80,6 +86,25 @@ const Synopsis = () => {
     loadChapters(page); // Load the initial chapters
   }, [page]);
 
+  const [chapterIndex, setChapterIndex] = useState(null);
+  const [readerProgress, setReaderProgress] = useState(null);
+  useEffect(() => {
+    const fetchNovelProgress = async () => {
+      try {
+        const novelProgress: novelProgress = await getAllNovelChapters(novelData.id);
+        if (novelProgress.length === 0) {
+          return;
+        }
+        setChapterIndex(novelProgress[0].chapterIndex);
+        setReaderProgress(novelProgress[0].readerProgress);
+        return;
+      } catch (error) {
+        console.error('Error fetching progress data about novel', error);
+      }
+    }
+    fetchNovelProgress();
+  }, []);
+
   const handleNavigateToChapter = async (chapterPageURL: string) => {
     try {
       router.navigate({ 
@@ -93,15 +118,21 @@ const Synopsis = () => {
       console.error("Error fetching single novel:", error);
     }
   };
+  // console.log(JSON.stringify(chapterList, null, 2));
 
-  const renderChapterItem = ({ item }: { item: Chapter }) => (
-    <TouchableOpacity key={item.title} style={[styles.chapterContainer, { paddingVertical: 12 }]} onPress={() => handleNavigateToChapter(item.url)}>
-      <Text style={{ fontSize: 16, color: appliedTheme.colors.text, width: '90%' }} numberOfLines={1} ellipsizeMode='tail'>
-        {item.title}
-      </Text>
-      <MaterialIcons size={36} name="download" color={appliedTheme.colors.text} style={{ zIndex: 3 }} />
-    </TouchableOpacity>
-  );
+  const renderChapterItem = ({ item, index }: { item: Chapter, index: number }) => {
+    const chapterIndexOfItem = index + 1;
+    const defaultChapterIndex = chapterIndex || 0;
+    return(
+      <TouchableOpacity key={item.title} style={[styles.chapterContainer, { paddingVertical: 12, position: 'relative' }]} onPress={() => handleNavigateToChapter(item.url)}>
+        <Text style={{ fontSize: 16, color: chapterIndexOfItem >= defaultChapterIndex ? appliedTheme.colors.text : 'gray', width: '90%' }} numberOfLines={1} ellipsizeMode='tail'>
+          {item.title}
+        </Text>
+        {chapterIndexOfItem === defaultChapterIndex && <Text style={{position: 'absolute', color: appliedTheme.colors.text, top: 40, left: 18}}>{readerProgress}%</Text>}
+        <MaterialIcons size={36} name="download" color={chapterIndexOfItem >= defaultChapterIndex ? appliedTheme.colors.text : 'gray'} style={{ zIndex: 3 }} />
+      </TouchableOpacity>
+    );
+  };
   const renderListHeader = () => (
     <View style={{minWidth: '100%'}}>
       <Stack.Screen
@@ -123,7 +154,7 @@ const Synopsis = () => {
             horizontal
             keyExtractor={(item, index) => index.toString()}
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={[styles.genreContainer, {width: '100%'} ]}
+            contentContainerStyle={[styles.genreContainer, {} ]}
             renderItem={({ item }) => (
               <View style={[styles.genrePill, { backgroundColor: appliedTheme.colors.elevation.level2 }]}>
                 <Text style={[styles.genreText, { color: appliedTheme.colors.text }]}>{item}</Text>
@@ -279,6 +310,7 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center'
   },
   totalChapters: {
     fontSize: 24
