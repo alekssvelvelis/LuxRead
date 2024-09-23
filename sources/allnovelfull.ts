@@ -32,7 +32,7 @@ const popularNovels = async (pageNumber: number) => {
             const chapterCount = parseInt(chapterCountText.match(/\d+/)?.[0] || '0', 10);
             const novelPageHREF = loadedCheerio(element).find('.truyen-title a').attr('href');
             const novelPageURL = `${sourceURL}${novelPageHREF}`;
-
+            
             if (title && author && novelPageURL) {
                 const imageURL = await fetchNovelImage(novelPageURL);
                 return {
@@ -41,6 +41,7 @@ const popularNovels = async (pageNumber: number) => {
                     chapterCount,
                     imageURL,
                     novelPageURL,
+                    sourceName,
                 };
             }
         }).get(); // Convert Cheerio to array
@@ -76,6 +77,7 @@ const searchNovels = async (novelName: string, pageNumber: number) => {
                     chapterCount,
                     imageURL,
                     novelPageURL,
+                    sourceName,
                 };
             }
         }).get();

@@ -8,6 +8,9 @@ import ReaderOptions from '@/components/settings/ReaderOptions';
 export default function Settings() {
     const { setTheme, appliedTheme } = useThemeContext();
     const { setValue } = useNovelRowsContext();
+    const clearReaderOptions = () => {
+      return;
+    }
     return (
         <ScrollView contentContainerStyle={[styles.container, { backgroundColor: appliedTheme.colors.background }]}>
             <View style={[styles.infoContainer]}>
@@ -20,7 +23,7 @@ export default function Settings() {
             </View>
             <View style={[styles.infoContainer]}>
                 <Text style={{color: appliedTheme.colors.primary, marginTop: 32, marginHorizontal: 8, fontSize: 24}}>Reader Options</Text>
-                <ReaderOptions/>
+                <ReaderOptions onOptionsChange={clearReaderOptions}/>
             </View>
         </ScrollView>
     );

@@ -8,8 +8,8 @@ const Display = ({ onNovelRowsChange }: { onNovelRowsChange: (rows: string) => v
     const screenWidth = Dimensions.get('screen').width;
     const { appliedTheme } = useThemeContext();
     const [visible, setVisible] = useState<boolean>(false);
-    const [fadeAnimation] = useState(new Animated.Value(0)); // Initial opacity
-    const [value, setValue] = useState<string>('1'); // Initial value for TS
+    const [fadeAnimation] = useState(new Animated.Value(0));
+    const [value, setValue] = useState<string>('1');
 
     useEffect(() => {
         const loadInitialValue = async () => {
@@ -45,10 +45,6 @@ const Display = ({ onNovelRowsChange }: { onNovelRowsChange: (rows: string) => v
             duration: 300,
             useNativeDriver: true,
         }).start(() => setVisible(false));
-    };
-    const handleNovelRowsChange = (rows: string) => {
-        setValue(rows);
-        onNovelRowsChange(rows);
     };
 
     return (
@@ -105,7 +101,7 @@ const Display = ({ onNovelRowsChange }: { onNovelRowsChange: (rows: string) => v
                                     </View>
                                 </Pressable>
                             </RadioButton.Group>
-                            <Button onPress={closeModal}>Close</Button>
+                            <Button onPress={closeModal} textColor={appliedTheme.colors.text}>Close</Button>
                         </View>
                     </View>
                 </Modal>

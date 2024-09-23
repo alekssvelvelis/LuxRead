@@ -2,17 +2,25 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, Dimensions, FlatList } from 'react-native';
 
 import { createShimmerPlaceholder } from 'react-native-shimmer-placeholder'
-import { Stack, useRouter } from 'expo-router';
+import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 
 import { useThemeContext } from '@/contexts/ThemeContext';
 import  { popularNovels, searchNovels, fetchSingleNovel } from '@/sources/allnovelfull';
-import { insertLibraryNovel } from '@/database/ExpoDB';
+import { insertLibraryNovel, getNovelsBySource } from '@/database/ExpoDB';
+
 import SearchBar from '@/components/SearchBar';
 
+interface queriedData{
+  id: number;
+  title: string;
+}
+
 const SourceList = () => {
+  const sourceData = useLocalSearchParams();
   const { appliedTheme } = useThemeContext();
   const [novels, setNovels] = useState([]);
+  const [queriedNovels, setQueriedNovels] = useState<queriedData[]>([]);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const ShimmerPlaceholder = createShimmerPlaceholder(LinearGradient);
@@ -21,11 +29,24 @@ const SourceList = () => {
   const [hasMore, setHasMore] = useState(true);
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchPage, setSearchPage] = useState(1); // Track search page
+  const [searchPage, setSearchPage] = useState(1);
+
+  useEffect(() => {
+    const fetchNovels = async () => {
+      try {
+        const data = await getNovelsBySource(sourceData.sourceName);
+        // console.log(JSON.stringify(data, null,2));
+        setQueriedNovels(data);
+      } catch (error) {
+        console.error("Failed to fetch queried novels:", error);
+      }
+    };
+    fetchNovels();
+  }, []);
 
   const handleSearchQuery = (query) => {
     setSearchQuery(query);
-    setSearchPage(1); // Reset search page when a new search starts
+    setSearchPage(1);
   };
 
   const fetchNovels = useCallback(async (pageNumber = 1, searchQuery = null) => {
@@ -38,23 +59,19 @@ const SourceList = () => {
       if (searchQuery) {
         
         if (pageNumber === 1) {
-          // On a new search, replace existing novels
           setNovels(novelsData);
         } else {
-          // Append search results if it's a subsequent page
           setNovels(prevNovels => [...prevNovels, ...novelsData]);
         }
       } else {
 
         if (pageNumber === 1) {
-          // For popular novels, replace existing on first page load
           setNovels(novelsData);
           // console.log(JSON.stringify(novelsData, null, 2));
-
         } else {
-          // Append popular novels for more pages
           setNovels(prevNovels => [...prevNovels, ...novelsData]);
         }
+        // console.log(JSON.stringify(novelsData, null , 2));
       }
       setHasMore(novelsData.length === 20); 
     } catch (error) {
@@ -63,6 +80,16 @@ const SourceList = () => {
       setLoading(false);
     }
   }, []);
+
+  const handleSaveNovel = async (novel) => {
+    try {
+      await insertLibraryNovel(novel.title, novel.author, novel.chapterCount, novel.imageURL, novel.novelPageURL, sourceData.sourceName);
+      setQueriedNovels(prevQueriedNovels => [...prevQueriedNovels, { id: novel.id, title: novel.title }]); // Add the saved novel to queriedNovels
+    } catch (error) {
+      console.error('Error saving novel:', error);
+    }
+  };
+  
 
   // Use effect to trigger fetch based on page or search query
   useEffect(() => {
@@ -111,21 +138,28 @@ const SourceList = () => {
   };
 
   const renderItem = ({ item }) => {
+    const isQueriedNovel = queriedNovels.some(queriedNovel => queriedNovel.title === item.title);
     return (
-      <TouchableOpacity style={[styles.novelItem, { width: novelWidth }]} onPress={() => handleNavigateToNovel(item.novelPageURL)} onLongPress={() => insertLibraryNovel(item.title, item.author, item.chapterCount, item.imageURL, item.novelPageURL)}>
+      <TouchableOpacity 
+        style={[styles.novelItem, { width: novelWidth }]} 
+        onPress={() => handleNavigateToNovel(item.novelPageURL)} 
+        onLongPress={() => handleSaveNovel(item)}
+      >
         <Image 
           source={{ uri: item.imageURL }} 
-          style={[styles.novelLogo, { height: 250 }]} 
+          style={[styles.novelLogo, { height: 250, opacity: isQueriedNovel ? 0.3 : 1 }]} 
           resizeMode="contain"
         />
         <Text numberOfLines={2} style={{ color: appliedTheme.colors.text, fontSize: 12 }}>
           {item.title}
         </Text>
+        <View style={[styles.isInLibraryPill,{backgroundColor: appliedTheme.colors.elevation.level2, display: isQueriedNovel ? 'flex' : 'none'}]}>
+          <Text style={{ color: appliedTheme.colors.text, fontSize: 12 }}>In library</Text>
+        </View>
       </TouchableOpacity>
     );
   };
   
-
   const Skeleton = () => (
     <View style={[styles.novelItem, { width: novelWidth }]}>
     <ShimmerPlaceholder
@@ -168,7 +202,6 @@ const SourceList = () => {
 };
 
 export default SourceList;
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -183,10 +216,18 @@ const styles = StyleSheet.create({
   novelItem: {
     marginBottom: 24,
     marginLeft: 8,
+    position: 'relative',
   },
   novelLogo: {
     width: '100%',
     borderRadius: 4,
     objectFit: 'fill',
   },
+  isInLibraryPill: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    borderRadius: 4,
+    padding: 4,
+  }
 });

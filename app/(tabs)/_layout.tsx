@@ -49,7 +49,10 @@ export default () => {
                     tabBarIcon: ({ color }) => <Ionicons size={28} name="cog" color={color} />,
                 }}
             />
-            <Tabs.Screen name="list" options={{headerShown: false}}/>
+            <Tabs.Screen name="list" options={{ 
+                href: null,
+            }}
+            />
         </Tabs>
     );
 }

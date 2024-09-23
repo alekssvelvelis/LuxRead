@@ -45,7 +45,6 @@ const Synopsis = () => {
   const novelData = useLocalSearchParams();
   const genresArray = novelData.genres.split(',').map(genre => genre.trim());
   const imageURL = Array.isArray(novelData.imageURL) ? novelData.imageURL[0] : novelData.imageURL;
-
   const [showFullDescription, setShowFullDescription] = useState(false);
   const toggleDescription = () => {
     setShowFullDescription(!showFullDescription);
@@ -87,6 +86,7 @@ const Synopsis = () => {
         pathname: `chapter/[id]`, 
         params: {
           chapterPageURL: chapterPageURL,
+          id: novelData.id,
         },
       });
     } catch (error) {

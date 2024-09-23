@@ -1,11 +1,13 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Alert, TouchableOpacity, Pressable, FlatList } from 'react-native';
-import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Pressable } from 'react-native';
+import { useLocalSearchParams, Stack, useRouter, useFocusEffect } from 'expo-router';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { fetchChapterContent } from '@/sources/allnovelfull';
-import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { PullUpModal } from '@/components/PullUpModal';
-import Slider from '@react-native-community/slider';
+import ReaderOptions from '@/components/settings/ReaderOptions';
+import { getReaderOptions } from '@/utils/asyncStorage';
+import { upsertNovelChapter, getAllNovelChapters } from '@/database/ExpoDB';
 
 interface Content {
   title: string;
@@ -13,7 +15,6 @@ interface Content {
   closeChapters: {
     prevChapter?: string;
     nextChapter?: string;
-    // add other chapters if there are any
   };
 }
 
@@ -21,22 +22,47 @@ const ChapterPage = () => {
   const [content, setContent] = useState<Content>({ title: '', content: [], closeChapters: {} });
   const [loading, setLoading] = useState(false);
   const [isOverlayVisible, setIsOverlayVisible] = useState(false);
-  const [readerOptions, setReaderOptions] = useState(false);
+  const [readerModalVisible, setReaderModalVisible] = useState(false);
 
   const { appliedTheme } = useThemeContext();
   const propData = useLocalSearchParams();
-  let chapterPageURL: string = propData.chapterPageURL;
+  const chapterPageURL: string | string[] = propData.chapterPageURL;
   const router = useRouter();
 
-  // State for text settings
-  const [fontSize, setFontSize] = useState(16);
-  const [lineHeight, setLineHeight] = useState(25);
-  const [textAlign, setTextAlign] = useState('left');
-  const [fontFamily, setFontFamily] = useState('Roboto');
+  const [readerOptions, setReaderOptions] = useState({
+    fontSize: 16,
+    lineHeight: 25,
+    textAlign: 'left',
+    fontFamily: 'Roboto'
+  });
+
+  useEffect(() => {
+    const loadReaderOptions = async () => {
+      try {
+        const options = await getReaderOptions('readerOptions');
+        if (options) {
+          const { fontSize, lineHeight, textAlign, fontFamily } = JSON.parse(options);
+          setReaderOptions({
+            fontSize: fontSize || 16,
+            lineHeight: lineHeight || 25,
+            textAlign: textAlign || 'left',
+            fontFamily: fontFamily || 'Roboto',
+          });
+        }
+      } catch (error) {
+        console.error('Error loading reader options', error);
+      }
+    };
+
+    loadReaderOptions();
+  }, []);
+
+  const handleOptionsChange = (options: { fontSize: number; lineHeight: number; textAlign: string; fontFamily: string }) => {
+    setReaderOptions(options);
+  };
 
   const loadChapterContent = useCallback(async () => {
     setLoading(true);
-
     try {
       const chapterContent = await fetchChapterContent(chapterPageURL);
       if (chapterContent) {
@@ -47,7 +73,26 @@ const ChapterPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [propData.chapterPageURL]);
+  }, [chapterPageURL]);
+
+  const [readerProgress, setReaderProgress] = useState(0);
+  useFocusEffect(
+    useCallback(() => {
+      const fetchNovels = async () => {
+        try {
+          const data = await getAllNovelChapters(propData.id);
+          console.log(JSON.stringify(data, null, 2));
+          setReaderProgress(data.readerProgress);
+        } catch (error) {
+          console.error("Failed to fetch novels:", error);
+        }
+      };
+      fetchNovels();
+      return () => {
+        console.log('This route is now unfocused.');
+      }
+    }, [])
+  );
 
   useEffect(() => {
     loadChapterContent();
@@ -62,15 +107,7 @@ const ChapterPage = () => {
   };
 
   const handleReaderOptionsOpen = () => {
-    setReaderOptions(!readerOptions);
-  };
-
-  const changeTextAlign = (alignment: string) => {
-    setTextAlign(alignment);
-  };
-
-  const changeFontFamily = (font: string) => {
-    setFontFamily(font);
+    setReaderModalVisible(!readerModalVisible);
   };
 
   const handleNavigateCloseChapter = async (chapterPageURL: string) => {
@@ -98,24 +135,68 @@ const ChapterPage = () => {
   const overlayBase = appliedTheme.colors.elevation.level2;
   const overlayBackgroundColor = rgbToRgba(overlayBase, 0.9);
 
-  if (loading) {
-      return (
-        <View style={{ flex: 1, backgroundColor: appliedTheme.colors.background }}>
-          <ActivityIndicator size="large" color={appliedTheme.colors.primary} />
-        </View>
-      );
+  const [scrollOffset, setScrollOffset] = useState(0);
+  const [contentHeight, setContentHeight] = useState(0);
+  const [scrollViewHeight, setScrollViewHeight] = useState(0);
+
+  const handleScroll = (event) => {
+    const offsetY = event.nativeEvent.contentOffset.y;
+    setScrollOffset(offsetY);
+  };
+
+  const handleContentSizeChange = (contentWidth, contentHeight) => {
+    setContentHeight(contentHeight);
+  };
+
+  const handleLayout = (event) => {
+    const { height } = event.nativeEvent.layout;
+    setScrollViewHeight(height);
+  };
+
+  const scrollPercentage = contentHeight > 0 ? ((scrollOffset / (contentHeight - scrollViewHeight)) * 100).toFixed(1) : 0;
+  const chapterNumber = content.title.match(/\d/);
+  const chapterIndex = chapterNumber ? parseInt(chapterNumber[0], 10) : null;
+  const handleSaveChapterData = async (novel_id: number, scrollPercentage: number, chapterIndex: number) => {
+    try {
+      console.log(novel_id, scrollPercentage, chapterIndex);
+      await upsertNovelChapter(novel_id, scrollPercentage, chapterIndex);
+      handleBackPress();
+    } catch (error) {
+      console.error('Error saving chapter:', error);
     }
+  }
+  const scrollViewRef = useRef<ScrollView>(null);
+  useEffect(() => {
+    if(!loading){
+      const scrollToY = ((contentHeight - scrollViewHeight) / 100) * readerProgress;
+      scrollViewRef.current.scrollTo({ y: scrollToY, animated: true });
+    }
+  }, [contentHeight, scrollViewHeight, readerProgress]);
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, backgroundColor: appliedTheme.colors.background }}>
+        <ActivityIndicator size="large" color={appliedTheme.colors.primary} />
+      </View>
+    );
+  }
+
   return (
     <View style={{ flex: 1 }}>
       {isOverlayVisible && (
-        <>
-          <View style={[styles.header, { backgroundColor: overlayBackgroundColor, flexDirection: 'row' }]}>
-            <Ionicons name={'arrow-back'} size={32} color={appliedTheme.colors.text} style={{ marginLeft: '2%' }} onPress={handleBackPress} />
-            <Text style={{ color: appliedTheme.colors.text, fontSize: 20, marginBottom: 4, marginLeft: 12 }} numberOfLines={1}>{content.title}</Text>
-          </View>
-        </>
+        <View style={[styles.header, { backgroundColor: overlayBackgroundColor, flexDirection: 'row' }]}>
+          <Ionicons name={'arrow-back'} size={32} color={appliedTheme.colors.text} style={{ marginLeft: '2%' }} onPress={() => handleSaveChapterData(propData.id, scrollPercentage, chapterIndex)} />
+          <Text style={{ color: appliedTheme.colors.text, fontSize: 20, marginBottom: 4, marginLeft: 12 }} numberOfLines={1}>{content.title}</Text>
+        </View>
       )}
-      <ScrollView contentContainerStyle={[styles.container, { backgroundColor: appliedTheme.colors.background }]} >
+      <ScrollView
+        ref={scrollViewRef}
+        contentContainerStyle={[styles.container, { backgroundColor: appliedTheme.colors.background }]}
+        onLayout={handleLayout}
+        onContentSizeChange={handleContentSizeChange}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
+      >
         <Pressable onPress={toggleOverlay}>
           <Stack.Screen
             options={{
@@ -126,7 +207,6 @@ const ChapterPage = () => {
             }}
           />
           <View style={styles.contentContainer}>
-            <View>{content.closeChapterURL}</View>
             {content.content.map((paragraph, index) => (
               <Text
                 key={index}
@@ -134,10 +214,10 @@ const ChapterPage = () => {
                   styles.chapterText,
                   {
                     color: appliedTheme.colors.text,
-                    fontSize: fontSize,
-                    lineHeight: lineHeight,
-                    textAlign: textAlign,
-                    fontFamily: fontFamily,
+                    fontSize: readerOptions.fontSize,
+                    lineHeight: readerOptions.lineHeight,
+                    textAlign: readerOptions.textAlign,
+                    fontFamily: readerOptions.fontFamily,
                   },
                 ]}
               >
@@ -163,97 +243,28 @@ const ChapterPage = () => {
 
       {isOverlayVisible && (
         <View style={[styles.footer, { backgroundColor: overlayBackgroundColor }]}>
-          <View style={{ width: '90%', flexDirection: 'row', justifyContent: 'space-around' }}>
-            {content.closeChapters['prevChapter'] &&
-              <Ionicons name={'arrow-back'} size={32} color={appliedTheme.colors.text} onPress={() => handleNavigateCloseChapter(content.closeChapters['prevChapter'])}/> 
-            }
-            <Ionicons name={'cog'} size={32} color={appliedTheme.colors.text} onPress={handleReaderOptionsOpen} />
-            {content.closeChapters['nextChapter'] &&
-              <Ionicons name={'arrow-forward'} size={32} color={appliedTheme.colors.text} onPress={() => handleNavigateCloseChapter(content.closeChapters['nextChapter'])}/>
-            }
+          <View style={{ width: '90%', flexDirection: 'row', justifyContent: 'space-around'}}>
+            <View style={{width: '33%', justifyContent:'center', alignItems:'center'}}>
+              {content.closeChapters['prevChapter'] &&
+                <Ionicons name={'arrow-back'} size={32} color={appliedTheme.colors.text} onPress={() => handleNavigateCloseChapter(content.closeChapters['prevChapter'])}/> 
+              }
+            </View>
+            <View style={{width: '33%', justifyContent:'center', alignItems:'center'}}>
+              <Ionicons name={'cog'} size={32} color={appliedTheme.colors.text} onPress={handleReaderOptionsOpen} />
+            </View>
+            <View style={{width: '33%', justifyContent:'center', alignItems:'center'}}>
+              {content.closeChapters['nextChapter'] &&
+                <Ionicons name={'arrow-forward'} size={32} color={appliedTheme.colors.text} onPress={() => handleNavigateCloseChapter(content.closeChapters['nextChapter'])}/>
+              }
+            </View>
           </View>
         </View>
       )}
 
-      {readerOptions && (
-        <PullUpModal visible={readerOptions} onClose={handleReaderOptionsOpen}>
+      {readerModalVisible && (
+        <PullUpModal visible={readerModalVisible} onClose={handleReaderOptionsOpen}>
           <Text style={{ color: appliedTheme.colors.primary, fontSize: 24 }}>Reader options</Text>
-
-          <View style={styles.pullupModalItemContainer}>
-            <Text style={[styles.pullupModalSettingTitle, { color: appliedTheme.colors.text }]}>Text size</Text>
-            <View style={styles.pullupModalItemContainerInner}>
-              <Slider
-                style={{ width: 200, height: 40 }}
-                minimumValue={12}
-                maximumValue={20}
-                step={1}
-                value={fontSize}
-                onValueChange={value => setFontSize(value)}
-                minimumTrackTintColor={appliedTheme.colors.primary}
-                maximumTrackTintColor={appliedTheme.colors.text}
-                thumbTintColor={appliedTheme.colors.primary} 
-              />
-              <Text style={{color: appliedTheme.colors.text}}>{fontSize}</Text>
-            </View>
-          </View>
-
-          <View style={styles.pullupModalItemContainer}>
-            <Text style={[styles.pullupModalSettingTitle, { color: appliedTheme.colors.text }]}>Line height</Text>
-            <View style={styles.pullupModalItemContainerInner}>
-              <Slider
-                style={{ width: 200, height: 40 }}
-                minimumValue={18}
-                maximumValue={32}
-                step={1}
-                value={lineHeight}
-                onValueChange={value => setLineHeight(value)}
-                minimumTrackTintColor={appliedTheme.colors.primary}
-                maximumTrackTintColor={appliedTheme.colors.text}
-                thumbTintColor={appliedTheme.colors.primary} 
-              />
-              <Text style={{color: appliedTheme.colors.text}}>{lineHeight}</Text>
-            </View>
-          </View>
-
-          <View style={styles.pullupModalItemContainer}>
-            <Text style={[styles.pullupModalSettingTitle, { color: appliedTheme.colors.text }]}>Text align</Text>
-            <View style={styles.pullupModalItemContainerInner}>
-              {['left', 'center', 'right', 'justify'].map((alignment) => (
-                <TouchableOpacity key={alignment} onPress={() => changeTextAlign(alignment)}>
-                  <MaterialIcons
-                    size={28}
-                    name={`format-align-${alignment}`}
-                    color={appliedTheme.colors.text}
-                    style={{
-                      marginHorizontal: 12,
-                      backgroundColor: textAlign === alignment ? appliedTheme.colors.primary : 'transparent',
-                      borderRadius: 4,
-                    }}
-                  />
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-          <View style={styles.pullupModalItemContainer}>
-            <Text style={[styles.pullupModalSettingTitle, { color: appliedTheme.colors.text }]}>Font preset</Text>
-            <View style={styles.pullupModalItemContainerInner}>
-              <FlatList
-                data={['serif', 'Roboto', 'monospace']}
-                horizontal
-                style={{marginLeft: 8}}
-                keyExtractor={(item) => item}
-                renderItem={({ item: font }) => (
-                  <TouchableOpacity onPress={() => changeFontFamily(font)}>
-                    <View style={[styles.fontPill, { backgroundColor: fontFamily === font ? appliedTheme.colors.primary : appliedTheme.colors.elevation.level3 }]}>
-                      <Text style={{ color: appliedTheme.colors.text }}>{font}</Text>
-                    </View>
-                  </TouchableOpacity>
-                )}
-                showsHorizontalScrollIndicator={false} // Hides the horizontal scroll bar
-                contentContainerStyle={{ flexDirection: 'row', alignItems: 'center' }} // Align items
-              />
-            </View>
-          </View>
+          <ReaderOptions onOptionsChange={handleOptionsChange}/>
         </PullUpModal>
       )}
     </View>
@@ -308,26 +319,5 @@ const styles = StyleSheet.create({
   },
   readingButtonText: {
     fontSize: 16,
-  },
-  pullupModalItemContainer: {
-    width: '100%',
-    flexDirection: 'row',
-    padding: 8,
-  },
-  pullupModalItemContainerInner: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-    flexDirection: 'row',
-  },
-  pullupModalSettingTitle: {
-    fontSize: 18,
-  },
-  fontPill: {
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    marginHorizontal: 4,
-    height: 32,
   },
 });

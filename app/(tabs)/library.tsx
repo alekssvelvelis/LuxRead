@@ -8,7 +8,7 @@ import { useNovelRowsContext } from '@/contexts/NovelRowsContext';
 import  { fetchSingleNovel } from '@/sources/allnovelfull';
 
 import { useRouter } from 'expo-router';
-import { getAllLibraryNovels, deleteLibraryNovel, } from '@/database/ExpoDB';
+import { getAllLibraryNovels, deleteLibraryNovel, clearTable, dropTable, setupLibraryNovelsTable, getTableStructure, setupNovelChaptersTable} from '@/database/ExpoDB';
 
 interface Data{
     id: string | number;
@@ -20,16 +20,25 @@ interface Data{
 }
 
 export default function Library() {
+
+  useEffect(() =>{
+    // clearTable('libraryNovels');
+    // dropTable('novelChapters');
+    // console.log(JSON.stringify(getTableStructure('novelChapters'), null, 2));
+    // setupNovelChaptersTable();
+  }, [])
+  
   const { appliedTheme } = useThemeContext();
   const { value: novelRows } = useNovelRowsContext();
   const router = useRouter();
 
-  const [novelsData, setNovelsData] = useState([]);
+  const [novelsData, setNovelsData] = useState<Data[]>([]);
   
   useEffect(() => {
     const fetchNovels = async () => {
       try {
         const data = await getAllLibraryNovels('libraryNovels');
+        // console.log(JSON.stringify(data, null ,2));
         setNovelsData(data); // Update the state with the fetched data
       } catch (error) {
         console.error("Failed to fetch novels:", error);
@@ -37,7 +46,7 @@ export default function Library() {
     };
     fetchNovels();
   }, []);
-  
+    
   const handleDeleteNovel = async (novelId: number) => {
     try {
       await deleteLibraryNovel(novelId);
@@ -48,7 +57,6 @@ export default function Library() {
       console.error("Error deleting novel:", error);
     }
   };
-  
   
   const getNovelContainerStyle = () => {
     const novelsInSingleRow = parseInt(novelRows, 10);
@@ -76,18 +84,18 @@ export default function Library() {
     };
   };
 
-  const handleNavigateToNovel = async (novelPageURL) => {
+  const handleNavigateToNovel = async (novelPageURL: string, novelId: number) => {
     try {
       const novelData = await fetchSingleNovel(novelPageURL);
       // console.log(JSON.stringify(novelData, null, 2) + ' inside of [id].tsx/source');
       router.navigate({ 
-        pathname: `novel/[id]`, 
+        pathname: `novel/[id]`,
         params: {
           ...novelData,
           chapters: JSON.stringify(novelData.chapters),
+          id: novelId,
         },
-      });
-      // params: { title: novelData.title, description: novelData.description, author: novelData.author, genres: novelData.genres, imageURL: novelData.imageURL, url: novelData.url, chapters: novelData.chapters } 
+      }); 
     } catch (error) {
       console.error("Error fetching single novel:", error);
     }
@@ -103,7 +111,7 @@ export default function Library() {
           {novelsData.map((novel, index) => {
             const novelStyle = getNovelContainerStyle();
             return (
-              <TouchableOpacity key={index} style={[styles.novelContainer, { width: novelStyle.width }]} onPress={() => handleNavigateToNovel(novel.novelPageURL)} onLongPress={() => handleDeleteNovel(novel.id)}>
+              <TouchableOpacity key={index} style={[styles.novelContainer, { width: novelStyle.width }]} onPress={() => handleNavigateToNovel(novel.novelPageURL, novel.id)} onLongPress={() => handleDeleteNovel(novel.id)}>
                 <Image
                   style={[styles.novelLogo, { height: novelStyle.height }]}
                   source={{ uri: novel.imageURL }}
