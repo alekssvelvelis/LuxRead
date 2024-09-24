@@ -103,8 +103,10 @@ async function upsertNovelChapter(novel_id: number, readerProgress: number, chap
 }
 
 async function getAllNovelChapters(novelId: number) {
+    const db = await SQLite.openDatabaseAsync('luxreadDatabase', {
+        useNewConnection: true
+    });
     try {
-        const db = await SQLite.openDatabaseAsync('luxreadDatabase');
         const allRows: NovelRow[] = await db.getAllAsync(
             `SELECT * FROM novelChapters WHERE novel_id = ?`,
             [novelId]

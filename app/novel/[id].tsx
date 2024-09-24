@@ -1,10 +1,10 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity, Animated, FlatList, ActivityIndicator } from 'react-native';
 import { useThemeContext } from '@/contexts/ThemeContext';
-import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
+import { useLocalSearchParams, Stack, useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { PullUpModal } from '@/components/PullUpModal';
-import { fetchChapters } from '@/sources/allnovelfull'; // Ensure fetchChapters is imported
+import { fetchChapters } from '@/sources/allnovelfull';
 import { getAllNovelChapters } from '@/database/ExpoDB';
 interface Chapter {
   title: string;
@@ -88,7 +88,9 @@ const Synopsis = () => {
 
   const [chapterIndex, setChapterIndex] = useState(null);
   const [readerProgress, setReaderProgress] = useState(null);
-  useEffect(() => {
+
+  useFocusEffect(
+    useCallback(() => {
     const fetchNovelProgress = async () => {
       try {
         const novelProgress: novelProgress = await getAllNovelChapters(novelData.id);
@@ -103,7 +105,12 @@ const Synopsis = () => {
       }
     }
     fetchNovelProgress();
-  }, []);
+    return () => {
+      console.log('This novel is now unfocused.');
+    }
+    }, [])
+  );
+
 
   const handleNavigateToChapter = async (chapterPageURL: string) => {
     try {
@@ -128,7 +135,7 @@ const Synopsis = () => {
         <Text style={{ fontSize: 16, color: chapterIndexOfItem >= defaultChapterIndex ? appliedTheme.colors.text : 'gray', width: '90%' }} numberOfLines={1} ellipsizeMode='tail'>
           {item.title}
         </Text>
-        {chapterIndexOfItem === defaultChapterIndex && <Text style={{position: 'absolute', color: appliedTheme.colors.text, top: 40, left: 18}}>{readerProgress}%</Text>}
+        {chapterIndexOfItem === defaultChapterIndex && <Text style={{position: 'absolute', color: appliedTheme.colors.text, top: 40, left: 0}}>Reading progress: {readerProgress}%</Text>}
         <MaterialIcons size={36} name="download" color={chapterIndexOfItem >= defaultChapterIndex ? appliedTheme.colors.text : 'gray'} style={{ zIndex: 3 }} />
       </TouchableOpacity>
     );
@@ -177,11 +184,11 @@ const Synopsis = () => {
         </TouchableOpacity>
       </View>
       {chapterList.length > 0 && (
-        <View style={[styles.readingButton, { backgroundColor: appliedTheme.colors.primary, justifyContent: 'center', alignItems: 'center' }]}>
+        <TouchableOpacity style={[styles.readingButton, { backgroundColor: appliedTheme.colors.primary, justifyContent: 'center', alignItems: 'center' }]} onPress={() => handleNavigateToChapter(chapterList[chapterIndex-1].url)}>
           <Text style={[styles.readingButtonText, { color: appliedTheme.colors.text }]} numberOfLines={1} ellipsizeMode='tail'>
-            Start reading {chapterList[0].title}
+            {chapterIndex > 0 ? `Continue reading ${chapterList[chapterIndex-1].title}` : `Start reading ${chapterList[0].title}`}
           </Text>
-        </View>
+        </TouchableOpacity>
       )}
        <View style={{ flexDirection: 'row'}}>
         <View style={[styles.chapterContainer, {}]}>
