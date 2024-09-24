@@ -52,7 +52,6 @@ const SourceList = () => {
   const fetchNovels = useCallback(async (pageNumber = 1, searchQuery = null) => {
     setLoading(true);
     // await new Promise(resolve => setTimeout(resolve, 20000)); //skeleton testing hehe
-
     const fetchFunction = searchQuery ? searchNovels : popularNovels;
     try {
       const novelsData = await fetchFunction(searchQuery || pageNumber, pageNumber); // Pass page number for both cases
@@ -90,8 +89,6 @@ const SourceList = () => {
     }
   };
   
-
-  // Use effect to trigger fetch based on page or search query
   useEffect(() => {
     if (searchQuery) {
       fetchNovels(searchPage, searchQuery); // Fetch search results with searchPage

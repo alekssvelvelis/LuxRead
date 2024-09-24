@@ -145,11 +145,12 @@ interface NovelRow {
 }
 
 async function getAllLibraryNovels(tableName: string) {
+    const db = await SQLite.openDatabaseAsync('luxreadDatabase', {
+        useNewConnection: true
+    });
     try {
-        const db = await SQLite.openDatabaseAsync('luxreadDatabase');
         const allRows: NovelRow[] = await db.getAllAsync(`SELECT * FROM ${tableName}`);
         const librarySavedNovels = []
-
         for (const row of allRows) {
             librarySavedNovels.push({
                 id: row.id,
@@ -174,8 +175,10 @@ async function getAllLibraryNovels(tableName: string) {
 }
 
 async function getNovelsBySource(novelSource: string) {
+    const db = await SQLite.openDatabaseAsync('luxreadDatabase', {
+        useNewConnection: true
+    });
     try {
-        const db = await SQLite.openDatabaseAsync('luxreadDatabase');
         const allRows: NovelRow[] = await db.getAllAsync(
             `SELECT id, title FROM libraryNovels WHERE novelSource = ?`,
             [novelSource]
@@ -199,12 +202,25 @@ async function getNovelsBySource(novelSource: string) {
 
 
 async function deleteLibraryNovel(novelId: string) {
-    const db = await SQLite.openDatabaseAsync('luxreadDatabase');
+    const db = await SQLite.openDatabaseAsync('luxreadDatabase', {
+        useNewConnection: true
+    });
     try {
         await db.execAsync(`DELETE FROM libraryNovels WHERE id = ${novelId}`);
         console.log(`Table "libraryNovels" ${novelId} cleared successfully.`);
     } catch (error) {
         console.error(`Failed to clear ${novelId} from table "libraryNovels": `, error);
+    }
+}
+async function deleteNovelChapters(novelId: string) {
+    const db = await SQLite.openDatabaseAsync('luxreadDatabase', {
+        useNewConnection: true
+    });
+    try {
+        await db.execAsync(`DELETE FROM novelChapters WHERE novel_id = ${novelId}`);
+        console.log(`Table "novelChapters" ${novelId} cleared successfully.`);
+    } catch (error) {
+        console.error(`Failed to clear ${novelId} from table "novelChapters": `, error);
     }
 }
 
@@ -228,4 +244,4 @@ async function dropTable(tableName: string) {
     }
 }
 
-export { clearTable, getAllNovelChapters, setupLibraryNovelsTable, insertLibraryNovel, getAllLibraryNovels, dropTable, deleteLibraryNovel, getTableStructure, getNovelsBySource, setupNovelChaptersTable, upsertNovelChapter };
+export { clearTable, getAllNovelChapters, setupLibraryNovelsTable, insertLibraryNovel, getAllLibraryNovels, dropTable, deleteLibraryNovel, deleteNovelChapters, getTableStructure, getNovelsBySource, setupNovelChaptersTable, upsertNovelChapter };

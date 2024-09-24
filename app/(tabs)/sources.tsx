@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity } from "react-native";
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { Entypo } from '@expo/vector-icons';
@@ -15,23 +15,43 @@ export default function Sources() {
         },
     ];
 
+    const [query, setQuery] = useState("");
+    const [filteredSources, setFilteredSources] = useState(sources);
+    const handleSearchQuery = (query: string) => {
+        setQuery(query);
+    }
+    useEffect(() => {
+        const filteredSources = sources.filter(source =>
+          source.sourceName.toLowerCase().includes(query.toLowerCase())
+        );
+        setFilteredSources(filteredSources);
+      }, [query]);
+
     const handleSourcePress = (sourceId: any) => {
         router.navigate({ pathname: `source/[id]`, params: sourceId });
     };
 
     return (
         <View style={[styles.container, {backgroundColor: appliedTheme.colors.background}]}>
-            <View style={styles.header}><SearchBar/></View>
+            <View style={styles.header}><SearchBar onSearchChange={handleSearchQuery}/></View>
             <ScrollView contentContainerStyle={styles.scrollViewContent} style={styles.scrollView}>
-                {sources.map((source, index) => { 
+                {filteredSources.length === 0 ? (
+                    <View style={{ position: 'relative',  justifyContent: 'center',  alignItems: 'center', paddingHorizontal: 20, paddingVertical: 40, marginTop: '50%'}}>
+                        <Text style={{ color: appliedTheme.colors.text, fontSize: 24, textAlign: 'center'}}>
+                            {query ? 'No sources found with this search query' : 'Sources currently empty - check internet connection'}
+                        </Text>
+                    </View>
+                ) : (
+                    filteredSources.map((filteredSource, index) => { 
                     return(
-                        <TouchableOpacity key={index} onPress={() => handleSourcePress(source)} style={[styles.sourceContainer, {backgroundColor: appliedTheme.colors.elevation.level2}]}>
-                            <Image style={styles.sourceImage} source={{uri : source.imageUrl}}></Image>
-                            <Text style={[styles.sourceText, {color: appliedTheme.colors.text}]}>{source.sourceName}</Text>
+                        <TouchableOpacity key={index} onPress={() => handleSourcePress(filteredSource)} style={[styles.sourceContainer, {backgroundColor: appliedTheme.colors.elevation.level2}]}>
+                            <Image style={styles.sourceImage} source={{uri : filteredSource.imageUrl}}></Image>
+                            <Text style={[styles.sourceText, {color: appliedTheme.colors.text}]}>{filteredSource.sourceName}</Text>
                             <Entypo style={[styles.bookmark, {}]} size={40} name="bookmarks" color={appliedTheme.colors.onSurfaceVariant}/>
                         </TouchableOpacity>
                     );
-                })}
+                })
+            )}
             </ScrollView>
         </View>
     );

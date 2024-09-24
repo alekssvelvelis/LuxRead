@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { StyleSheet, View, Text, ScrollView, Image, Dimensions, TouchableOpacity } from 'react-native';
 import SearchBar from '@/components/SearchBar';
 
@@ -7,8 +7,8 @@ import { useNovelRowsContext } from '@/contexts/NovelRowsContext';
 
 import  { fetchSingleNovel } from '@/sources/allnovelfull';
 
-import { useRouter } from 'expo-router';
-import { getAllLibraryNovels, deleteLibraryNovel, clearTable, dropTable, setupLibraryNovelsTable, getTableStructure, setupNovelChaptersTable} from '@/database/ExpoDB';
+import { useRouter, useFocusEffect } from 'expo-router';
+import { getAllLibraryNovels, deleteLibraryNovel, deleteNovelChapters, clearTable, dropTable, setupLibraryNovelsTable, getTableStructure, setupNovelChaptersTable} from '@/database/ExpoDB';
 
 interface Data{
     id: string | number;
@@ -34,23 +34,40 @@ export default function Library() {
 
   const [novelsData, setNovelsData] = useState<Data[]>([]);
   
+  useFocusEffect(
+    useCallback(() => {
+      const fetchNovels = async () => {
+        try {
+          const data = await getAllLibraryNovels('libraryNovels');
+          console.log(JSON.stringify(data, null,2), ' inside of library.tsx');
+          setNovelsData(data); // Update the state with the fetched data
+        } catch (error) {
+          console.error("Failed to fetch novels:", error);
+        }
+      };
+      fetchNovels();
+      console.log(JSON.stringify(novelsData, null, 2));
+    }, [])
+  );
+  
+
+  const [query, setQuery] = useState("");
+  const [filteredNovels, setFilteredNovels] = useState(novelsData);
+  const handleSearchQuery = (query: string) => {
+    setQuery(query);
+  }
   useEffect(() => {
-    const fetchNovels = async () => {
-      try {
-        const data = await getAllLibraryNovels('libraryNovels');
-        // console.log(JSON.stringify(data, null ,2));
-        setNovelsData(data); // Update the state with the fetched data
-      } catch (error) {
-        console.error("Failed to fetch novels:", error);
-      }
-    };
-    fetchNovels();
-  }, []);
-    
+    const filtered = novelsData.filter(novel =>
+      novel.title.toLowerCase().includes(query.toLowerCase())
+    );
+    setFilteredNovels(filtered);
+  }, [query, novelsData]);
+  
+
   const handleDeleteNovel = async (novelId: number) => {
     try {
       await deleteLibraryNovel(novelId);
-      // Fetch the updated list of novels
+      await deleteNovelChapters(novelId);
       const updatedNovelsData = await getAllLibraryNovels('libraryNovels');
       setNovelsData(updatedNovelsData);
     } catch (error) {
@@ -104,27 +121,40 @@ export default function Library() {
   return (
     <View style={[styles.container, { backgroundColor: appliedTheme.colors.background }]}>
       <View style={styles.header}>
-        <SearchBar />
+        <SearchBar onSearchChange={handleSearchQuery}/>
       </View>
       <ScrollView contentContainerStyle={styles.scrollViewContent} style={styles.scrollView}>
-        <View style={styles.novelScrollView}>
-          {novelsData.map((novel, index) => {
-            const novelStyle = getNovelContainerStyle();
-            return (
-              <TouchableOpacity key={index} style={[styles.novelContainer, { width: novelStyle.width }]} onPress={() => handleNavigateToNovel(novel.novelPageURL, novel.id)} onLongPress={() => handleDeleteNovel(novel.id)}>
-                <Image
-                  style={[styles.novelLogo, { height: novelStyle.height }]}
-                  source={{ uri: novel.imageURL }}
-                />
-                <Text numberOfLines={2} style={{ color: appliedTheme.colors.text, fontSize: 12 }}>
-                  {novel.title}
-                </Text>
-                <View style={[styles.chaptersRemain, { backgroundColor: appliedTheme.colors.primary }]}>
-                  <Text style={{ color: appliedTheme.colors.text }}>{novel.chapterCount}</Text>
-                </View>
-              </TouchableOpacity>
-            );
-          })}
+        <View style={[styles.novelScrollView]}>
+          {filteredNovels.length === 0 ? (
+            <View style={{ position: 'relative',  justifyContent: 'center',  alignItems: 'center', paddingHorizontal: 20, paddingVertical: 40, marginTop: '50%'}}>
+              <Text style={{ color: appliedTheme.colors.text, fontSize: 24, textAlign: 'center'}}>
+                {query ? 'No novels found by with this search query.' : 'You have no saved novels. Navigate to Sources and find what to read.'}
+              </Text>
+            </View>
+          ) : (
+            filteredNovels.map((novel, index) => {
+              const novelStyle = getNovelContainerStyle();
+              return (
+                <TouchableOpacity
+                  key={index}
+                  style={[styles.novelContainer, { width: novelStyle.width }]}
+                  onPress={() => handleNavigateToNovel(novel.novelPageURL, novel.id)}
+                  onLongPress={() => handleDeleteNovel(novel.id)}
+                >
+                  <Image
+                    style={[styles.novelLogo, { height: novelStyle.height }]}
+                    source={{ uri: novel.imageURL }}
+                  />
+                  <Text numberOfLines={2} style={{ color: appliedTheme.colors.text, fontSize: 12 }}>
+                    {novel.title}
+                  </Text>
+                  <View style={[styles.chaptersRemain, { backgroundColor: appliedTheme.colors.primary }]}>
+                    <Text style={{ color: appliedTheme.colors.text }}>{novel.chapterCount}</Text>
+                  </View>
+                </TouchableOpacity>
+              );
+            })
+          )}
         </View>
       </ScrollView>
     </View>
