@@ -39,11 +39,12 @@ async function insertLibraryNovel(title: string, author: string, chapterCount: n
         useNewConnection: true
     });
     try {
-        await db.runAsync(
+        const result = await db.runAsync(
           `INSERT INTO libraryNovels (title, author, chapterCount, imageURL, novelPageURL, novelSource) VALUES (?, ?, ?, ?, ?, ?)`,
           [title, author, chapterCount, imageURL, novelPageURL, novelSource]
         );
-        console.log(`Novel ${title}, written by ${author} succesfully added. Extra data: ${imageURL} and ${novelPageURL} and ${novelSource}`);
+        console.log(`Novel ${title}, written by ${author} succesfully added. Extra data: ${imageURL} and ${novelPageURL} and ${result.lastInsertRowId}`);
+        return result.lastInsertRowId;
     } catch (error: any) {
         if (error.message.includes('UNIQUE constraint failed')) {
             console.error('Error: Novel with the same title, author, novelPageURL already exists.');
@@ -74,11 +75,20 @@ async function setupNovelChaptersTable(){
     }
 }
 
-async function upsertNovelChapter(novel_id: number, readerProgress: number, chapterIndex: number) {
+async function upsertNovelChapter(novelTitle: string, readerProgress: number, chapterIndex: number) {
     const db = await SQLite.openDatabaseAsync('luxreadDatabase', {
         useNewConnection: true
     });
     try {
+        const novelRow = await db.getAllAsync(
+            `SELECT id FROM libraryNovels WHERE title = ?`,
+            [novelTitle]
+        );
+        if (!novelRow) {
+            console.log(`No novel saved with the title: ${novelTitle}`);
+            return;
+        }
+        const novelToUpdateId = novelRow[0].id;
         await db.runAsync(
             `INSERT INTO novelChapters (novel_id, readerProgress, chapterIndex) VALUES (?, ?, ?)
             ON CONFLICT(novel_id) 
@@ -94,7 +104,7 @@ async function upsertNovelChapter(novel_id: number, readerProgress: number, chap
                     THEN excluded.chapterIndex 
                     ELSE novelChapters.chapterIndex 
                 END;`,
-            [novel_id, readerProgress, chapterIndex]
+            [novelToUpdateId, readerProgress, chapterIndex]
         );
         console.log('Upserted novel chapter');
     } catch (error) {
@@ -102,16 +112,37 @@ async function upsertNovelChapter(novel_id: number, readerProgress: number, chap
     }
 }
 
-async function getAllNovelChapters(novelId: number) {
+interface ChapterRow{
+    id: number;
+    novel_id: number;
+    readerProgress: number;
+    chapterIndex: number;
+}
+
+async function getAllNovelChapters(novelTitle: string) {
     const db = await SQLite.openDatabaseAsync('luxreadDatabase', {
         useNewConnection: true
     });
+
     try {
-        const allRows: NovelRow[] = await db.getAllAsync(
+        const novelRow = await db.getAllAsync(
+            `SELECT id FROM libraryNovels WHERE title = ?`,
+            [novelTitle]
+        );
+
+        if (!novelRow) {
+            console.log(`No novel found with the title: ${novelTitle}`);
+            return;
+        }
+
+        const novelId = novelRow[0].id;
+        
+        const allRows: ChapterRow[] = await db.getAllAsync(
             `SELECT * FROM novelChapters WHERE novel_id = ?`,
             [novelId]
         );
-        const librarySavedNovels = []
+
+        const librarySavedNovels = [];
 
         for (const row of allRows) {
             librarySavedNovels.push({
@@ -123,7 +154,7 @@ async function getAllNovelChapters(novelId: number) {
         }
 
         if (allRows.length === 0) {
-            console.log('no data to output');
+            console.log('No chapters found for this novel');
         }
 
         return librarySavedNovels;
@@ -132,7 +163,6 @@ async function getAllNovelChapters(novelId: number) {
         return [];
     }
 }
-
 
 interface NovelRow {
     id: number | string;
@@ -201,7 +231,7 @@ async function getNovelsBySource(novelSource: string) {
 }
 
 
-async function deleteLibraryNovel(novelId: string) {
+async function deleteLibraryNovel(novelId: number) {
     const db = await SQLite.openDatabaseAsync('luxreadDatabase', {
         useNewConnection: true
     });
@@ -212,7 +242,7 @@ async function deleteLibraryNovel(novelId: string) {
         console.error(`Failed to clear ${novelId} from table "libraryNovels": `, error);
     }
 }
-async function deleteNovelChapters(novelId: string) {
+async function deleteNovelChapters(novelId: number) {
     const db = await SQLite.openDatabaseAsync('luxreadDatabase', {
         useNewConnection: true
     });

@@ -11,7 +11,7 @@ import { useRouter, useFocusEffect } from 'expo-router';
 import { getAllLibraryNovels, deleteLibraryNovel, deleteNovelChapters, clearTable, dropTable, setupLibraryNovelsTable, getTableStructure, setupNovelChaptersTable} from '@/database/ExpoDB';
 
 interface Data{
-    id: string | number;
+    id: number;
     title: string;
     author: string;
     chapterCount: number;
@@ -22,10 +22,11 @@ interface Data{
 export default function Library() {
 
   useEffect(() =>{
-    // clearTable('libraryNovels');
+    // dropTable('libraryNovels');
     // dropTable('novelChapters');
     // console.log(JSON.stringify(getTableStructure('novelChapters'), null, 2));
     // setupNovelChaptersTable();
+    // setupLibraryNovelsTable();
   }, [])
   
   const { appliedTheme } = useThemeContext();
@@ -39,14 +40,14 @@ export default function Library() {
       const fetchNovels = async () => {
         try {
           const data = await getAllLibraryNovels('libraryNovels');
-          console.log(JSON.stringify(data, null,2), ' inside of library.tsx');
+          // console.log(JSON.stringify(data, null,2), ' inside of library.tsx');
           setNovelsData(data); // Update the state with the fetched data
         } catch (error) {
           console.error("Failed to fetch novels:", error);
         }
       };
       fetchNovels();
-      console.log(JSON.stringify(novelsData, null, 2));
+      // console.log(JSON.stringify(novelsData, null, 2));
     }, [])
   );
   
@@ -101,7 +102,7 @@ export default function Library() {
     };
   };
 
-  const handleNavigateToNovel = async (novelPageURL: string, novelId: number) => {
+  const handleNavigateToNovel = async (novelPageURL: string) => {
     try {
       const novelData = await fetchSingleNovel(novelPageURL);
       // console.log(JSON.stringify(novelData, null, 2) + ' inside of [id].tsx/source');
@@ -110,7 +111,6 @@ export default function Library() {
         params: {
           ...novelData,
           chapters: JSON.stringify(novelData.chapters),
-          id: novelId,
         },
       }); 
     } catch (error) {

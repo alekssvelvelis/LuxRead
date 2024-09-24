@@ -44,14 +44,13 @@ const SourceList = () => {
     fetchNovels();
   }, []);
 
-  const handleSearchQuery = (query) => {
+  const handleSearchQuery = (query: string) => {
     setSearchQuery(query);
     setSearchPage(1);
   };
 
   const fetchNovels = useCallback(async (pageNumber = 1, searchQuery = null) => {
     setLoading(true);
-    // await new Promise(resolve => setTimeout(resolve, 20000)); //skeleton testing hehe
     const fetchFunction = searchQuery ? searchNovels : popularNovels;
     try {
       const novelsData = await fetchFunction(searchQuery || pageNumber, pageNumber); // Pass page number for both cases
@@ -82,8 +81,8 @@ const SourceList = () => {
 
   const handleSaveNovel = async (novel) => {
     try {
-      await insertLibraryNovel(novel.title, novel.author, novel.chapterCount, novel.imageURL, novel.novelPageURL, sourceData.sourceName);
-      setQueriedNovels(prevQueriedNovels => [...prevQueriedNovels, { id: novel.id, title: novel.title }]); // Add the saved novel to queriedNovels
+      const result = await insertLibraryNovel(novel.title, novel.author, novel.chapterCount, novel.imageURL, novel.novelPageURL, sourceData.sourceName);
+      setQueriedNovels(prevQueriedNovels => [...prevQueriedNovels, { id: result, title: novel.title }]); // Add the saved novel to queriedNovels
     } catch (error) {
       console.error('Error saving novel:', error);
     }
@@ -117,7 +116,7 @@ const SourceList = () => {
   const screenWidth = Dimensions.get('window').width;
   const novelWidth = screenWidth / 2 - 24;
 
-  const handleNavigateToNovel = async (novelPageURL) => {
+  const handleNavigateToNovel = async (novelPageURL: string) => {
     try {
       const novelData = await fetchSingleNovel(novelPageURL);
       // console.log(JSON.stringify(novelData, null, 2) + ' inside of [id].tsx/source');
@@ -136,6 +135,7 @@ const SourceList = () => {
 
   const renderItem = ({ item }) => {
     const isQueriedNovel = queriedNovels.some(queriedNovel => queriedNovel.title === item.title);
+    // const foundQueriedNovel = queriedNovels.find(queriedNovel => queriedNovel.title === item.title);
     return (
       <TouchableOpacity 
         style={[styles.novelItem, { width: novelWidth }]} 

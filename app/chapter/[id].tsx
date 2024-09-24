@@ -7,7 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { PullUpModal } from '@/components/PullUpModal';
 import ReaderOptions from '@/components/settings/ReaderOptions';
 import { getReaderOptions } from '@/utils/asyncStorage';
-import { upsertNovelChapter, getAllNovelChapters } from '@/database/ExpoDB';
+import { upsertNovelChapter } from '@/database/ExpoDB';
 
 interface Content {
   title: string;
@@ -75,23 +75,6 @@ const ChapterPage = () => {
     }
   }, [chapterPageURL]);
 
-  useFocusEffect(
-    useCallback(() => {
-      const fetchNovels = async () => {
-        try {
-          const data = await getAllNovelChapters(propData.id);
-          console.log(JSON.stringify(data, null ,2));
-        } catch (error) {
-          console.error("Failed to fetch novels:", error);
-        }
-      };
-      fetchNovels();
-      return () => {
-        console.log('This route is now unfocused.');
-      }
-    }, [])
-  );
-
   useEffect(() => {
     loadChapterContent();
   }, [loadChapterContent]);
@@ -155,10 +138,10 @@ const ChapterPage = () => {
   // ((contentHeight-scrollViewHeight)/100)*readerProgress) is used to calculate where it should autoscroll when opening a chapter
   const chapterNumber = content.title.match(/\d/);
   const chapterIndex = chapterNumber ? parseInt(chapterNumber[0], 10) : null;
-  const handleSaveChapterData = async (novel_id: number, scrollPercentage: number, chapterIndex: number) => {
+  const handleSaveChapterData = async (novelTitle: string, scrollPercentage: number, chapterIndex: number) => {
     try {
-      console.log(novel_id, scrollPercentage, chapterIndex);
-      await upsertNovelChapter(novel_id, scrollPercentage, chapterIndex);
+      console.log(novelTitle, scrollPercentage, chapterIndex);
+      await upsertNovelChapter(novelTitle, scrollPercentage, chapterIndex);
       handleBackPress();
     } catch (error) {
       console.error('Error saving chapter:', error);
@@ -177,7 +160,7 @@ const ChapterPage = () => {
     <View style={{ flex: 1 }}>
       {isOverlayVisible && (
         <View style={[styles.header, { backgroundColor: overlayBackgroundColor, flexDirection: 'row' }]}>
-          <Ionicons name={'arrow-back'} size={32} color={appliedTheme.colors.text} style={{ marginLeft: '2%' }} onPress={() => handleSaveChapterData(propData.id, scrollPercentage, chapterIndex)} />
+          <Ionicons name={'arrow-back'} size={32} color={appliedTheme.colors.text} style={{ marginLeft: '2%' }} onPress={() => handleSaveChapterData(propData.title, scrollPercentage, chapterIndex)} />
           <Text style={{ color: appliedTheme.colors.text, fontSize: 20, marginBottom: 4, marginLeft: 12 }} numberOfLines={1}>{content.title}</Text>
         </View>
       )}

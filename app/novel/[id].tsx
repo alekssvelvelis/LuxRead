@@ -93,7 +93,7 @@ const Synopsis = () => {
     useCallback(() => {
     const fetchNovelProgress = async () => {
       try {
-        const novelProgress: novelProgress = await getAllNovelChapters(novelData.id);
+        const novelProgress: novelProgress = await getAllNovelChapters(novelData.title);
         if (novelProgress.length === 0) {
           return;
         }
@@ -118,7 +118,7 @@ const Synopsis = () => {
         pathname: `chapter/[id]`, 
         params: {
           chapterPageURL: chapterPageURL,
-          id: novelData.id,
+          title: novelData.title,
         },
       });
     } catch (error) {
@@ -126,7 +126,6 @@ const Synopsis = () => {
     }
   };
   // console.log(JSON.stringify(chapterList, null, 2));
-
   const renderChapterItem = ({ item, index }: { item: Chapter, index: number }) => {
     const chapterIndexOfItem = index + 1;
     const defaultChapterIndex = chapterIndex || 0;
