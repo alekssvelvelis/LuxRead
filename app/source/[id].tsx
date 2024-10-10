@@ -105,7 +105,8 @@ const SourceList = () => {
   
   useEffect(() => {
     if (searchQuery) {
-      fetchNovels(searchPage, searchQuery); // Fetch search results with searchPage
+      fetchNovels(searchPage, searchQuery);
+      setLoading(true); // Fetch search results with searchPage
     } else {
       fetchNovels(page); // Fetch popular novels with normal page
     }

@@ -1,13 +1,17 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Pressable } from 'react-native';
-import { useLocalSearchParams, Stack, useRouter, useFocusEffect } from 'expo-router';
-import { useThemeContext } from '@/contexts/ThemeContext';
-import { fetchChapterContent } from '@/sources/AllNovelFull';
+
+import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
+import { upsertNovelChapter } from '@/database/ExpoDB';
 import { Ionicons } from '@expo/vector-icons';
+
+import { useThemeContext } from '@/contexts/ThemeContext';
+
+import getSourceFunctions from '@/utils/getSourceFunctions';
+import { getReaderOptions } from '@/utils/asyncStorage';
+
 import { PullUpModal } from '@/components/PullUpModal';
 import ReaderOptions from '@/components/settings/ReaderOptions';
-import { getReaderOptions } from '@/utils/asyncStorage';
-import { upsertNovelChapter } from '@/database/ExpoDB';
 
 interface Content {
   title: string;
@@ -27,6 +31,7 @@ const ChapterPage = () => {
   const { appliedTheme } = useThemeContext();
   const propData = useLocalSearchParams();
   const chapterPageURL: string | string[] = propData.chapterPageURL;
+  const sourceName: string | string[] = propData.sourceName;
   const router = useRouter();
 
   const [readerOptions, setReaderOptions] = useState({
@@ -57,27 +62,42 @@ const ChapterPage = () => {
     loadReaderOptions();
   }, []);
 
+  const [fetchFunctions, setFetchFunctions] = useState<any>(null);
+  useEffect(() => {
+    if (sourceName) {
+      try {
+        const functions = getSourceFunctions(sourceName);
+        setFetchFunctions(functions);
+      } catch (error) {
+        console.error('Error loading source functions:', error);
+      }
+    }
+  }, [sourceName]);
+
   const handleOptionsChange = (options: { fontSize: number; lineHeight: number; textAlign: string; fontFamily: string }) => {
     setReaderOptions(options);
   };
 
-  const loadChapterContent = useCallback(async () => {
-    setLoading(true);
-    try {
-      const chapterContent = await fetchChapterContent(chapterPageURL);
-      if (chapterContent) {
-        setContent(chapterContent);
-      }
-    } catch (error) {
-      console.error('Error fetching chapter content', error);
-    } finally {
-      setLoading(false);
-    }
-  }, [chapterPageURL]);
-
   useEffect(() => {
-    loadChapterContent();
-  }, [loadChapterContent]);
+    const loadChapterContent = async () => {
+      setLoading(true);
+      try {
+        const chapterContent = await fetchFunctions.fetchChapterContent(chapterPageURL);
+        // console.log(JSON.stringify(chapterContent, null, 2));
+        if (chapterContent) {
+          setContent(chapterContent);
+        }
+      } catch (error) {
+        console.error('Error fetching chapter content', error, chapterPageURL, sourceName);
+      } finally {
+        setLoading(false);
+      }
+    };
+  
+    if (fetchFunctions) {
+      loadChapterContent();
+    }
+  }, [fetchFunctions, chapterPageURL, sourceName]);
 
   const handleBackPress = () => {
     router.back();
@@ -259,7 +279,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     gap: 10,
     paddingHorizontal: 16,
-    paddingBottom: 20,
+    paddingTop: 28,
   },
   chapterText: {
     fontSize: 14,

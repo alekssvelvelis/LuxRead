@@ -9,7 +9,6 @@ import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { Image } from 'expo-image'; //  takes priority over react-native image tag to read static images
 
 import { PullUpModal } from '@/components/PullUpModal';
-import { fetchChapters } from '@/sources/AllNovelFull';
 import { getAllNovelChapters } from '@/database/ExpoDB';
 interface Chapter {
   title: string;
@@ -23,7 +22,6 @@ interface novelProgress{
 }
 const Synopsis = () => {
   const { sourceName } = useLocalSearchParams();
-  console.log('test123', sourceName);
   const { appliedTheme } = useThemeContext();
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
   const [isRotated, setIsRotated] = useState<boolean>(false);
@@ -92,6 +90,7 @@ const Synopsis = () => {
 
       try {
         const chapters = await fetchFunctions.fetchChapters(novelData.url, pageNumber);
+        // console.log(chapters);
         if (chapters && chapters.length > 0) {
           setChapterList((prevChapters) => [...prevChapters, ...chapters]);
           setHasMoreChapters(chapters.length > 0);
@@ -145,6 +144,7 @@ const Synopsis = () => {
         params: {
           chapterPageURL: chapterPageURL,
           title: novelData.title,
+          sourceName: sourceName,
         },
       });
     } catch (error) {

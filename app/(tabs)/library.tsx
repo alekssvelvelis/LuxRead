@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { StyleSheet, View, Text, ScrollView, Dimensions, TouchableOpacity } from 'react-native';
+
 import SearchBar from '@/components/SearchBar';
-import { Image } from 'expo-image'
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { useNovelRowsContext } from '@/contexts/NovelRowsContext';
 
-import  { fetchSingleNovel } from '@/sources/AllNovelFull';
+import getSourceFunctions from '@/utils/getSourceFunctions';
 
 import { useRouter, useFocusEffect } from 'expo-router';
+import { Image } from 'expo-image'
+
 import { getAllLibraryNovels, deleteLibraryNovel, deleteNovelChapters, setupSourcesTable, clearTable, dropTable, setupLibraryNovelsTable, getTableStructure, setupNovelChaptersTable} from '@/database/ExpoDB';
 
 interface Data{
@@ -55,7 +57,7 @@ export default function Library() {
       const fetchNovels = async () => {
         try {
           const data = await getAllLibraryNovels('libraryNovels');
-          console.log(JSON.stringify(data, null,2), ' inside of library.tsx');
+          // console.log(JSON.stringify(data, null,2), ' inside of library.tsx');
           setNovelsData(data);
         } catch (error) {
           console.error("Failed to fetch novels:", error);
@@ -117,22 +119,32 @@ export default function Library() {
     };
   };
 
-  const handleNavigateToNovel = async (novelPageURL: string, novelSource: string) => {
+  //
+  const handleSourceFunctions = async (novelSource: string) => {
     try {
-      const novelData: novelData = await fetchSingleNovel(novelPageURL);
-      console.log(JSON.stringify(novelData, null, 2) + ' inside of [id].tsx/source');
-      router.navigate({ 
+      const data = getSourceFunctions(novelSource);
+      return data;
+    } catch (error) {
+      console.error('Error getting source functions in library', error);
+      return [];
+    }
+  }
+
+  const handleNavigateToNovel = async (novelPageURL: string, novelSource: string) => {
+    const functions =  await handleSourceFunctions(novelSource);
+    try {
+      const novelData: novelData = await functions.fetchSingleNovel(novelPageURL);
+      router.navigate({
         pathname: `novel/[id]`,
         params: {
           ...novelData,
-          // chapters: JSON.stringify(novelData.chapters),
-          sourceName: novelSource,
+          sourceName: novelSource
         },
-      }); 
+      });
     } catch (error) {
-      console.error("Error fetching single novel:", error);
+      console.error("Error fetching single novel in library:", error);
     }
-  };
+  }
 
   return (
     <View style={[styles.container, { backgroundColor: appliedTheme.colors.background }]}>
