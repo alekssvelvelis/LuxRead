@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, Dimensions, FlatList } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions, FlatList } from 'react-native';
 
 import { createShimmerPlaceholder } from 'react-native-shimmer-placeholder'
+
 import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Image } from 'expo-image'; //  takes priority over react-native image tag to read static images
 
 import { useThemeContext } from '@/contexts/ThemeContext';
-import  { popularNovels, searchNovels, fetchSingleNovel } from '@/sources/allnovelfull';
+import getSourceFunctions from '@/utils/getSourceFunctions'; 
 import { insertLibraryNovel, getNovelsBySource } from '@/database/ExpoDB';
 
 import SearchBar from '@/components/SearchBar';
@@ -17,24 +19,37 @@ interface queriedData{
 }
 
 const SourceList = () => {
-  const sourceData = useLocalSearchParams();
+  const { sourceName } = useLocalSearchParams();
   const { appliedTheme } = useThemeContext();
-  const [novels, setNovels] = useState([]);
+
+  const [novels, setNovels] = useState<object>([]);
   const [queriedNovels, setQueriedNovels] = useState<queriedData[]>([]);
-  const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState<number>(1);
+  const [loading, setLoading] = useState<boolean>(false);
+
   const ShimmerPlaceholder = createShimmerPlaceholder(LinearGradient);
-  const router = useRouter(); // Import and use router
+  const router = useRouter();
 
-  const [hasMore, setHasMore] = useState(true);
+  const [hasMore, setHasMore] = useState<boolean>(true);
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [searchPage, setSearchPage] = useState<number>(1);
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchPage, setSearchPage] = useState(1);
+  const [fetchFunctions, setFetchFunctions] = useState<any>(null);
+  useEffect(() => {
+    if (sourceName) {
+      try {
+        const functions = getSourceFunctions(sourceName); // Use the utility function to get the source functions
+        setFetchFunctions(functions);
+      } catch (error) {
+        console.error('Error loading source functions:', error);
+      }
+    }
+  }, [sourceName]);
 
   useEffect(() => {
     const fetchNovels = async () => {
       try {
-        const data = await getNovelsBySource(sourceData.sourceName);
+        const data = await getNovelsBySource(sourceName);
         // console.log(JSON.stringify(data, null,2));
         setQueriedNovels(data);
       } catch (error) {
@@ -50,38 +65,38 @@ const SourceList = () => {
   };
 
   const fetchNovels = useCallback(async (pageNumber = 1, searchQuery = null) => {
+    if (!fetchFunctions) {
+      console.log("fetchFunctions is not available");
+      return;
+    }
     setLoading(true);
-    const fetchFunction = searchQuery ? searchNovels : popularNovels;
+    const fetchFunction = searchQuery ? fetchFunctions.searchNovels : fetchFunctions.popularNovels;
     try {
-      const novelsData = await fetchFunction(searchQuery || pageNumber, pageNumber); // Pass page number for both cases
-      if (searchQuery) {
-        
+      const novelsData = await fetchFunction(searchQuery || pageNumber, pageNumber);
+      if (searchQuery) { 
         if (pageNumber === 1) {
           setNovels(novelsData);
         } else {
           setNovels(prevNovels => [...prevNovels, ...novelsData]);
         }
       } else {
-
         if (pageNumber === 1) {
           setNovels(novelsData);
-          // console.log(JSON.stringify(novelsData, null, 2));
         } else {
           setNovels(prevNovels => [...prevNovels, ...novelsData]);
         }
-        // console.log(JSON.stringify(novelsData, null , 2));
       }
-      setHasMore(novelsData.length === 20); 
+      setHasMore(novelsData.length >= 15); 
     } catch (error) {
       console.error("Error fetching novels:", error);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [fetchFunctions]);
 
   const handleSaveNovel = async (novel) => {
     try {
-      const result = await insertLibraryNovel(novel.title, novel.author, novel.chapterCount, novel.imageURL, novel.novelPageURL, sourceData.sourceName);
+      const result = await insertLibraryNovel(novel.title, novel.author, novel.chapterCount, novel.imageURL, novel.novelPageURL, sourceName);
       setQueriedNovels(prevQueriedNovels => [...prevQueriedNovels, { id: result, title: novel.title }]); // Add the saved novel to queriedNovels
     } catch (error) {
       console.error('Error saving novel:', error);
@@ -106,9 +121,9 @@ const SourceList = () => {
   const handleLoadMore = () => {
     if (!loading && hasMore) {
       if (searchQuery) {
-        setSearchPage(prevPage => prevPage + 1); // Load more search results
+        setSearchPage(prevPage => prevPage + 1);
       } else {
-        setPage(prevPage => prevPage + 1); // Load more popular novels
+        setPage(prevPage => prevPage + 1);
       }
     }
   };
@@ -118,16 +133,14 @@ const SourceList = () => {
 
   const handleNavigateToNovel = async (novelPageURL: string) => {
     try {
-      const novelData = await fetchSingleNovel(novelPageURL);
-      // console.log(JSON.stringify(novelData, null, 2) + ' inside of [id].tsx/source');
+      const novelData = await fetchFunctions.fetchSingleNovel(novelPageURL);
       router.navigate({ 
         pathname: `novel/[id]`, 
         params: {
           ...novelData,
-          chapters: JSON.stringify(novelData.chapters),
+          sourceName: sourceName,
         },
-      });
-      // params: { title: novelData.title, description: novelData.description, author: novelData.author, genres: novelData.genres, imageURL: novelData.imageURL, url: novelData.url, chapters: novelData.chapters } 
+      }); 
     } catch (error) {
       console.error("Error fetching single novel:", error);
     }
@@ -135,7 +148,6 @@ const SourceList = () => {
 
   const renderItem = ({ item }) => {
     const isQueriedNovel = queriedNovels.some(queriedNovel => queriedNovel.title === item.title);
-    // const foundQueriedNovel = queriedNovels.find(queriedNovel => queriedNovel.title === item.title);
     return (
       <TouchableOpacity 
         style={[styles.novelItem, { width: novelWidth }]} 
@@ -144,8 +156,8 @@ const SourceList = () => {
       >
         <Image 
           source={{ uri: item.imageURL }} 
-          style={[styles.novelLogo, { height: 250, opacity: isQueriedNovel ? 0.3 : 1 }]} 
-          resizeMode="contain"
+          style={[styles.novelLogo, { minHeight: 250, opacity: isQueriedNovel ? 0.3 : 1 }]} 
+          contentFit="fill"
         />
         <Text numberOfLines={2} style={{ color: appliedTheme.colors.text, fontSize: 12 }}>
           {item.title}
@@ -190,9 +202,7 @@ const SourceList = () => {
         contentContainerStyle={styles.scrollViewContent}
         onEndReached={handleLoadMore}
         onEndReachedThreshold={0.5}
-        ListFooterComponent={loading ? 
-          <Skeleton/>
-          : null}
+        ListFooterComponent={loading ?  <Skeleton/> : null}
       />
     </View>
   );

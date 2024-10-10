@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Pressable } from 'react-native';
 import { useLocalSearchParams, Stack, useRouter, useFocusEffect } from 'expo-router';
 import { useThemeContext } from '@/contexts/ThemeContext';
-import { fetchChapterContent } from '@/sources/allnovelfull';
+import { fetchChapterContent } from '@/sources/AllNovelFull';
 import { Ionicons } from '@expo/vector-icons';
 import { PullUpModal } from '@/components/PullUpModal';
 import ReaderOptions from '@/components/settings/ReaderOptions';
@@ -97,6 +97,7 @@ const ChapterPage = () => {
         pathname: `chapter/[id]`, 
         params: {
           chapterPageURL: chapterPageURL,
+          title: propData.title,
         },
       });
     } catch (error) {
@@ -148,6 +149,7 @@ const ChapterPage = () => {
     }
    
   }
+
   if (loading) {
     return (
       <View style={{ flex: 1, backgroundColor: appliedTheme.colors.background }}>

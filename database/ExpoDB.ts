@@ -11,6 +11,30 @@ async function getTableStructure(tableName: string) {
     }
 }
 
+async function setupSourcesTable(){
+    const db = await SQLite.openDatabaseAsync('luxreadDatabase');
+    try {
+        await db.execAsync(`
+            PRAGMA journal_mode = WAL;
+            CREATE TABLE IF NOT EXISTS sources 
+            (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                sourceName TEXT NOT NULL,
+                UNIQUE(sourceName)
+            );
+        `);
+        console.log('Created Sources table');
+        await db.execAsync(`
+            INSERT INTO sources (sourceName) VALUES 
+            ('AllNovelFull'),
+            ('LightNovelPub');
+        `);
+        console.log('Succesfully inserted default sources');
+    } catch (error) {
+       console.error('Error creating Sources table ', error) 
+    }
+}
+
 async function setupLibraryNovelsTable(){
     const db = await SQLite.openDatabaseAsync('luxreadDatabase');
     try {
@@ -25,7 +49,8 @@ async function setupLibraryNovelsTable(){
                 imageURL TEXT NOT NULL,
                 novelPageURL TEXT NOT NULL,
                 novelSource TEXT NOT NULL,
-                UNIQUE(title, author, novelPageURL)
+                UNIQUE(title, author, novelPageURL),
+                FOREIGN KEY (novelSource) REFERENCES sources(sourceName) ON DELETE CASCADE ON UPDATE CASCADE
             );
         `);
         console.log('Created librarynovels table');
@@ -130,13 +155,13 @@ async function getAllNovelChapters(novelTitle: string) {
             [novelTitle]
         );
 
-        if (!novelRow) {
+        if (!novelRow || novelRow.length === 0) {
             console.log(`No novel found with the title: ${novelTitle}`);
             return;
         }
 
         const novelId = novelRow[0].id;
-        
+
         const allRows: ChapterRow[] = await db.getAllAsync(
             `SELECT * FROM novelChapters WHERE novel_id = ?`,
             [novelId]
@@ -194,7 +219,7 @@ async function getAllLibraryNovels(tableName: string) {
         }
 
         if (allRows.length === 0) {
-            console.log('no data to output');
+            console.log('no data to output getAllLibraryNovels');
         }
 
         return librarySavedNovels;
@@ -220,7 +245,7 @@ async function getNovelsBySource(novelSource: string) {
         }));
 
         if (librarySavedNovels.length === 0) {
-            console.log('no data to output');
+            console.log('no data to output getNovelsBySource');
         }
 
         return librarySavedNovels;
@@ -274,4 +299,4 @@ async function dropTable(tableName: string) {
     }
 }
 
-export { clearTable, getAllNovelChapters, setupLibraryNovelsTable, insertLibraryNovel, getAllLibraryNovels, dropTable, deleteLibraryNovel, deleteNovelChapters, getTableStructure, getNovelsBySource, setupNovelChaptersTable, upsertNovelChapter };
+export { clearTable, getAllNovelChapters, setupSourcesTable, setupLibraryNovelsTable, insertLibraryNovel, getAllLibraryNovels, dropTable, deleteLibraryNovel, deleteNovelChapters, getTableStructure, getNovelsBySource, setupNovelChaptersTable, upsertNovelChapter };

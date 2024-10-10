@@ -13,6 +13,11 @@ export default function Sources() {
             sourceName: 'AllNovelFull',
             imageUrl: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTyjJn_YwCifVmvArmnCMIVroxl61obyCE5WQ&s',
         },
+        {
+            id: 2,
+            sourceName: 'LightNovelPub',
+            imageUrl: 'https://i.redd.it/ui97q7ehwqsa1.jpg',
+        },
     ];
 
     const [query, setQuery] = useState("");
@@ -27,8 +32,8 @@ export default function Sources() {
         setFilteredSources(filteredSources);
       }, [query]);
 
-    const handleSourcePress = (sourceId: any) => {
-        router.navigate({ pathname: `source/[id]`, params: sourceId });
+    const handleSourcePress = (sourceName: string) => {
+        router.navigate({ pathname: `source/[id]`, params: { sourceName } });
     };
 
     return (
@@ -44,7 +49,7 @@ export default function Sources() {
                 ) : (
                     filteredSources.map((filteredSource, index) => { 
                     return(
-                        <TouchableOpacity key={index} onPress={() => handleSourcePress(filteredSource)} style={[styles.sourceContainer, {backgroundColor: appliedTheme.colors.elevation.level2}]}>
+                        <TouchableOpacity key={index} onPress={() => handleSourcePress(filteredSource.sourceName)} style={[styles.sourceContainer, {backgroundColor: appliedTheme.colors.elevation.level2}]}>
                             <Image style={styles.sourceImage} source={{uri : filteredSource.imageUrl}}></Image>
                             <Text style={[styles.sourceText, {color: appliedTheme.colors.text}]}>{filteredSource.sourceName}</Text>
                             <Entypo style={[styles.bookmark, {}]} size={40} name="bookmarks" color={appliedTheme.colors.onSurfaceVariant}/>

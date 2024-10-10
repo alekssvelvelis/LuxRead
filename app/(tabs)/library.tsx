@@ -5,10 +5,10 @@ import SearchBar from '@/components/SearchBar';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { useNovelRowsContext } from '@/contexts/NovelRowsContext';
 
-import  { fetchSingleNovel } from '@/sources/allnovelfull';
+import  { fetchSingleNovel } from '@/sources/AllNovelFull';
 
 import { useRouter, useFocusEffect } from 'expo-router';
-import { getAllLibraryNovels, deleteLibraryNovel, deleteNovelChapters, clearTable, dropTable, setupLibraryNovelsTable, getTableStructure, setupNovelChaptersTable} from '@/database/ExpoDB';
+import { getAllLibraryNovels, deleteLibraryNovel, deleteNovelChapters, setupSourcesTable, clearTable, dropTable, setupLibraryNovelsTable, getTableStructure, setupNovelChaptersTable} from '@/database/ExpoDB';
 
 interface Data{
     id: number;
@@ -17,6 +17,19 @@ interface Data{
     chapterCount: number;
     imageURL: string;
     novelPageURL: string;
+    novelSource: string;
+}
+
+interface novelData{
+  title: string;
+  imageURL: string;
+  description: string;
+  author: string;
+  genres: string;
+  url: string;
+  // chapters: object;
+  chapterCount: number;
+  novelSource: string;
 }
 
 export default function Library() {
@@ -24,9 +37,11 @@ export default function Library() {
   useEffect(() =>{
     // dropTable('libraryNovels');
     // dropTable('novelChapters');
-    // console.log(JSON.stringify(getTableStructure('novelChapters'), null, 2));
+    // dropTable('sources');
+    // console.log(JSON.stringify(getTableStructure('sources'), null, 2));
     // setupNovelChaptersTable();
     // setupLibraryNovelsTable();
+    // setupSourcesTable();
   }, [])
   
   const { appliedTheme } = useThemeContext();
@@ -41,7 +56,7 @@ export default function Library() {
         try {
           const data = await getAllLibraryNovels('libraryNovels');
           // console.log(JSON.stringify(data, null,2), ' inside of library.tsx');
-          setNovelsData(data); // Update the state with the fetched data
+          setNovelsData(data);
         } catch (error) {
           console.error("Failed to fetch novels:", error);
         }
@@ -102,15 +117,16 @@ export default function Library() {
     };
   };
 
-  const handleNavigateToNovel = async (novelPageURL: string) => {
+  const handleNavigateToNovel = async (novelPageURL: string, novelSource: string) => {
     try {
-      const novelData = await fetchSingleNovel(novelPageURL);
-      // console.log(JSON.stringify(novelData, null, 2) + ' inside of [id].tsx/source');
+      const novelData: novelData = await fetchSingleNovel(novelPageURL);
+      console.log(JSON.stringify(novelData, null, 2) + ' inside of [id].tsx/source');
       router.navigate({ 
         pathname: `novel/[id]`,
         params: {
           ...novelData,
-          chapters: JSON.stringify(novelData.chapters),
+          // chapters: JSON.stringify(novelData.chapters),
+          sourceName: novelSource,
         },
       }); 
     } catch (error) {
@@ -138,7 +154,7 @@ export default function Library() {
                 <TouchableOpacity
                   key={index}
                   style={[styles.novelContainer, { width: novelStyle.width }]}
-                  onPress={() => handleNavigateToNovel(novel.novelPageURL, novel.id)}
+                  onPress={() => handleNavigateToNovel(novel.novelPageURL, novel.novelSource)}
                   onLongPress={() => handleDeleteNovel(novel.id)}
                 >
                   <Image

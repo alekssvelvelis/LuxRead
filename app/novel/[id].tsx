@@ -1,10 +1,15 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity, Animated, FlatList, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Animated, FlatList, ActivityIndicator } from 'react-native';
+
 import { useThemeContext } from '@/contexts/ThemeContext';
+import getSourceFunctions from '@/utils/getSourceFunctions';
+
 import { useLocalSearchParams, Stack, useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
+import { Image } from 'expo-image'; //  takes priority over react-native image tag to read static images
+
 import { PullUpModal } from '@/components/PullUpModal';
-import { fetchChapters } from '@/sources/allnovelfull';
+import { fetchChapters } from '@/sources/AllNovelFull';
 import { getAllNovelChapters } from '@/database/ExpoDB';
 interface Chapter {
   title: string;
@@ -17,6 +22,8 @@ interface novelProgress{
   chapterIndex: number;
 }
 const Synopsis = () => {
+  const { sourceName } = useLocalSearchParams();
+  console.log('test123', sourceName);
   const { appliedTheme } = useThemeContext();
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
   const [isRotated, setIsRotated] = useState<boolean>(false);
@@ -49,6 +56,7 @@ const Synopsis = () => {
   };
 
   const novelData = useLocalSearchParams();
+  // console.log(JSON.stringify(novelData,null,2));
   const genresArray = novelData.genres.split(',').map(genre => genre.trim());
   const imageURL = Array.isArray(novelData.imageURL) ? novelData.imageURL[0] : novelData.imageURL;
   const [showFullDescription, setShowFullDescription] = useState(false);
@@ -62,29 +70,44 @@ const Synopsis = () => {
     }
   };
 
-  const loadChapters = useCallback(async (pageNumber = 1) => {
-    setLoading(true);
-
-    try {
-      const chapters = await fetchChapters(novelData.url, pageNumber);
-      if (chapters) {
-        setChapterList(chapterList => [...chapterList, ...chapters]);
+  const [fetchFunctions, setFetchFunctions] = useState<any>(null);
+  useEffect(() => {
+    if (sourceName) {
+      try {
+        const functions = getSourceFunctions(sourceName);
+        setFetchFunctions(functions);
+      } catch (error) {
+        console.error('Error loading source functions:', error);
       }
-      if (chapters.length === 50) {
-        setHasMoreChapters(true);
-      } else {
-        setHasMoreChapters(false);
-      }
-    } catch (error) {
-      console.error('Error fetching more chapters', error);
-    } finally {
-      setLoading(false);
     }
-  }, []);
+  }, [sourceName]);
 
   useEffect(() => {
-    loadChapters(page); // Load the initial chapters
-  }, [page]);
+    const loadChapters = async (pageNumber = 1) => {
+      if (!fetchFunctions) {
+        return;
+      }
+
+      setLoading(true);
+
+      try {
+        const chapters = await fetchFunctions.fetchChapters(novelData.url, pageNumber);
+        if (chapters && chapters.length > 0) {
+          setChapterList((prevChapters) => [...prevChapters, ...chapters]);
+          setHasMoreChapters(chapters.length > 0);
+        } else {
+          setHasMoreChapters(false);
+        }
+      } catch (error) {
+        console.error('Error fetching chapters:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    if (fetchFunctions) {
+      loadChapters(page);
+    }
+  }, [fetchFunctions, page, novelData.url]);
 
   const [chapterIndex, setChapterIndex] = useState(null);
   const [readerProgress, setReaderProgress] = useState(null);
@@ -94,7 +117,11 @@ const Synopsis = () => {
     const fetchNovelProgress = async () => {
       try {
         const novelProgress: novelProgress = await getAllNovelChapters(novelData.title);
-        if (novelProgress.length === 0) {
+        if (!novelProgress) {
+          return;
+        }
+        if (Array.isArray(novelProgress) && novelProgress.length === 0) {
+          console.log('Empty progress array');
           return;
         }
         setChapterIndex(novelProgress[0].chapterIndex);
@@ -110,7 +137,6 @@ const Synopsis = () => {
     }
     }, [])
   );
-
 
   const handleNavigateToChapter = async (chapterPageURL: string) => {
     try {
@@ -169,7 +195,7 @@ const Synopsis = () => {
           />
         </View>
         <View style={styles.imageContainer}>
-          <Image source={{ uri: imageURL }} style={[styles.image]} />
+          <Image source={{ uri: imageURL }} style={[styles.image]} contentFit='contain' />
         </View>
       </View>
       <View style={styles.descriptionContainer}>
@@ -183,7 +209,9 @@ const Synopsis = () => {
         </TouchableOpacity>
       </View>
       {chapterList.length > 0 && (
-        <TouchableOpacity style={[styles.readingButton, { backgroundColor: appliedTheme.colors.primary, justifyContent: 'center', alignItems: 'center' }]} onPress={() => handleNavigateToChapter(chapterList[chapterIndex-1].url)}>
+        <TouchableOpacity 
+        style={[styles.readingButton, { backgroundColor: appliedTheme.colors.primary, justifyContent: 'center', alignItems: 'center' }]} 
+        onPress={() => chapterIndex > 0 ? handleNavigateToChapter(chapterList[chapterIndex - 1].url) : handleNavigateToChapter(chapterList[0].url)}>
           <Text style={[styles.readingButtonText, { color: appliedTheme.colors.text }]} numberOfLines={1} ellipsizeMode='tail'>
             {chapterIndex > 0 ? `Continue reading ${chapterList[chapterIndex-1].title}` : `Start reading ${chapterList[0].title}`}
           </Text>
@@ -251,7 +279,6 @@ const styles = StyleSheet.create({
     width: 175,
     height: 175,
     marginVertical: 12,
-    resizeMode: 'contain',
   },
   title: {
     fontSize: 22,
