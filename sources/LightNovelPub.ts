@@ -3,6 +3,32 @@ import axios from 'axios';
 const sourceName = 'LightNovelPub';
 const sourceURL = `https://www.lightnovelpub.com`;
 
+interface ExtraTableData{
+    author: string;
+    chapterCount: string;
+};
+
+const fetchRelevantOfNovel = async (novelPageURL: string) => {
+    try {
+        const result = await axios.get(novelPageURL, {
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.82 Safari/537.36',
+            }
+        });
+        const body = result.data;
+        const loadedCheerio = cheerio.load(body);
+        const author = loadedCheerio('.novel-info .author a span').text().trim();
+        const chapterCount = loadedCheerio('.novel-info .header-stats strong').first().text().trim();
+        return {
+            author,
+            chapterCount,
+        };
+    } catch (error) {
+        console.error('Error fetching author of novel', error);
+        return [];
+    }
+}
+
 const popularNovels = async (pageNumber: number) => {
     try {
         const url = `${sourceURL}/browse/genre-all-25060123/order-popular/status-all?page=${pageNumber}`;
@@ -19,10 +45,15 @@ const popularNovels = async (pageNumber: number) => {
                 const novelPageHREF = loadedCheerio(element).find('.novel-title a').attr('href');
                 const novelPageURL = `${sourceURL}${novelPageHREF}`;
                 const imageURL = loadedCheerio(element).find('.novel-item img').attr('data-src');
-                if (title && novelPageURL) {
+                const tableNecessaryData: ExtraTableData = await fetchRelevantOfNovel(novelPageURL);
+                const author = tableNecessaryData.author;
+                const chapterCount = tableNecessaryData.chapterCount;
+                if (title && novelPageURL && author && chapterCount) {
                     return {
                         title,
                         imageURL,
+                        author,
+                        chapterCount,
                         novelPageURL,
                         sourceName,
                     };
@@ -68,10 +99,8 @@ const searchVerifyToken = async () => {
             }
           });
         const loadedCheerio = cheerio.load(response.data);
-        
         const verifyToken = loadedCheerio('input[name="__LNRequestVerifyToken"]').attr('value');
         return verifyToken;
-        
     } catch (error) {
         console.error('Error getting the verify token for lightnovelpub', error);
         return [];
@@ -88,18 +117,18 @@ const searchNovels = async (novelName: string) => {
             const title = loadedCheerio(element).find('h4.novel-title').text().trim();
             const novelPageHREF = loadedCheerio(element).find('a').attr('href');
             const imageURL = loadedCheerio(element).find('img').attr('src');
-            const chapterCount = loadedCheerio(element).find('div.novel-stats span').first().text().trim();
             const novelPageURL = `${sourceURL}${novelPageHREF}`;
-            // console.log(title);
-            // console.log(novelPageURL);
-            // console.log(imageURL);
-            // console.log(chapterCount);
-            if(title && novelPageHREF && imageURL){
+            const tableNecessaryData: ExtraTableData = await fetchRelevantOfNovel(novelPageURL);
+            const author = tableNecessaryData.author;
+            const chapterCount = tableNecessaryData.chapterCount;
+            if(title && novelPageHREF && imageURL && author){
                 return{
                     title,
                     imageURL,
+                    author,
                     chapterCount,
                     novelPageURL,
+                    sourceName,
                 };
             }
         }).get();

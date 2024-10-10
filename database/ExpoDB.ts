@@ -247,7 +247,7 @@ async function getNovelsBySource(novelSource: string) {
         if (librarySavedNovels.length === 0) {
             console.log('no data to output getNovelsBySource');
         }
-
+        
         return librarySavedNovels;
     } catch (error) {
         console.error('Error fetching library novels:', error);

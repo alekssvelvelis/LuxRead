@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { StyleSheet, View, Text, ScrollView, Image, Dimensions, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, Text, ScrollView, Dimensions, TouchableOpacity } from 'react-native';
 import SearchBar from '@/components/SearchBar';
-
+import { Image } from 'expo-image'
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { useNovelRowsContext } from '@/contexts/NovelRowsContext';
 
@@ -55,7 +55,7 @@ export default function Library() {
       const fetchNovels = async () => {
         try {
           const data = await getAllLibraryNovels('libraryNovels');
-          // console.log(JSON.stringify(data, null,2), ' inside of library.tsx');
+          console.log(JSON.stringify(data, null,2), ' inside of library.tsx');
           setNovelsData(data);
         } catch (error) {
           console.error("Failed to fetch novels:", error);
@@ -160,6 +160,7 @@ export default function Library() {
                   <Image
                     style={[styles.novelLogo, { height: novelStyle.height }]}
                     source={{ uri: novel.imageURL }}
+                    contentFit='fill'
                   />
                   <Text numberOfLines={2} style={{ color: appliedTheme.colors.text, fontSize: 12 }}>
                     {novel.title}
@@ -209,7 +210,6 @@ const styles = StyleSheet.create({
   novelLogo: {
     width: '100%',
     borderRadius: 4,
-    objectFit: 'fill'
   },
   chaptersRemain: {
     position: 'absolute',
