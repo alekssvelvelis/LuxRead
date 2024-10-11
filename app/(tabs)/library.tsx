@@ -10,7 +10,7 @@ import getSourceFunctions from '@/utils/getSourceFunctions';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Image } from 'expo-image'
 
-import { getAllLibraryNovels, deleteLibraryNovel, deleteNovelChapters, setupSourcesTable, clearTable, dropTable, setupLibraryNovelsTable, getTableStructure, setupNovelChaptersTable} from '@/database/ExpoDB';
+import { getAllLibraryNovels, deleteLibraryNovel, deleteNovelChapters, setupSourcesTable, clearTable, dropTable, setupLibraryNovelsTable, setupNovelChaptersTable, setupDownloadedChaptersTable} from '@/database/ExpoDB';
 
 interface Data{
     id: number;
@@ -40,10 +40,12 @@ export default function Library() {
     // dropTable('libraryNovels');
     // dropTable('novelChapters');
     // dropTable('sources');
+    // dropTable('downloadedChapters');
     // console.log(JSON.stringify(getTableStructure('sources'), null, 2));
     // setupNovelChaptersTable();
     // setupLibraryNovelsTable();
     // setupSourcesTable();
+    // setupDownloadedChaptersTable();
   }, [])
   
   const { appliedTheme } = useThemeContext();
@@ -130,7 +132,7 @@ export default function Library() {
     }
   }
 
-  const handleNavigateToNovel = async (novelPageURL: string, novelSource: string) => {
+  const handleNavigateToNovel = async (novelPageURL: string, novelSource: string, novelId: number) => {
     const functions =  await handleSourceFunctions(novelSource);
     try {
       const novelData: novelData = await functions.fetchSingleNovel(novelPageURL);
@@ -138,7 +140,8 @@ export default function Library() {
         pathname: `novel/[id]`,
         params: {
           ...novelData,
-          sourceName: novelSource
+          sourceName: novelSource,
+          id: novelId
         },
       });
     } catch (error) {
@@ -166,7 +169,7 @@ export default function Library() {
                 <TouchableOpacity
                   key={index}
                   style={[styles.novelContainer, { width: novelStyle.width }]}
-                  onPress={() => handleNavigateToNovel(novel.novelPageURL, novel.novelSource)}
+                  onPress={() => handleNavigateToNovel(novel.novelPageURL, novel.novelSource, novel.id)}
                   onLongPress={() => handleDeleteNovel(novel.id)}
                 >
                   <Image

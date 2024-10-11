@@ -246,24 +246,18 @@ const fetchChapterContent = async (chapterPageURL: string) => {
         });
 
         const nextChapterElement = loadedCheerio('.nextchap');
-        console.log('nextb4');
         if (nextChapterElement && !nextChapterElement.hasClass('isDisabled')) {
-            console.log(1);
             const nextChapter = nextChapterElement.attr('href');
             const nextChapterURL = `${sourceURL}${nextChapter}`;
-            console.log(nextChapterURL);
             if (nextChapter) {
                 chapterContent.closeChapters['nextChapter'] = nextChapterURL;
             }
         }
 
         const prevChapterElement = loadedCheerio('.prevchap');
-        console.log('prevb4');
         if (prevChapterElement && !prevChapterElement.hasClass('isDisabled')) {
-            console.log(2);
             const prevChapter = prevChapterElement.attr('href');
             const prevChapterURL = `${sourceURL}${prevChapter}`;
-            console.log(prevChapterURL);
             if (prevChapter) {
                 chapterContent.closeChapters['prevChapter'] = prevChapterURL;
             }

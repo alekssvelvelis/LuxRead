@@ -9,7 +9,7 @@ import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { Image } from 'expo-image'; //  takes priority over react-native image tag to read static images
 
 import { PullUpModal } from '@/components/PullUpModal';
-import { getAllNovelChapters } from '@/database/ExpoDB';
+import { getAllNovelChapters, insertDownloadedChapter } from '@/database/ExpoDB';
 interface Chapter {
   title: string;
   url: string;
@@ -54,7 +54,7 @@ const Synopsis = () => {
   };
 
   const novelData = useLocalSearchParams();
-  // console.log(JSON.stringify(novelData,null,2));
+  console.log(JSON.stringify(novelData,null,2));
   const genresArray = novelData.genres.split(',').map(genre => genre.trim());
   const imageURL = Array.isArray(novelData.imageURL) ? novelData.imageURL[0] : novelData.imageURL;
   const [showFullDescription, setShowFullDescription] = useState(false);
@@ -85,12 +85,9 @@ const Synopsis = () => {
       if (!fetchFunctions) {
         return;
       }
-
       setLoading(true);
-
       try {
         const chapters = await fetchFunctions.fetchChapters(novelData.url, pageNumber);
-        // console.log(chapters);
         if (chapters && chapters.length > 0) {
           setChapterList((prevChapters) => [...prevChapters, ...chapters]);
           setHasMoreChapters(chapters.length > 0);
@@ -151,7 +148,16 @@ const Synopsis = () => {
       console.error("Error fetching single novel:", error);
     }
   };
-  // console.log(JSON.stringify(chapterList, null, 2));
+
+  const handleDownloadChapter = async (chapterPageURL: string, chapterTitle: string, novelId: number) => {
+    try {
+      const chapters = await fetchFunctions.fetchChapterContent(chapterPageURL);
+      await insertDownloadedChapter(chapterTitle, chapters.content, novelId);
+    } catch (error) {
+      console.error("Error deleting novel:", error);
+    }
+  };
+
   const renderChapterItem = ({ item, index }: { item: Chapter, index: number }) => {
     const chapterIndexOfItem = index + 1;
     const defaultChapterIndex = chapterIndex || 0;
@@ -160,11 +166,12 @@ const Synopsis = () => {
         <Text style={{ fontSize: 16, color: chapterIndexOfItem >= defaultChapterIndex ? appliedTheme.colors.text : 'gray', width: '90%' }} numberOfLines={1} ellipsizeMode='tail'>
           {item.title}
         </Text>
-        {chapterIndexOfItem === defaultChapterIndex && <Text style={{position: 'absolute', color: appliedTheme.colors.text, top: 40, left: 0}}>Reading progress: {readerProgress}%</Text>}
-        <MaterialIcons size={36} name="download" color={chapterIndexOfItem >= defaultChapterIndex ? appliedTheme.colors.text : 'gray'} style={{ zIndex: 3 }} />
+        {chapterIndexOfItem === defaultChapterIndex && <Text style={{position: 'absolute', color: appliedTheme.colors.text, top: 35, left: 0}}>Reading progress: {readerProgress}%</Text>}
+        {novelData.id === "[id]" ? null : <MaterialIcons size={36} name="download" color={chapterIndexOfItem >= defaultChapterIndex ? appliedTheme.colors.text : 'gray'} style={{ zIndex: 3 }} onPress={() => handleDownloadChapter(item.url, item.title, novelData.id)}/> }
       </TouchableOpacity>
     );
   };
+
   const renderListHeader = () => (
     <View style={{minWidth: '100%'}}>
       <Stack.Screen

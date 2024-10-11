@@ -137,6 +137,84 @@ async function upsertNovelChapter(novelTitle: string, readerProgress: number, ch
     }
 }
 
+async function setupDownloadedChaptersTable(){
+    const db = await SQLite.openDatabaseAsync('luxreadDatabase');
+    try {
+        await db.execAsync(`
+            PRAGMA journal_mode = WAL;
+            CREATE TABLE IF NOT EXISTS downloadedChapters 
+            (
+                downloadId INTEGER PRIMARY KEY AUTOINCREMENT,
+                chapterTitle TEXT NOT NULL,
+                chapterText TEXT NOT NULL,
+                novel_id INTEGER NOT NULL,
+                FOREIGN KEY (novel_id) REFERENCES libraryNovels(id) ON DELETE CASCADE ON UPDATE CASCADE
+                UNIQUE (chapterTitle, novel_id)
+            );
+        `);
+        console.log('Created downloadedChapters table');
+    } catch (error) {
+       console.error('Error creating downloadedChapters table ', error) 
+    }
+}
+
+async function insertDownloadedChapter(chapterTitle: string, chapterText: string, novel_id: number) {
+    const db = await SQLite.openDatabaseAsync('luxreadDatabase', {
+        useNewConnection: true
+    });
+    try {
+        const result = await db.runAsync(
+          `INSERT INTO downloadedChapters (chapterTitle, chapterText, novel_id) VALUES (?, ?, ?)`,
+          [chapterTitle, chapterText, novel_id]
+        );
+        if(result){
+            console.log(`Chapter ${chapterTitle}, for novel with id ${novel_id} succesfully added`);
+        }
+    } catch (error) {
+        console.error('Insert for TABLE libraryNovels failed due to:', error);
+    }
+}
+
+interface DownloadedChapterRow{
+    downloadId: number;
+    chapterTitle: string;
+    chapterText: string | string[];
+    novel_id: number;
+}
+
+async function getDownloadedChapters(novelId: number) {
+    const db = await SQLite.openDatabaseAsync('luxreadDatabase', {
+        useNewConnection: true
+    });
+
+    try {
+        const allRows: DownloadedChapterRow[] = await db.getAllAsync(
+            `SELECT * FROM novelChapters WHERE novel_id = ?`,
+            [novelId]
+        );
+
+        const downloadedChapters = [];
+
+        for (const row of allRows) {
+            downloadedChapters.push({
+                id: row.id,
+                chapterTitle: row.chapterTitle,
+                chapterContent: row.chapterText,
+                novel_id: row.novel_id,
+            });
+        }
+
+        if (allRows.length === 0) {
+            console.log('No chapters found downloaded for this novel', novelId);
+        }
+
+        return downloadedChapters;
+    } catch (error) {
+        console.error('Error fetching downloaded novel chapters:', error, ' for ', novelId);
+        return [];
+    }
+}
+
 interface ChapterRow{
     id: number;
     novel_id: number;
@@ -299,4 +377,4 @@ async function dropTable(tableName: string) {
     }
 }
 
-export { clearTable, getAllNovelChapters, setupSourcesTable, setupLibraryNovelsTable, insertLibraryNovel, getAllLibraryNovels, dropTable, deleteLibraryNovel, deleteNovelChapters, getTableStructure, getNovelsBySource, setupNovelChaptersTable, upsertNovelChapter };
+export { clearTable, getAllNovelChapters, setupSourcesTable, setupLibraryNovelsTable, insertLibraryNovel, getAllLibraryNovels, dropTable, deleteLibraryNovel, deleteNovelChapters, getTableStructure, getNovelsBySource, setupNovelChaptersTable, upsertNovelChapter, setupDownloadedChaptersTable, getDownloadedChapters, insertDownloadedChapter };

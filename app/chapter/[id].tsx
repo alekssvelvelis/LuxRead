@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Pressable } from 'react-native';
 
 import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
@@ -17,8 +17,8 @@ interface Content {
   title: string;
   content: string[];
   closeChapters: {
-    prevChapter?: string;
-    nextChapter?: string;
+    prevChapter?: string | undefined;
+    nextChapter?: string | undefined;
   };
 }
 
@@ -111,7 +111,7 @@ const ChapterPage = () => {
     setReaderModalVisible(!readerModalVisible);
   };
 
-  const handleNavigateCloseChapter = async (chapterPageURL: string) => {
+  const handleNavigateCloseChapter = async (chapterPageURL: string | undefined) => {
     try {
       router.navigate({ 
         pathname: `chapter/[id]`, 
@@ -141,16 +141,16 @@ const ChapterPage = () => {
   const [contentHeight, setContentHeight] = useState(0);
   const [scrollViewHeight, setScrollViewHeight] = useState(0);
 
-  const handleScroll = (event) => {
+  const handleScroll = (event: any) => {
     const offsetY = event.nativeEvent.contentOffset.y;
     setScrollOffset(offsetY);
   };
 
-  const handleContentSizeChange = (contentWidth, contentHeight) => {
+  const handleContentSizeChange = (contentHeight: number) => {
     setContentHeight(contentHeight);
   };
 
-  const handleLayout = (event) => {
+  const handleLayout = (event: any) => {
     const { height } = event.nativeEvent.layout;
     setScrollViewHeight(height);
   };
