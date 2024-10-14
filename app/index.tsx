@@ -1,5 +1,4 @@
 import React from 'react';
-import 'react-native-gesture-handler';
 import { View, StyleSheet } from 'react-native';
 import { PaperProvider } from 'react-native-paper';
 import { useThemeContext } from '@/contexts/ThemeContext';

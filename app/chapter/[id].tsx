@@ -4,6 +4,7 @@ import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity
 import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
 import { upsertNovelChapter } from '@/database/ExpoDB';
 import { Ionicons } from '@expo/vector-icons';
+import * as Speech from 'expo-speech';
 
 import { useThemeContext } from '@/contexts/ThemeContext';
 
@@ -12,6 +13,7 @@ import { getReaderOptions } from '@/utils/asyncStorage';
 
 import { PullUpModal } from '@/components/PullUpModal';
 import ReaderOptions from '@/components/settings/ReaderOptions';
+import { NativeBoundaryEvent } from 'expo-speech/build/Speech.types';
 
 interface Content {
   title: string;
@@ -86,6 +88,7 @@ const ChapterPage = () => {
         // console.log(JSON.stringify(chapterContent, null, 2));
         if (chapterContent) {
           setContent(chapterContent);
+          setChapterText(chapterContent.content);
         }
       } catch (error) {
         console.error('Error fetching chapter content', error, chapterPageURL, sourceName);
@@ -98,6 +101,71 @@ const ChapterPage = () => {
       loadChapterContent();
     }
   }, [fetchFunctions, chapterPageURL, sourceName]);
+
+  function splitStringIntoBlocks(str: string, maxLength = 4000) {
+    let blocks = [];
+    for (let i = 0; i < str.length; i += maxLength) {
+      let chunk = str.slice(i, i + maxLength);
+      blocks.push(chunk);
+    }
+    return blocks;
+  }
+
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [chapterText, setChapterText] = useState('');
+  const [textBlockIndex, setTextBlockIndex] = useState(0);
+  const [pausedCharIndex, setPausedCharIndex] = useState(0);
+  
+  const speakText = () => {
+    const inputValue = chapterText.toString();
+    const textBlocks = splitStringIntoBlocks(inputValue);
+  
+    if (textBlockIndex < textBlocks.length) {
+      const currentBlock = textBlocks[textBlockIndex];
+      const startingIndex = pausedCharIndex;
+      const textToSpeak = currentBlock.slice(startingIndex);
+      if (textToSpeak.length > 0) {
+        console.log(textToSpeak);
+        Speech.speak(textToSpeak, {
+          onBoundary: (boundaries: NativeBoundaryEvent) => {
+            const { charIndex } = boundaries;
+            setPausedCharIndex(startingIndex + charIndex);
+          },
+          onDone: () => {
+            console.log('Finished speaking block:', textBlockIndex);
+            if (textBlockIndex + 1 < textBlocks.length) {
+              setPausedCharIndex(0);
+              setTextBlockIndex(prevIndex => {
+                console.log('Updating to textBlockIndex', prevIndex + 1);
+                return prevIndex + 1;
+              });
+            } else {
+              console.log('All text read. Stopping speech.');
+              setIsSpeaking(false);
+            }
+          },
+          voice: 'eb-GN-SMTf00',
+          rate: 1.5,
+        });
+      } else {
+        console.error('Error finding text in textblock inside of chapter.tsx');
+      }
+    }
+  };
+
+  useEffect(() => {
+    speakText();
+  },[textBlockIndex])
+
+  const handleSpeaking = () => {
+    if (isSpeaking) {
+      Speech.stop();
+      setIsSpeaking(false);
+    } else {
+      setIsSpeaking(true);
+      speakText();
+    }
+  };
 
   const handleBackPress = () => {
     router.back();
@@ -182,8 +250,11 @@ const ChapterPage = () => {
     <View style={{ flex: 1 }}>
       {isOverlayVisible && (
         <View style={[styles.header, { backgroundColor: overlayBackgroundColor, flexDirection: 'row' }]}>
-          <Ionicons name={'arrow-back'} size={32} color={appliedTheme.colors.text} style={{ marginLeft: '2%' }} onPress={() => handleSaveChapterData(propData.title, scrollPercentage, chapterIndex)} />
-          <Text style={{ color: appliedTheme.colors.text, fontSize: 20, marginBottom: 4, marginLeft: 12 }} numberOfLines={1}>{content.title}</Text>
+          <View style={{flex: 1, flexDirection: 'row', marginBottom: 6}}>
+            <Ionicons name={'arrow-back'} size={32} color={appliedTheme.colors.text} style={{ marginLeft: '2%' }} onPress={() => handleSaveChapterData(propData.title, scrollPercentage, chapterIndex)} />
+            <Text style={{ color: appliedTheme.colors.text, fontSize: 20, marginBottom: 4, marginLeft: 12, maxWidth: '80%' }} numberOfLines={1}>{content.title}</Text>
+            {isSpeaking ? <Ionicons name={'pause-circle-outline'} size={32} color={appliedTheme.colors.text} style={{ marginLeft: '3%', position: 'absolute', right: 8 }} onPress={() => handleSpeaking()}/> : <Ionicons name={'play-circle-outline'} size={32} color={appliedTheme.colors.text} style={{ marginLeft: '3%', position: 'absolute', right: 8 }} onPress={() => handleSpeaking()}/>}
+          </View>
         </View>
       )}
       <ScrollView
@@ -291,7 +362,7 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    height: 60,
+    height: 70,
     zIndex: 1,
     justifyContent: 'flex-start',
     alignItems: 'flex-end',

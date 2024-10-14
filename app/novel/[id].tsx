@@ -54,7 +54,7 @@ const Synopsis = () => {
   };
 
   const novelData = useLocalSearchParams();
-  console.log(JSON.stringify(novelData,null,2));
+  // console.log(JSON.stringify(novelData,null,2));
   const genresArray = novelData.genres.split(',').map(genre => genre.trim());
   const imageURL = Array.isArray(novelData.imageURL) ? novelData.imageURL[0] : novelData.imageURL;
   const [showFullDescription, setShowFullDescription] = useState(false);
