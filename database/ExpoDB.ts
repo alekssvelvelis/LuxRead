@@ -8,6 +8,7 @@ async function getTableStructure(tableName: string) {
         return tableInfo;
     } catch (error) {
         console.error(`Failed to get structure of table "${tableName}":`, error);
+        return;
     }
 }
 
@@ -73,8 +74,10 @@ async function insertLibraryNovel(title: string, author: string, chapterCount: n
     } catch (error: any) {
         if (error.message.includes('UNIQUE constraint failed')) {
             console.error('Error: Novel with the same title, author, novelPageURL already exists.');
+            return;
         } else {
             console.error('Insert for TABLE libraryNovels failed due to:', error);
+            return;
         }
     }
 }
@@ -105,7 +108,7 @@ async function upsertNovelChapter(novelTitle: string, readerProgress: number, ch
         useNewConnection: true
     });
     try {
-        const novelRow = await db.getAllAsync(
+        const novelRow: NovelRow[] = await db.getAllAsync(
             `SELECT id FROM libraryNovels WHERE title = ?`,
             [novelTitle]
         );
@@ -176,6 +179,7 @@ async function insertDownloadedChapter(chapterTitle: string, chapterText: string
 }
 
 interface DownloadedChapterRow{
+    id: number;
     downloadId: number;
     chapterTitle: string;
     chapterText: string | string[];
@@ -222,13 +226,14 @@ interface ChapterRow{
     chapterIndex: number;
 }
 
+
 async function getAllNovelChapters(novelTitle: string) {
     const db = await SQLite.openDatabaseAsync('luxreadDatabase', {
         useNewConnection: true
     });
 
     try {
-        const novelRow = await db.getAllAsync(
+        const novelRow: NovelRow[] = await db.getAllAsync(
             `SELECT id FROM libraryNovels WHERE title = ?`,
             [novelTitle]
         );

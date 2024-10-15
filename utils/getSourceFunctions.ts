@@ -1,5 +1,5 @@
 
-import { popularNovels as AllNovelFullPopular, searchNovels as AllNovelFullSearch, fetchSingleNovel as AllNovelFullFetchSingle, fetchChapters as AllNovelFullChapters, fetchChapterContent as AllNovelFullChapterContent, fetchChapterContent } from '@/sources/AllNovelFull';
+import { popularNovels as AllNovelFullPopular, searchNovels as AllNovelFullSearch, fetchSingleNovel as AllNovelFullFetchSingle, fetchChapters as AllNovelFullChapters, fetchChapterContent as AllNovelFullChapterContent } from '@/sources/AllNovelFull';
 import { popularNovels as LightNovelPubPopular, searchNovels as LightnovelPubSearch, fetchSingleNovel as LightNovelPubFetchSingle, fetchChapters as LightNovelPubChapters, fetchChapterContent as LightNovelPubChapterContent } from '@/sources/LightNovelPub';
 
 const getSourceFunctions = (sourceName: string) => {

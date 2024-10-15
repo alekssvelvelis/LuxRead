@@ -28,9 +28,9 @@ const Synopsis = () => {
   const rotation = useRef(new Animated.Value(0)).current;
 
   const [chapterList, setChapterList] = useState<Chapter[]>([]); // Holds the loaded chapters
-  const [loading, setLoading] = useState(false); // Loading state
-  const [page, setPage] = useState(1); // Page for chapter pagination
-  const [hasMoreChapters, setHasMoreChapters] = useState(true); // Track if more chapters exist
+  const [loading, setLoading] = useState<boolean>(false); // Loading state
+  const [page, setPage] = useState<number>(1); // Page for chapter pagination
+  const [hasMoreChapters, setHasMoreChapters] = useState<boolean>(true); // Track if more chapters exist
 
   const router = useRouter();
 
@@ -136,7 +136,8 @@ const Synopsis = () => {
 
   const handleNavigateToChapter = async (chapterPageURL: string) => {
     try {
-      router.navigate({ 
+      router.navigate({
+        // @ts-ignore since pathname only works this way. Can remove and try to fix error.
         pathname: `chapter/[id]`, 
         params: {
           chapterPageURL: chapterPageURL,

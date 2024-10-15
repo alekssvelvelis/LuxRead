@@ -1,3 +1,4 @@
+// @ts-ignore
 import cheerio from 'react-native-cheerio';
 import pLimit from 'p-limit';
 import axios from 'axios';
@@ -11,8 +12,7 @@ interface ExtraTableData{
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-
-const fetchRelevantOfNovel = async (novelPageURL: string) => {
+const fetchRelevantOfNovel = async (novelPageURL: string): Promise<ExtraTableData> => {
     await sleep(1000);
     try {
         const result = await axios.get(novelPageURL, {
@@ -30,7 +30,7 @@ const fetchRelevantOfNovel = async (novelPageURL: string) => {
         };
     } catch (error) {
         console.error('Error fetching author of novel', error);
-        return [];
+        throw new Error ('Failed to fetch relevant data of novel');
     }
 }
 
@@ -53,7 +53,7 @@ const popularNovels = async (pageNumber: number) => {
             const loadedCheerio = cheerio.load(response.data);
             const novelList = loadedCheerio('.novel-list > .novel-item');
             
-            const promises = novelList.map((index: number, element: cheerio.Element) => 
+            const promises = novelList.map((_: number, element: cheerio.Element) =>  // _ used as a replacement for index, index is required by .map but not used here
                 limit(async () => { // Limit each request to avoid overwhelming the server
                     const title = loadedCheerio(element).find('.novel-title a').text().trim();
                     const novelPageHREF = loadedCheerio(element).find('.novel-title a').attr('href');
@@ -73,6 +73,7 @@ const popularNovels = async (pageNumber: number) => {
                             sourceName,
                         };
                     }
+                    return;
                 })
             ).get();
 
@@ -130,30 +131,35 @@ const searchNovels = async (novelName: string) => {
     try {
         const verifyToken = await searchVerifyToken();
         const body = await searchNovelsAxios(novelName, verifyToken);
-        const loadedCheerio = cheerio.load(body.data.resultview);
-        const novelList = loadedCheerio('li.novel-item');
-        // const promises = novelList.map((index: number, element: cheerio.Element) => limit(async () => { })
-        const promises = novelList.map((index: number, element: cheerio.Element) => 
-            limit(async () => { 
-                const title = loadedCheerio(element).find('h4.novel-title').text().trim();
-                const novelPageHREF = loadedCheerio(element).find('a').attr('href');
-                const imageURL = loadedCheerio(element).find('img').attr('src');
-                const novelPageURL = `${sourceURL}${novelPageHREF}`;
-                if(title && novelPageHREF && imageURL){
-                    const tableNecessaryData: ExtraTableData = await fetchRelevantOfNovel(novelPageURL);
-                    const author = tableNecessaryData.author;
-                    const chapterCount = tableNecessaryData.chapterCount;
-                    return{
-                        title,
-                        imageURL,
-                        author,
-                        chapterCount,
-                        novelPageURL,
-                        sourceName,
-                    };
-                }
-            })).get();
-        return Promise.all(promises);
+        if (body && typeof body === 'object' && 'data' in body) {
+            const loadedCheerio = cheerio.load(body.data.resultview);
+            const novelList = loadedCheerio('li.novel-item');
+            const promises = novelList.map((_: number, element: cheerio.Element) => 
+                limit(async () => { 
+                    const title = loadedCheerio(element).find('h4.novel-title').text().trim();
+                    const novelPageHREF = loadedCheerio(element).find('a').attr('href');
+                    const imageURL = loadedCheerio(element).find('img').attr('src');
+                    const novelPageURL = `${sourceURL}${novelPageHREF}`;
+                    if (title && novelPageHREF && imageURL) {
+                        const tableNecessaryData: ExtraTableData = await fetchRelevantOfNovel(novelPageURL);
+                        const author = tableNecessaryData.author;
+                        const chapterCount = tableNecessaryData.chapterCount;
+                        return {
+                            title,
+                            imageURL,
+                            author,
+                            chapterCount,
+                            novelPageURL,
+                            sourceName,
+                        };
+                    }
+                    return;
+                })).get();
+            return Promise.all(promises);
+        } else {
+            console.error('Unexpected response structure:', body);
+            return [];
+        }
     } catch (error) {
         console.error('Failure to fetch search novels at', sourceName, 'with url', sourceURL, 'throws', error);
         return [];
@@ -174,7 +180,7 @@ const fetchSingleNovel = async (novelPageURL: string) => {
         const title = loadedCheerio('.novel-info .novel-title').text().trim();
         const author = loadedCheerio('.novel-info .author a span').text().trim();
         const chapterCount = loadedCheerio('.header-stats strong').text().match(/\d+/) || '0';
-        const genres = loadedCheerio('.categories li').find('a').map((i: number, el: cheerio.Element) => loadedCheerio(el).text()).toArray().join(',');
+        const genres = loadedCheerio('.categories li').find('a').map((_: number, el: cheerio.Element) => loadedCheerio(el).text()).toArray().join(',');
         return {
             title,
             imageURL,
@@ -202,7 +208,7 @@ const fetchChapters = async (novelPageURL: string, page: number) => {
         const loadedCheerio = cheerio.load(body);
         const chapters: { title: string, url: string }[] = [];
 
-        loadedCheerio('.chapter-list li a').each((i: number, el: cheerio.Element) => {
+        loadedCheerio('.chapter-list li a').each((_: number, el: cheerio.Element) => {
             const title = loadedCheerio(el).attr('title') || '';
             const chapterUrl = `${sourceURL}${loadedCheerio(el).attr('href')}`;
 
@@ -241,7 +247,7 @@ const fetchChapterContent = async (chapterPageURL: string) => {
         const chapterTitle = loadedCheerio('.chapter-title').text().trim();
         chapterContent.title = chapterTitle;
 
-        loadedCheerio('#chapter-container p').each((i: number, el: cheerio.Element) => {
+        loadedCheerio('#chapter-container p').each((_: number, el: cheerio.Element) => {
             chapterContent.content.push(loadedCheerio(el).text().trim());
         });
 

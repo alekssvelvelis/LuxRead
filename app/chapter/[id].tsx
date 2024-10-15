@@ -4,16 +4,17 @@ import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity
 import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
 import { upsertNovelChapter } from '@/database/ExpoDB';
 import { Ionicons } from '@expo/vector-icons';
-import * as Speech from 'expo-speech';
 
 import { useThemeContext } from '@/contexts/ThemeContext';
 
 import getSourceFunctions from '@/utils/getSourceFunctions';
 import { getReaderOptions } from '@/utils/asyncStorage';
+import { rgbToRgba } from '@/utils/rgbToRgba';
 
 import { PullUpModal } from '@/components/PullUpModal';
 import ReaderOptions from '@/components/settings/ReaderOptions';
-import { NativeBoundaryEvent } from 'expo-speech/build/Speech.types';
+
+import { useSpeech } from '@/hooks/useSpeech';
 
 interface Content {
   title: string;
@@ -24,11 +25,18 @@ interface Content {
   };
 }
 
+interface ReaderOptions {
+  fontSize: number,
+  lineHeight: number,
+  textAlign: string,
+  fontFamily: string
+}
+
 const ChapterPage = () => {
   const [content, setContent] = useState<Content>({ title: '', content: [], closeChapters: {} });
-  const [loading, setLoading] = useState(false);
-  const [isOverlayVisible, setIsOverlayVisible] = useState(false);
-  const [readerModalVisible, setReaderModalVisible] = useState(false);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [isOverlayVisible, setIsOverlayVisible] = useState<boolean>(false);
+  const [readerModalVisible, setReaderModalVisible] = useState<boolean>(false);
 
   const { appliedTheme } = useThemeContext();
   const propData = useLocalSearchParams();
@@ -36,7 +44,7 @@ const ChapterPage = () => {
   const sourceName: string | string[] = propData.sourceName;
   const router = useRouter();
 
-  const [readerOptions, setReaderOptions] = useState({
+  const [readerOptions, setReaderOptions] = useState<ReaderOptions>({
     fontSize: 16,
     lineHeight: 25,
     textAlign: 'left',
@@ -102,70 +110,10 @@ const ChapterPage = () => {
     }
   }, [fetchFunctions, chapterPageURL, sourceName]);
 
-  function splitStringIntoBlocks(str: string, maxLength = 4000) {
-    let blocks = [];
-    for (let i = 0; i < str.length; i += maxLength) {
-      let chunk = str.slice(i, i + maxLength);
-      blocks.push(chunk);
-    }
-    return blocks;
-  }
 
-  const [isSpeaking, setIsSpeaking] = useState(false);
-  const [chapterText, setChapterText] = useState('');
-  const [textBlockIndex, setTextBlockIndex] = useState(0);
-  const [pausedCharIndex, setPausedCharIndex] = useState(0);
-  
-  const speakText = () => {
-    const inputValue = chapterText.toString();
-    const textBlocks = splitStringIntoBlocks(inputValue);
-  
-    if (textBlockIndex < textBlocks.length) {
-      const currentBlock = textBlocks[textBlockIndex];
-      const startingIndex = pausedCharIndex;
-      const textToSpeak = currentBlock.slice(startingIndex);
-      if (textToSpeak.length > 0) {
-        console.log(textToSpeak);
-        Speech.speak(textToSpeak, {
-          onBoundary: (boundaries: NativeBoundaryEvent) => {
-            const { charIndex } = boundaries;
-            setPausedCharIndex(startingIndex + charIndex);
-          },
-          onDone: () => {
-            console.log('Finished speaking block:', textBlockIndex);
-            if (textBlockIndex + 1 < textBlocks.length) {
-              setPausedCharIndex(0);
-              setTextBlockIndex(prevIndex => {
-                console.log('Updating to textBlockIndex', prevIndex + 1);
-                return prevIndex + 1;
-              });
-            } else {
-              console.log('All text read. Stopping speech.');
-              setIsSpeaking(false);
-            }
-          },
-          voice: 'eb-GN-SMTf00',
-          rate: 1.5,
-        });
-      } else {
-        console.error('Error finding text in textblock inside of chapter.tsx');
-      }
-    }
-  };
+  const [chapterText, setChapterText] = useState<string>('');
+  const { isSpeaking, handleSpeaking } = useSpeech(chapterText);
 
-  useEffect(() => {
-    speakText();
-  },[textBlockIndex])
-
-  const handleSpeaking = () => {
-    if (isSpeaking) {
-      Speech.stop();
-      setIsSpeaking(false);
-    } else {
-      setIsSpeaking(true);
-      speakText();
-    }
-  };
 
   const handleBackPress = () => {
     router.back();
@@ -182,7 +130,8 @@ const ChapterPage = () => {
   const handleNavigateCloseChapter = async (chapterPageURL: string | undefined) => {
     try {
       router.navigate({ 
-        pathname: `chapter/[id]`, 
+        // @ts-ignore since pathname only works this way. Can remove and try to fix error.
+        pathname: `chapter/[id]`,
         params: {
           chapterPageURL: chapterPageURL,
           title: propData.title,
@@ -191,15 +140,6 @@ const ChapterPage = () => {
     } catch (error) {
       console.error("Error fetching single novel:", error);
     }
-  };
-
-  const rgbToRgba = (rgb: string, alpha: number) => {
-    const rgbValues = rgb.match(/\d+/g);
-    if (rgbValues && rgbValues.length === 3) {
-      const [r, g, b] = rgbValues;
-      return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-    }
-    return rgb;
   };
 
   const overlayBase = appliedTheme.colors.elevation.level2;

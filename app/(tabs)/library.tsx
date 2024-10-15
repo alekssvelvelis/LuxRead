@@ -9,7 +9,6 @@ import getSourceFunctions from '@/utils/getSourceFunctions';
 
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Image } from 'expo-image'
-import NetInfo from '@react-native-community/netinfo';
 
 import { getAllLibraryNovels, deleteLibraryNovel, deleteNovelChapters, setupSourcesTable, clearTable, dropTable, setupLibraryNovelsTable, setupNovelChaptersTable, setupDownloadedChaptersTable} from '@/database/ExpoDB';
 
@@ -37,17 +36,6 @@ interface novelData{
 
 export default function Library() {
 
-  const [isOffline, setIsOffline] = useState(false);
-
-  useEffect(() => {
-    // Subscribe to network state changes
-    const unsubscribe = NetInfo.addEventListener(state => {
-      setIsOffline(state.isConnected);
-    });
-    // console.log(isOffline);
-    // Cleanup subscription on unmount
-    return () => unsubscribe();
-  }, []);
 
   useEffect(() =>{
     // dropTable('libraryNovels');
@@ -150,6 +138,7 @@ export default function Library() {
     try {
       const novelData: novelData = await functions.fetchSingleNovel(novelPageURL);
       router.navigate({
+        // @ts-ignore since pathname only works this way. Can remove and try to fix error.
         pathname: `novel/[id]`,
         params: {
           ...novelData,

@@ -33,6 +33,7 @@ export default function Sources() {
       }, [query]);
 
     const handleSourcePress = (sourceName: string) => {
+        // @ts-ignore since pathname only works this way. Can remove and try to fix error.
         router.navigate({ pathname: `source/[id]`, params: { sourceName } });
     };
 

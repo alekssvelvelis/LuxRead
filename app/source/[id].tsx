@@ -23,7 +23,7 @@ const SourceList = () => {
   const { appliedTheme } = useThemeContext();
 
   const [novels, setNovels] = useState<object>([]);
-  const [queriedNovels, setQueriedNovels] = useState<queriedData[]>([]);
+  const [queriedNovels, setQueriedNovels] = useState([]);
   const [page, setPage] = useState<number>(1);
   const [loading, setLoading] = useState<boolean>(false);
 
@@ -38,7 +38,7 @@ const SourceList = () => {
   useEffect(() => {
     if (sourceName) {
       try {
-        const functions = getSourceFunctions(sourceName); // Use the utility function to get the source functions
+        const functions = getSourceFunctions(sourceName);
         setFetchFunctions(functions);
       } catch (error) {
         console.error('Error loading source functions:', error);
@@ -50,7 +50,6 @@ const SourceList = () => {
     const fetchNovels = async () => {
       try {
         const data = await getNovelsBySource(sourceName);
-        // console.log(JSON.stringify(data, null,2));
         setQueriedNovels(data);
       } catch (error) {
         console.error("Failed to fetch queried novels:", error);
@@ -66,13 +65,14 @@ const SourceList = () => {
 
   const fetchNovels = useCallback(async (pageNumber = 1, searchQuery = null) => {
     if (!fetchFunctions) {
-      console.log("fetchFunctions is not available");
+      // console.log("fetchFunctions is not available");
       return;
     }
     setLoading(true);
     const fetchFunction = searchQuery ? fetchFunctions.searchNovels : fetchFunctions.popularNovels;
     try {
       const novelsData = await fetchFunction(searchQuery || pageNumber, pageNumber);
+      // console.log(JSON.stringify(novelsData, null, 2));
       if (searchQuery) { 
         if (pageNumber === 1) {
           setNovels(novelsData);
@@ -106,9 +106,9 @@ const SourceList = () => {
   useEffect(() => {
     if (searchQuery) {
       fetchNovels(searchPage, searchQuery);
-      setLoading(true); // Fetch search results with searchPage
+      setLoading(true);
     } else {
-      fetchNovels(page); // Fetch popular novels with normal page
+      fetchNovels(page);
     }
   }, [page, searchPage, searchQuery, fetchNovels]);
 
@@ -135,7 +135,9 @@ const SourceList = () => {
   const handleNavigateToNovel = async (novelPageURL: string) => {
     try {
       const novelData = await fetchFunctions.fetchSingleNovel(novelPageURL);
+      // console.log(novelData, ' inside of source');
       router.navigate({ 
+        // @ts-ignore since pathname only works this way. Can remove and try to fix error.
         pathname: `novel/[id]`, 
         params: {
           ...novelData,
