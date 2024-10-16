@@ -25,15 +25,15 @@ interface novelProgress{
 };
 
 type typeSearchParams = {
-  id: string | number,
+  id: string,
   imageURL: string,
   description: string,
   author: string,
   genres: string,
-  url: string,
+  novelPageURL: string,
   sourceName: string,
   title: string,
-  chapterCount: number,
+  chapterCount: string,
 };
 const Synopsis = () => {
   const { appliedTheme } = useThemeContext();
@@ -42,6 +42,7 @@ const Synopsis = () => {
   const rotation = useRef(new Animated.Value(0)).current;
   const [chapterList, setChapterList] = useState<Chapter[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [isInitialLoading, setIsInitialLoading] = useState<boolean>(true);
   const [page, setPage] = useState<number>(1);
   const [hasMoreChapters, setHasMoreChapters] = useState<boolean>(true);
 
@@ -67,8 +68,9 @@ const Synopsis = () => {
   };
 
   const novelData = useLocalSearchParams<typeSearchParams>();
+  const novelId = Number(novelData.id);
   const sourceName = novelData.sourceName;
-  console.log(JSON.stringify(novelData,null,2));
+  // console.log(JSON.stringify(novelData,null,2));
   const genresArray = novelData.genres.split(',').map(genre => genre.trim());
   const imageURL = Array.isArray(novelData.imageURL) ? novelData.imageURL[0] : novelData.imageURL;
   const [showFullDescription, setShowFullDescription] = useState(false);
@@ -101,7 +103,7 @@ const Synopsis = () => {
       }
       setLoading(true);
       try {
-        const chapters = await fetchFunctions.fetchChapters(novelData.url, pageNumber);
+        const chapters = await fetchFunctions.fetchChapters(novelData.novelPageURL, pageNumber);
         if (chapters && chapters.length > 0) {
           setChapterList((prevChapters) => [...prevChapters, ...chapters]);
           setHasMoreChapters(chapters.length > 0);
@@ -112,12 +114,13 @@ const Synopsis = () => {
         console.error('Error fetching chapters:', error);
       } finally {
         setLoading(false);
+        setIsInitialLoading(false);
       }
     };
     if (fetchFunctions) {
       loadChapters(page);
     }
-  }, [fetchFunctions, page, novelData.url]);
+  }, [fetchFunctions, page, novelData.novelPageURL]);
 
   const [readingProgress, setReadingProgress] = useState<novelProgress>({ id: 0, novelId: 0, readerProgress: 0, chapterIndex: 0 });
   useFocusEffect(
@@ -141,7 +144,7 @@ const Synopsis = () => {
     }
     fetchNovelProgress();
     return () => {
-      console.log('This novel is now unfocused.');
+      // console.log('This novel is now unfocused.');
     }
     }, [])
   );
@@ -174,14 +177,13 @@ const Synopsis = () => {
   const renderChapterItem = ({ item, index }: { item: Chapter, index: number }) => {
     const chapterIndexOfItem = index + 1;
     const defaultChapterIndex = readingProgress.chapterIndex || 0;
-    // console.log(readingProgress.chapterIndex);
     return(
       <TouchableOpacity key={item.title} style={[styles.chapterContainer, { paddingVertical: 12, position: 'relative' }]} onPress={() => handleNavigateToChapter(item.url)}>
         <Text style={{ fontSize: 16, color: chapterIndexOfItem >= defaultChapterIndex ? appliedTheme.colors.text : 'gray', width: '90%' }} numberOfLines={1} ellipsizeMode='tail'>
           {item.title}
         </Text>
         {chapterIndexOfItem === defaultChapterIndex && <Text style={{position: 'absolute', color: appliedTheme.colors.text, top: 35, left: 0}}>Reading progress: {readingProgress.readerProgress}%</Text>}
-        {novelData.id === "[id]" ? null : <MaterialIcons size={36} name="download" color={chapterIndexOfItem >= defaultChapterIndex ? appliedTheme.colors.text : 'gray'} style={{ zIndex: 3 }} onPress={() => handleDownloadChapter(item.url, item.title, novelData.id)}/> }
+        {novelData.id === "[id]" ? null : <MaterialIcons size={36} name="download" color={chapterIndexOfItem >= defaultChapterIndex ? appliedTheme.colors.text : 'gray'} style={{ zIndex: 3 }} onPress={() => handleDownloadChapter(item.url, item.title, novelId)}/> }
       </TouchableOpacity>
     );
   };
@@ -252,7 +254,7 @@ const Synopsis = () => {
     </View>
   );
 
-  if (loading) {
+  if (isInitialLoading) {
     return (
       <View style={{ flex: 1, backgroundColor: appliedTheme.colors.background }}>
         <NovelSkeleton></NovelSkeleton>
@@ -269,7 +271,7 @@ const Synopsis = () => {
         onEndReached={handleLoadMore}
         onEndReachedThreshold={0.2}
         ListFooterComponent={
-          loading ? (
+          loading && !isInitialLoading ? (
             <ActivityIndicator size="large" color={appliedTheme.colors.primary} />
           ) : !hasMoreChapters ? (
             <Text style={{ textAlign: 'center', color: appliedTheme.colors.text, marginTop: 24 }}>No more chapters</Text>
