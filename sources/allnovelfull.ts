@@ -125,17 +125,24 @@ const fetchSingleNovel = async (novelPageURL: string) => {
     }
 };
 
-const fetchChapters = async (novelPageURL: string, page: number) => {
+const fetchChapters = async (novelPageURL: string, chapterCount: number) => {
     try {
-        const url = `${novelPageURL}?page=${page}`;
-        const result = await axios.get(url);
+        const actualChapterCount = chapterCount-1; // lazy fix :)
+        const url = `${novelPageURL}#tab-chapters-title`;
+        const parts = url.split('/');
+        const novelTitle = parts[parts.length - 1];
+        const APIurl = `https://allnovelfull.blog/ajax/chapter-archive?novelId=${novelTitle}`
+        const result = await axios.get(APIurl);
         const body = result.data;
         const loadedCheerio = cheerio.load(body);
-
-        return loadedCheerio('.list-chapter li a').map((_: number, el: cheerio.Element) => ({
-            title: loadedCheerio(el).text().trim(),
-            url: `${sourceURL}${loadedCheerio(el).attr('href')}`,
-        })).get();
+        const rowToGet = loadedCheerio('.panel-body .row').eq(actualChapterCount);
+        const titlesAndHrefs = rowToGet.find('ul li a').map((_: number, el: cheerio.Element) => {
+            return {
+                title: loadedCheerio(el).text().trim(),
+                url: `${loadedCheerio(el).attr('href')}`,
+            };
+        }).get();
+        return titlesAndHrefs;
     } catch (error) {
         console.error('Error fetching chapters:', error);
         return [];
@@ -161,14 +168,13 @@ const fetchChapterContent = async (chapterPageURL: string) => {
             closeChapters: {},
         };
 
-        const chapterTitle = loadedCheerio('.chapter-title').text();
+        const chapterTitle = loadedCheerio('.chr-title').text();
         chapterContent.title = chapterTitle;
 
-        loadedCheerio('#chapter-content p').each((_: number, el: cheerio.Element) => {
+        loadedCheerio('#chr-content p').each((_: number, el: cheerio.Element) => {
             chapterContent.content.push(loadedCheerio(el).text().trim());
         });
 
-        // Add next chapter
         const nextChapterElement = loadedCheerio('#next_chap');
         if (nextChapterElement.length && !nextChapterElement.hasClass('disabled')) {
             const nextChapter = nextChapterElement.attr('href');
@@ -178,7 +184,6 @@ const fetchChapterContent = async (chapterPageURL: string) => {
             }
         }
 
-        // Add previous chapter
         const prevChapterElement = loadedCheerio('#prev_chap');
         if (prevChapterElement.length && !prevChapterElement.hasClass('disabled')) {
             const prevChapter = prevChapterElement.attr('href');
@@ -187,10 +192,9 @@ const fetchChapterContent = async (chapterPageURL: string) => {
                 chapterContent.closeChapters['prevChapter'] = prevChapterURL;
             }
         }
-
         return chapterContent;
     } catch (error) {
-        console.error('Error fetching chapters:', error);
+        console.error('Error fetching single chapter content:', error);
         return { title: '', content: [], closeChapters: {} };
     }
 };

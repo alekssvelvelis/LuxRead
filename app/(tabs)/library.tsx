@@ -5,11 +5,8 @@ import SearchBar from '@/components/SearchBar';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { useNovelRowsContext } from '@/contexts/NovelRowsContext';
 
-import getSourceFunctions from '@/utils/getSourceFunctions';
-
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Image } from 'expo-image'
-
 import { getAllLibraryNovels, deleteLibraryNovel, deleteNovelChapters, setupSourcesTable, clearTable, dropTable, setupLibraryNovelsTable, setupNovelChaptersTable, setupDownloadedChaptersTable} from '@/database/ExpoDB';
 
 interface Data{
@@ -22,22 +19,10 @@ interface Data{
     novelSource: string;
 }
 
-interface novelData{
-  title: string;
-  imageURL: string;
-  description: string;
-  author: string;
-  genres: string;
-  url: string;
-  // chapters: object;
-  chapterCount: number;
-  novelSource: string;
-}
-
 export default function Library() {
 
-
   useEffect(() =>{
+    // unsubscribe();
     // dropTable('libraryNovels');
     // dropTable('novelChapters');
     // dropTable('sources');
@@ -59,7 +44,7 @@ export default function Library() {
     useCallback(() => {
       const fetchNovels = async () => {
         try {
-          const data = await getAllLibraryNovels('libraryNovels');
+          const data: Data[] = await getAllLibraryNovels('libraryNovels');
           // console.log(JSON.stringify(data, null,2), ' inside of library.tsx');
           setNovelsData(data);
         } catch (error) {
@@ -122,26 +107,15 @@ export default function Library() {
     };
   };
 
-  //
-  const handleSourceFunctions = async (novelSource: string) => {
+  const handleNavigateToNovel = async (novelSource: string, novelId: number) => {
     try {
-      const data = getSourceFunctions(novelSource);
-      return data;
-    } catch (error) {
-      console.error('Error getting source functions in library', error);
-      return [];
-    }
-  }
-
-  const handleNavigateToNovel = async (novelPageURL: string, novelSource: string, novelId: number) => {
-    const functions =  await handleSourceFunctions(novelSource);
-    try {
-      const novelData: novelData = await functions.fetchSingleNovel(novelPageURL);
+      const relevantNovelData = novelsData.find(novel => novel.id === novelId);
+      console.log(relevantNovelData);
       router.navigate({
         // @ts-ignore since pathname only works this way. Can remove and try to fix error.
         pathname: `novel/[id]`,
         params: {
-          ...novelData,
+          ...relevantNovelData,
           sourceName: novelSource,
           id: novelId
         },
@@ -171,7 +145,7 @@ export default function Library() {
                 <TouchableOpacity
                   key={index}
                   style={[styles.novelContainer, { width: novelStyle.width }]}
-                  onPress={() => handleNavigateToNovel(novel.novelPageURL, novel.novelSource, novel.id)}
+                  onPress={() => handleNavigateToNovel(novel.novelSource, novel.id)}
                   onLongPress={() => handleDeleteNovel(novel.id)}
                 >
                   <Image

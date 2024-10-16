@@ -13,6 +13,7 @@ import { rgbToRgba } from '@/utils/rgbToRgba';
 
 import { PullUpModal } from '@/components/PullUpModal';
 import ReaderOptions from '@/components/settings/ReaderOptions';
+import ChapterSkeleton from '@/components/skeletons/ChapterSkeleton';
 
 import { useSpeech } from '@/hooks/useSpeech';
 
@@ -32,6 +33,12 @@ interface ReaderOptions {
   fontFamily: string
 }
 
+type typeSearchParams = {
+  chapterPageURL: string,
+  sourceName: string,
+  title: string,
+};
+
 const ChapterPage = () => {
   const [content, setContent] = useState<Content>({ title: '', content: [], closeChapters: {} });
   const [loading, setLoading] = useState<boolean>(false);
@@ -39,9 +46,10 @@ const ChapterPage = () => {
   const [readerModalVisible, setReaderModalVisible] = useState<boolean>(false);
 
   const { appliedTheme } = useThemeContext();
-  const propData = useLocalSearchParams();
+  const propData = useLocalSearchParams<typeSearchParams>();
   const chapterPageURL: string | string[] = propData.chapterPageURL;
   const sourceName: string | string[] = propData.sourceName;
+  const title: string | string[] = propData.title;
   const router = useRouter();
 
   const [readerOptions, setReaderOptions] = useState<ReaderOptions>({
@@ -109,11 +117,10 @@ const ChapterPage = () => {
       loadChapterContent();
     }
   }, [fetchFunctions, chapterPageURL, sourceName]);
-
+  // console.log(JSON.stringify(content, null, 2));
 
   const [chapterText, setChapterText] = useState<string>('');
   const { isSpeaking, handleSpeaking } = useSpeech(chapterText);
-
 
   const handleBackPress = () => {
     router.back();
@@ -144,29 +151,18 @@ const ChapterPage = () => {
 
   const overlayBase = appliedTheme.colors.elevation.level2;
   const overlayBackgroundColor = rgbToRgba(overlayBase, 0.9);
-
-  const [scrollOffset, setScrollOffset] = useState(0);
-  const [contentHeight, setContentHeight] = useState(0);
-  const [scrollViewHeight, setScrollViewHeight] = useState(0);
-
+  const [scrollPercentage, setScrollPercentage] = useState(0);
   const handleScroll = (event: any) => {
-    const offsetY = event.nativeEvent.contentOffset.y;
-    setScrollOffset(offsetY);
+    const contentHeight = event.nativeEvent.contentSize.height;
+    const scrollViewHeight = event.nativeEvent.layoutMeasurement.height;
+    const scrollPosition = event.nativeEvent.contentOffset.y;
+    const scrollPercentage = parseFloat(((scrollPosition / (contentHeight - scrollViewHeight)) * 100).toFixed(1));
+    setScrollPercentage(Math.min(Math.max(scrollPercentage, 0), 100));
   };
 
-  const handleContentSizeChange = (contentHeight: number) => {
-    setContentHeight(contentHeight);
-  };
-
-  const handleLayout = (event: any) => {
-    const { height } = event.nativeEvent.layout;
-    setScrollViewHeight(height);
-  };
-
-  const scrollPercentage = contentHeight > 0 ? ((scrollOffset / (contentHeight - scrollViewHeight)) * 100).toFixed(1) : 0;
   // ((contentHeight-scrollViewHeight)/100)*readerProgress) is used to calculate where it should autoscroll when opening a chapter
   const chapterNumber = content.title.match(/\d/);
-  const chapterIndex = chapterNumber ? parseInt(chapterNumber[0], 10) : null;
+  const chapterIndex = chapterNumber ? parseInt(chapterNumber[0], 10) : 1;
   const handleSaveChapterData = async (novelTitle: string, scrollPercentage: number, chapterIndex: number) => {
     try {
       console.log(novelTitle, scrollPercentage, chapterIndex);
@@ -175,23 +171,21 @@ const ChapterPage = () => {
     } catch (error) {
       console.error('Error saving chapter:', error);
     }
-   
   }
 
   if (loading) {
     return (
       <View style={{ flex: 1, backgroundColor: appliedTheme.colors.background }}>
-        <ActivityIndicator size="large" color={appliedTheme.colors.primary} />
+        <ChapterSkeleton></ChapterSkeleton>
       </View>
     );
   }
-
   return (
     <View style={{ flex: 1 }}>
       {isOverlayVisible && (
         <View style={[styles.header, { backgroundColor: overlayBackgroundColor, flexDirection: 'row' }]}>
           <View style={{flex: 1, flexDirection: 'row', marginBottom: 6}}>
-            <Ionicons name={'arrow-back'} size={32} color={appliedTheme.colors.text} style={{ marginLeft: '2%' }} onPress={() => handleSaveChapterData(propData.title, scrollPercentage, chapterIndex)} />
+            <Ionicons name={'arrow-back'} size={32} color={appliedTheme.colors.text} style={{ marginLeft: '2%' }} onPress={() => handleSaveChapterData(title, scrollPercentage, chapterIndex)} />
             <Text style={{ color: appliedTheme.colors.text, fontSize: 20, marginBottom: 4, marginLeft: 12, maxWidth: '80%' }} numberOfLines={1}>{content.title}</Text>
             {isSpeaking ? <Ionicons name={'pause-circle-outline'} size={32} color={appliedTheme.colors.text} style={{ marginLeft: '3%', position: 'absolute', right: 8 }} onPress={() => handleSpeaking()}/> : <Ionicons name={'play-circle-outline'} size={32} color={appliedTheme.colors.text} style={{ marginLeft: '3%', position: 'absolute', right: 8 }} onPress={() => handleSpeaking()}/>}
           </View>
@@ -199,8 +193,6 @@ const ChapterPage = () => {
       )}
       <ScrollView
         contentContainerStyle={[styles.container, { backgroundColor: appliedTheme.colors.background }]}
-        onLayout={handleLayout}
-        onContentSizeChange={handleContentSizeChange}
         onScroll={handleScroll}
         scrollEventThrottle={16}
       >
@@ -233,7 +225,7 @@ const ChapterPage = () => {
             ))}
           </View>
           <View style={{ width: '100%', alignItems: 'center' }}>
-            <Text style={[styles.readingButtonText, { color: appliedTheme.colors.text, marginVertical: 4 }]}>
+            <Text style={[styles.readingButtonText, { color: appliedTheme.colors.text, marginVertical: 4, marginTop: 12, width: '100%', textAlign: 'center' }]}>
               Finished {content.title}
             </Text>
           </View>
@@ -252,9 +244,9 @@ const ChapterPage = () => {
         <View style={[styles.footer, { backgroundColor: overlayBackgroundColor }]}>
           <View style={{ width: '90%', flexDirection: 'row', justifyContent: 'space-around'}}>
             <View style={{width: '33%', justifyContent:'center', alignItems:'center'}}>
-              {content.closeChapters['prevChapter'] &&
-                <Ionicons name={'arrow-back'} size={32} color={appliedTheme.colors.text} onPress={() => handleNavigateCloseChapter(content.closeChapters['prevChapter'])}/> 
-              }
+              {/* {content.closeChapters['prevChapter'] && */}
+                <Ionicons name={'arrow-back'} size={32} color={content.closeChapters['prevChapter'] ? appliedTheme.colors.text : 'rgba(255,255,255,0.5)'} onPress={content.closeChapters['prevChapter'] ? () => handleNavigateCloseChapter(content.closeChapters['prevChapter']) : null}/> 
+              {/* } */}
             </View>
             <View style={{width: '33%', justifyContent:'center', alignItems:'center'}}>
               <Ionicons name={'cog'} size={32} color={appliedTheme.colors.text} onPress={handleReaderOptionsOpen} />

@@ -46,6 +46,8 @@ async function setupLibraryNovelsTable(){
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 title TEXT NOT NULL,
                 author TEXT NOT NULL,
+                description TEXT NOT NULL,
+                genres TEXT NOT NULL,
                 chapterCount INTEGER NOT NULL,
                 imageURL TEXT NOT NULL,
                 novelPageURL TEXT NOT NULL,
@@ -60,14 +62,15 @@ async function setupLibraryNovelsTable(){
     }
 }
 
-async function insertLibraryNovel(title: string, author: string, chapterCount: number, imageURL: string, novelPageURL: string, novelSource: string) {
+async function insertLibraryNovel(title: string, author: string, description: string, genres: string, chapterCount: number, imageURL: string, novelPageURL: string, novelSource: string) {
     const db = await SQLite.openDatabaseAsync('luxreadDatabase', {
         useNewConnection: true
     });
     try {
+        console.log(novelPageURL);
         const result = await db.runAsync(
-          `INSERT INTO libraryNovels (title, author, chapterCount, imageURL, novelPageURL, novelSource) VALUES (?, ?, ?, ?, ?, ?)`,
-          [title, author, chapterCount, imageURL, novelPageURL, novelSource]
+          `INSERT INTO libraryNovels (title, author, description, genres, chapterCount, imageURL, novelPageURL, novelSource) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+          [title, author, description, genres, chapterCount, imageURL, novelPageURL, novelSource]
         );
         console.log(`Novel ${title}, written by ${author} succesfully added. Extra data: ${imageURL} and ${novelPageURL} and ${result.lastInsertRowId}`);
         return result.lastInsertRowId;
@@ -226,7 +229,6 @@ interface ChapterRow{
     chapterIndex: number;
 }
 
-
 async function getAllNovelChapters(novelTitle: string) {
     const db = await SQLite.openDatabaseAsync('luxreadDatabase', {
         useNewConnection: true
@@ -273,9 +275,11 @@ async function getAllNovelChapters(novelTitle: string) {
 }
 
 interface NovelRow {
-    id: number | string;
+    id: number;
     title: string;
     author: string;
+    description: string;
+    genres: string | string[];
     chapterCount: number;
     imageURL: string;
     novelPageURL: string;
@@ -294,6 +298,8 @@ async function getAllLibraryNovels(tableName: string) {
                 id: row.id,
                 title: row.title,
                 author: row.author,
+                description: row.description,
+                genres: row.genres,
                 chapterCount: row.chapterCount,
                 imageURL: row.imageURL,
                 novelPageURL: row.novelPageURL,

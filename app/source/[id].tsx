@@ -1,10 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions, FlatList } from 'react-native';
 
-import { createShimmerPlaceholder } from 'react-native-shimmer-placeholder'
-
 import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Image } from 'expo-image'; //  takes priority over react-native image tag to read static images
 
 import { useThemeContext } from '@/contexts/ThemeContext';
@@ -12,11 +9,7 @@ import getSourceFunctions from '@/utils/getSourceFunctions';
 import { insertLibraryNovel, getNovelsBySource } from '@/database/ExpoDB';
 
 import SearchBar from '@/components/SearchBar';
-
-interface queriedData{
-  id: number;
-  title: string;
-}
+import SourcesSkeleton from '@/components/skeletons/SourcesSkeleton';
 
 const SourceList = () => {
   const { sourceName } = useLocalSearchParams();
@@ -26,8 +19,6 @@ const SourceList = () => {
   const [queriedNovels, setQueriedNovels] = useState([]);
   const [page, setPage] = useState<number>(1);
   const [loading, setLoading] = useState<boolean>(false);
-
-  const ShimmerPlaceholder = createShimmerPlaceholder(LinearGradient);
   const router = useRouter();
 
   const [hasMore, setHasMore] = useState<boolean>(true);
@@ -96,8 +87,11 @@ const SourceList = () => {
 
   const handleSaveNovel = async (novel) => {
     try {
-      const result = await insertLibraryNovel(novel.title, novel.author, novel.chapterCount, novel.imageURL, novel.novelPageURL, sourceName);
-      setQueriedNovels(prevQueriedNovels => [...prevQueriedNovels, { id: result, title: novel.title }]); // Add the saved novel to queriedNovels
+      const allNovelInfo = await fetchFunctions.fetchSingleNovel(novel.novelPageURL);
+      const chapterCount = parseInt(allNovelInfo.chapterCount);
+      const genres = String(allNovelInfo.genres);
+      const result = await insertLibraryNovel(allNovelInfo.title, allNovelInfo.author, allNovelInfo.description, genres, chapterCount, allNovelInfo.imageURL, allNovelInfo.url, sourceName);
+      setQueriedNovels(prevQueriedNovels => [...prevQueriedNovels, { id: result, title: allNovelInfo.title }]); // Add the saved novel to queriedNovels
     } catch (error) {
       console.error('Error saving novel:', error);
     }
@@ -109,6 +103,7 @@ const SourceList = () => {
       setLoading(true);
     } else {
       fetchNovels(page);
+      setLoading(true);
     }
   }, [page, searchPage, searchQuery, fetchNovels]);
 
@@ -123,8 +118,10 @@ const SourceList = () => {
     if (!loading && hasMore) {
       if (searchQuery) {
         setSearchPage(prevPage => prevPage + 1);
+        console.log(novels.length);
       } else {
         setPage(prevPage => prevPage + 1);
+        console.log(novels.length);
       }
     }
   };
@@ -135,7 +132,6 @@ const SourceList = () => {
   const handleNavigateToNovel = async (novelPageURL: string) => {
     try {
       const novelData = await fetchFunctions.fetchSingleNovel(novelPageURL);
-      // console.log(novelData, ' inside of source');
       router.navigate({ 
         // @ts-ignore since pathname only works this way. Can remove and try to fix error.
         pathname: `novel/[id]`, 
@@ -171,21 +167,6 @@ const SourceList = () => {
       </TouchableOpacity>
     );
   };
-  
-  const Skeleton = () => (
-    <View style={[styles.novelItem, { width: novelWidth }]}>
-    <ShimmerPlaceholder
-      shimmerColors={[appliedTheme.colors.elevation.level3, appliedTheme.colors.elevation.level1, appliedTheme.colors.elevation.level3]} //maybe use #5c5b5b for shimmer, replace elevation.level1
-      style={[styles.novelLogo, { height: 250 }]}
-    >
-    </ShimmerPlaceholder>
-    <ShimmerPlaceholder
-      shimmerColors={[appliedTheme.colors.elevation.level3, appliedTheme.colors.elevation.level1, appliedTheme.colors.elevation.level3]} //read 6 lines up
-      style={[styles.novelLogo, { height: 24, marginTop: 6 }]}
-    >
-    </ShimmerPlaceholder>
-  </View>
-  );
 
   return (
     <View style={[styles.container, { backgroundColor: appliedTheme.colors.background }]}>
@@ -205,7 +186,7 @@ const SourceList = () => {
         contentContainerStyle={styles.scrollViewContent}
         onEndReached={handleLoadMore}
         onEndReachedThreshold={0.5}
-        ListFooterComponent={loading ?  <Skeleton/> : null}
+        ListFooterComponent={loading ?  <SourcesSkeleton/> : null}
       />
     </View>
   );
