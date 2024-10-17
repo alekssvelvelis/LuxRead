@@ -16,6 +16,7 @@ import NetInfoHelper from '@/components/NetInfoHelper';
 const SourceList = () => {
   const { isConnected } = useNetwork();
   const { sourceName } = useLocalSearchParams();
+  const sourceNameString = String(sourceName);
   const { appliedTheme } = useThemeContext();
 
   if(!isConnected){
@@ -32,7 +33,7 @@ const SourceList = () => {
   }
 
   const [novels, setNovels] = useState<object>([]);
-  const [queriedNovels, setQueriedNovels] = useState([]);
+  const [queriedNovels, setQueriedNovels] = useState<object>([]);
   const [page, setPage] = useState<number>(1);
   const [loading, setLoading] = useState<boolean>(false);
   const router = useRouter();
@@ -43,9 +44,9 @@ const SourceList = () => {
 
   const [fetchFunctions, setFetchFunctions] = useState<any>(null);
   useEffect(() => {
-    if (sourceName) {
+    if (sourceNameString) {
       try {
-        const functions = getSourceFunctions(sourceName);
+        const functions = getSourceFunctions(sourceNameString);
         setFetchFunctions(functions);
       } catch (error) {
         console.error('Error loading source functions:', error);
@@ -56,7 +57,7 @@ const SourceList = () => {
   useEffect(() => {
     const fetchNovels = async () => {
       try {
-        const data = await getNovelsBySource(sourceName);
+        const data = await getNovelsBySource(sourceNameString);
         setQueriedNovels(data);
       } catch (error) {
         console.error("Failed to fetch queried novels:", error);
@@ -134,10 +135,8 @@ const SourceList = () => {
     if (!loading && hasMore) {
       if (searchQuery) {
         setSearchPage(prevPage => prevPage + 1);
-        console.log(novels.length);
       } else {
         setPage(prevPage => prevPage + 1);
-        console.log(novels.length);
       }
     }
   };
@@ -148,6 +147,7 @@ const SourceList = () => {
   const handleNavigateToNovel = async (novelPageURL: string) => {
     try {
       const novelData = await fetchFunctions.fetchSingleNovel(novelPageURL);
+      console.log(novelData);
       router.navigate({ 
         // @ts-ignore since pathname only works this way. Can remove and try to fix error.
         pathname: `novel/[id]`, 
@@ -197,7 +197,7 @@ const SourceList = () => {
       <FlatList
         data={novels}
         renderItem={renderItem}
-        keyExtractor={(item, index) => index.toString()}
+        keyExtractor={(_, index) => index.toString()}
         numColumns={2}
         contentContainerStyle={styles.scrollViewContent}
         onEndReached={handleLoadMore}

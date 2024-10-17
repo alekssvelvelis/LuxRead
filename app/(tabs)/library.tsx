@@ -108,7 +108,7 @@ export default function Library() {
   const handleNavigateToNovel = async (novelSource: string, novelId: number) => {
     try {
       const relevantNovelData = novelsData.find(novel => novel.id === novelId);
-      console.log(JSON.stringify(relevantNovelData,null,2));
+      // console.log(JSON.stringify(relevantNovelData,null,2));
       router.navigate({
         // @ts-ignore since pathname only works this way. Can remove and try to fix error.
         pathname: `novel/[id]`,

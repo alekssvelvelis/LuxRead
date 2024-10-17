@@ -187,7 +187,7 @@ const fetchSingleNovel = async (novelPageURL: string) => {
             description,
             author,
             genres,
-            url: novelPageURL,
+            novelPageURL: novelPageURL,
             chapterCount,
         };
     } catch (error) {
@@ -215,8 +215,10 @@ const fetchChapters = async (novelPageURL: string, page: number) => {
         });
         return chapters;
     } catch (error) {
-        console.error('Error fetching chapters for ', novelPageURL);
-        return [];
+        return {
+            success: false,
+            error: error, // You may return the error object if needed
+        };
     }
 }
 

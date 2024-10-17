@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated, FlatList, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator } from 'react-native';
 
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { useNetwork } from '@/contexts/NetworkContext';
@@ -39,10 +39,8 @@ type typeSearchParams = {
 const Synopsis = () => {
   const { appliedTheme } = useThemeContext();
   const { isConnected } = useNetwork();
-  console.log(isConnected);
+  // console.log(isConnected);
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
-  const [isRotated, setIsRotated] = useState<boolean>(false);
-  const rotation = useRef(new Animated.Value(0)).current;
   const [chapterList, setChapterList] = useState<Chapter[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [isInitialLoading, setIsInitialLoading] = useState<boolean>(true);
@@ -50,25 +48,6 @@ const Synopsis = () => {
   const [hasMoreChapters, setHasMoreChapters] = useState<boolean>(true);
 
   const router = useRouter();
-
-  const toggleRotation = () => {
-    Animated.timing(rotation, {
-      toValue: isRotated ? 0 : 1,
-      duration: 300,
-      useNativeDriver: true,
-    }).start();
-    setIsRotated(!isRotated);
-    setIsModalVisible(!isModalVisible);
-  };
-
-  const rotateInterpolate = rotation.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '180deg'],
-  });
-
-  const animatedStyle = {
-    transform: [{ rotate: rotateInterpolate }],
-  };
 
   const novelData = useLocalSearchParams<typeSearchParams>();
   const novelId = Number(novelData.id);
@@ -107,6 +86,10 @@ const Synopsis = () => {
       setLoading(true);
       try {
         const chapters = await fetchFunctions.fetchChapters(novelData.novelPageURL, pageNumber);
+        // console.log(JSON.stringify(chapters, null, 2));
+        if(chapters.error.message === "Network Error"){
+          console.log(1);
+        }
         if (chapters && chapters.length > 0) {
           setChapterList((prevChapters) => [...prevChapters, ...chapters]);
           setHasMoreChapters(chapters.length > 0);
@@ -114,7 +97,7 @@ const Synopsis = () => {
           setHasMoreChapters(false);
         }
       } catch (error) {
-        console.error('Error fetching chapters:', error);
+        console.log(error, '11231231231');
       } finally {
         setLoading(false);
         setIsInitialLoading(false);
@@ -177,9 +160,12 @@ const Synopsis = () => {
     }
   };
 
-  const renderChapterItem = ({ item, index }: { item: Chapter, index: number }) => {
+  const RenderChapterItem = ({ item, index }: { item: Chapter, index: number }) => {
     const chapterIndexOfItem = index + 1;
     const defaultChapterIndex = readingProgress.chapterIndex || 0;
+    if(!isConnected){
+      return <Text style={{color: appliedTheme.colors.text}}>You're offline, these are your downloaded chapters</Text>
+    }
     return(
       <TouchableOpacity key={item.title} style={[styles.chapterContainer, { paddingVertical: 12, position: 'relative' }]} onPress={() => handleNavigateToChapter(item.url)}>
         <Text style={{ fontSize: 16, color: chapterIndexOfItem >= defaultChapterIndex ? appliedTheme.colors.text : 'gray', width: '90%' }} numberOfLines={1} ellipsizeMode='tail'>
@@ -191,7 +177,7 @@ const Synopsis = () => {
     );
   };
 
-  const renderListHeader = () => (
+  const RenderListHeader = () => (
     <View style={{minWidth: '100%'}}>
       <Stack.Screen
         options={{
@@ -247,11 +233,10 @@ const Synopsis = () => {
        <View style={{ flexDirection: 'row'}}>
         <View style={[styles.chapterContainer, {}]}>
           <Text style={[styles.totalChapters, { color: appliedTheme.colors.text }]}>Chapters: {novelData.chapterCount}</Text>
-          <TouchableOpacity onPress={toggleRotation}>
-            <Animated.View style={[animatedStyle]}>
-              <MaterialIcons size={36} name="keyboard-double-arrow-down" color={appliedTheme.colors.text}/> 
-            </Animated.View>
-          </TouchableOpacity>
+          <View style={{flexDirection: 'row'}}>
+              <Ionicons size={36} name="search-outline" color={appliedTheme.colors.text} style={{marginRight: 16,}}/>
+              <Ionicons size={36} name="download-outline" color={appliedTheme.colors.text}/> 
+          </View>
         </View>
       </View>
     </View>
@@ -269,24 +254,26 @@ const Synopsis = () => {
     <View style={[styles.container, {backgroundColor: appliedTheme.colors.background}]}>
       <FlatList
         data={chapterList}
-        renderItem={renderChapterItem}
+        renderItem={RenderChapterItem}
         keyExtractor={(item) => item.url}
         onEndReached={handleLoadMore}
         onEndReachedThreshold={0.2}
         ListFooterComponent={
           loading && !isInitialLoading ? (
             <ActivityIndicator size="large" color={appliedTheme.colors.primary} />
-          ) : !hasMoreChapters ? (
+          ) : !isConnected ? (
+            <Text style={{ textAlign: 'center', color: appliedTheme.colors.text, marginTop: 24 }}>You're offline, these are your downloaded chapters</Text>
+          ) : !hasMoreChapters && isConnected ? (
             <Text style={{ textAlign: 'center', color: appliedTheme.colors.text, marginTop: 24 }}>No more chapters</Text>
           ) : null
         }
-        ListHeaderComponent={renderListHeader}
+        ListHeaderComponent={RenderListHeader}
       />
+      
       <PullUpModal
         visible={isModalVisible}
         onClose={() => {
           setIsModalVisible(false);
-          toggleRotation();
         }}
       >
         <Text>abcdefg</Text>
