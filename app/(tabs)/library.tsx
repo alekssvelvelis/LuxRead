@@ -4,7 +4,6 @@ import { StyleSheet, View, Text, ScrollView, Dimensions, TouchableOpacity } from
 import SearchBar from '@/components/SearchBar';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { useNovelRowsContext } from '@/contexts/NovelRowsContext';
-
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Image } from 'expo-image'
 import { getAllLibraryNovels, deleteLibraryNovel, deleteNovelChapters, setupSourcesTable, clearTable, dropTable, setupLibraryNovelsTable, setupNovelChaptersTable, setupDownloadedChaptersTable} from '@/database/ExpoDB';
@@ -20,9 +19,8 @@ interface Data{
 }
 
 export default function Library() {
-
   useEffect(() =>{
-    // unsubscribe();
+
     // dropTable('libraryNovels');
     // dropTable('novelChapters');
     // dropTable('sources');

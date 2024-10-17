@@ -211,7 +211,6 @@ const fetchChapters = async (novelPageURL: string, page: number) => {
         loadedCheerio('.chapter-list li a').each((_: number, el: cheerio.Element) => {
             const title = loadedCheerio(el).attr('title') || '';
             const chapterUrl = `${sourceURL}${loadedCheerio(el).attr('href')}`;
-
             chapters.push({ title, url: chapterUrl });
         });
         return chapters;

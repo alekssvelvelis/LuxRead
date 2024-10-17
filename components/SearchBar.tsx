@@ -3,8 +3,8 @@ import { View, Pressable, TextInput, StyleSheet, Text, Animated } from 'react-na
 import { Ionicons } from '@expo/vector-icons';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { PullUpModal } from './PullUpModal'; // Adjust the import path as necessary
-import { router, usePathname } from 'expo-router';
-
+import { usePathname } from 'expo-router';
+import useNavigateBack from '@/hooks/useNavigateBack';
 interface SearchBarProps {
   onSearchChange: (query: string) => void; // onSearchChange takes a string and returns nothing (void)
 }
@@ -18,7 +18,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearchChange }) => {
   
   const pathname = usePathname();
   const isCoreTab = pathname === '/library' || pathname === '/sources';
-
+  const navigateBack = useNavigateBack();
   const toggleRotation = () => {
     Animated.timing(rotation, {
       toValue: isRotated ? 0 : 1,
@@ -27,12 +27,6 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearchChange }) => {
     }).start();
     setIsRotated(!isRotated);
     setIsModalVisible(!isModalVisible);
-  };
-
-  const handleBackPress = () => {
-    if (!isCoreTab) {
-      router.back();
-    }
   };
 
   const clearSearch = () => {
@@ -57,7 +51,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearchChange }) => {
             name={isCoreTab ? 'search-outline' : 'arrow-back'} 
             size={26} 
             color={appliedTheme.colors.onSurfaceVariant} 
-            onPress={handleBackPress} 
+            onPress={navigateBack} 
           />
           <TextInput
             placeholder='Search'

@@ -5,15 +5,31 @@ import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
 import { Image } from 'expo-image'; //  takes priority over react-native image tag to read static images
 
 import { useThemeContext } from '@/contexts/ThemeContext';
+import { useNetwork } from '@/contexts/NetworkContext';
 import getSourceFunctions from '@/utils/getSourceFunctions'; 
 import { insertLibraryNovel, getNovelsBySource } from '@/database/ExpoDB';
 
 import SearchBar from '@/components/SearchBar';
 import SourcesSkeleton from '@/components/skeletons/SourcesSkeleton';
+import NetInfoHelper from '@/components/NetInfoHelper';
 
 const SourceList = () => {
+  const { isConnected } = useNetwork();
   const { sourceName } = useLocalSearchParams();
   const { appliedTheme } = useThemeContext();
+
+  if(!isConnected){
+    return(
+      <View style={[styles.container, {backgroundColor: appliedTheme.colors.background}]}>
+        <Stack.Screen 
+          options={{
+            headerShown: false,
+          }}
+        />
+        <NetInfoHelper></NetInfoHelper>
+      </View>
+    );
+  }
 
   const [novels, setNovels] = useState<object>([]);
   const [queriedNovels, setQueriedNovels] = useState([]);

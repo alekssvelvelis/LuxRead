@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated, FlatList, ActivityIndicator } from 'react-native';
 
 import { useThemeContext } from '@/contexts/ThemeContext';
+import { useNetwork } from '@/contexts/NetworkContext';
 import getSourceFunctions from '@/utils/getSourceFunctions';
 
 import { useLocalSearchParams, Stack, useRouter, useFocusEffect } from 'expo-router';
@@ -37,6 +38,8 @@ type typeSearchParams = {
 };
 const Synopsis = () => {
   const { appliedTheme } = useThemeContext();
+  const { isConnected } = useNetwork();
+  console.log(isConnected);
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
   const [isRotated, setIsRotated] = useState<boolean>(false);
   const rotation = useRef(new Animated.Value(0)).current;

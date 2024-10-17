@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const THEME_KEY = 'userTheme';
-const NUMBER_KEY = 3;
+// const NUMBER_KEY = 3;
 const READER_OPTIONS_KEY = 'readerOptions';
 
 export const saveUserTheme = async (theme: string) => {

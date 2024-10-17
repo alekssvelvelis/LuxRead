@@ -1,39 +1,22 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import NetInfo, { NetInfoState } from '@react-native-community/netinfo';
+import React from 'react';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useThemeContext } from '@/contexts/ThemeContext';
-
-const NetInfoHelper = ({ onConnectionChange }) => {
+import useNavigateBack from '@/hooks/useNavigateBack';
+const NetInfoHelper = ({ }) => {
     const { appliedTheme } = useThemeContext();
-    const [isConnected, setIsConnected] = useState<boolean | null>(null);
-
-    useEffect(() => {
-        const unsubscribe = NetInfo.addEventListener((state: NetInfoState) => {
-            setIsConnected(state.isConnected);
-
-            if (onConnectionChange) {
-                onConnectionChange(state.isConnected);
-            }
-        });
-
-        return () => {
-            unsubscribe();
-        };
-    }, [onConnectionChange]);
-
-    if (isConnected === false) {
-        return (
-            <View style={styles.container}>
-                <Text style={{ color: appliedTheme.colors.text }}>
-                    You are offline, check your internet connection
-                </Text>
-                <Text style={{ color: appliedTheme.colors.text, marginTop: 12, fontSize: 24 }}>¯\_(ツ)_/¯</Text>
-                <Text style={{ color: appliedTheme.colors.text, marginTop: 12, fontSize: 24 }}>(✖╭╮✖)</Text>
-            </View>
-        );
-    }
-
-    return null;
+    const navigateBack = useNavigateBack();
+    return (
+        <View style={styles.container}>
+            <Text style={{ color: appliedTheme.colors.text, marginVertical: 12, fontSize: 24 }}>(✖╭╮✖)</Text>
+            <Text style={{ color: appliedTheme.colors.text, fontSize: 18, textAlign: 'center' }}>
+                You are offline, check your internet connection
+            </Text>
+            {/* <Text style={{ color: appliedTheme.colors.text, marginTop: 12, fontSize: 24 }}>¯\_(ツ)_/¯</Text> */}
+            <TouchableOpacity style={[styles.returnButton, {backgroundColor: appliedTheme.colors.primary}]} onPress={navigateBack}>
+                <Text style={{ color: appliedTheme.colors.text, fontSize: 24 }}>Return</Text>
+            </TouchableOpacity>
+        </View>
+    );
 };
 
 const styles = StyleSheet.create({
@@ -44,6 +27,14 @@ const styles = StyleSheet.create({
         transform: [{ translateX: -50 }, { translateY: -50 }],
         alignItems: 'center',
     },
+    returnButton: {
+        marginTop: 12,
+        width: 100,
+        height: 40,
+        borderRadius: 8,
+        justifyContent: 'center',
+        alignItems: 'center'
+    }
 });
 
 export default NetInfoHelper;

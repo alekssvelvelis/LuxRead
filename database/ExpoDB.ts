@@ -387,5 +387,4 @@ async function dropTable(tableName: string) {
         console.error(`Failed to drop table "${tableName}":`, error);
     }
 }
-
 export { clearTable, getAllNovelChapters, setupSourcesTable, setupLibraryNovelsTable, insertLibraryNovel, getAllLibraryNovels, dropTable, deleteLibraryNovel, deleteNovelChapters, getTableStructure, getNovelsBySource, setupNovelChaptersTable, upsertNovelChapter, setupDownloadedChaptersTable, getDownloadedChapters, insertDownloadedChapter };
