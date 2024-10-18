@@ -4,21 +4,29 @@ import { useThemeContext } from '@/contexts/ThemeContext';
 import { Entypo } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import SearchBar from '@/components/SearchBar';
+import { getSources } from '@/database/ExpoDB';
+interface SourceData {
+    id: number,
+    sourceName: string,
+    baseImage: string,
+}
 export default function Sources() {
     const { appliedTheme } = useThemeContext();
     const router = useRouter();
-    const sources = [
-        {
-            id: 1,
-            sourceName: 'AllNovelFull',
-            imageUrl: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTyjJn_YwCifVmvArmnCMIVroxl61obyCE5WQ&s',
-        },
-        {
-            id: 2,
-            sourceName: 'LightNovelPub',
-            imageUrl: 'https://i.redd.it/ui97q7ehwqsa1.jpg',
-        },
-    ];
+    const [sources, setSources] = useState<SourceData[]>([]);
+    useEffect(() => {
+        const fetchSources = async () => {
+            try {
+              const databaseSources = await getSources();
+              // console.log(JSON.stringify(data, null,2), ' inside of library.tsx');
+              setSources(databaseSources);
+            } catch (error) {
+              console.error("Failed to fetch novels:", error);
+            }
+          };
+          fetchSources();
+      }, []);
+      console.log(JSON.stringify(sources, null, 2));
 
     const [query, setQuery] = useState("");
     const [filteredSources, setFilteredSources] = useState(sources);
@@ -26,11 +34,11 @@ export default function Sources() {
         setQuery(query);
     }
     useEffect(() => {
-        const filteredSources = sources.filter(source =>
-          source.sourceName.toLowerCase().includes(query.toLowerCase())
+        const filteredSources = sources.filter(sources =>
+            sources.sourceName.toLowerCase().includes(query.toLowerCase())
         );
         setFilteredSources(filteredSources);
-      }, [query]);
+      }, [query, sources]);
 
     const handleSourcePress = (sourceName: string) => {
         // @ts-ignore since pathname only works this way. Can remove and try to fix error.
@@ -51,7 +59,7 @@ export default function Sources() {
                     filteredSources.map((filteredSource, index) => { 
                     return(
                         <TouchableOpacity key={index} onPress={() => handleSourcePress(filteredSource.sourceName)} style={[styles.sourceContainer, {backgroundColor: appliedTheme.colors.elevation.level2}]}>
-                            <Image style={styles.sourceImage} source={{uri : filteredSource.imageUrl}}></Image>
+                            <Image style={styles.sourceImage} source={{uri : filteredSource.baseImage}}></Image>
                             <Text style={[styles.sourceText, {color: appliedTheme.colors.text}]}>{filteredSource.sourceName}</Text>
                             <Entypo style={[styles.bookmark, {}]} size={40} name="bookmarks" color={appliedTheme.colors.onSurfaceVariant}/>
                         </TouchableOpacity>

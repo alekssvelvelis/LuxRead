@@ -97,7 +97,7 @@ const Synopsis = () => {
           setHasMoreChapters(false);
         }
       } catch (error) {
-        console.log(error, '11231231231');
+        console.log('Error thrown inside of novel/[id].tsx at fetchChapters', error);
       } finally {
         setLoading(false);
         setIsInitialLoading(false);

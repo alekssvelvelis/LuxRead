@@ -21,18 +21,56 @@ async function setupSourcesTable(){
             (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 sourceName TEXT NOT NULL,
+                baseImage TEXT NOT NULL,
                 UNIQUE(sourceName)
             );
         `);
         console.log('Created Sources table');
         await db.execAsync(`
-            INSERT INTO sources (sourceName) VALUES 
-            ('AllNovelFull'),
-            ('LightNovelPub');
+            INSERT INTO sources (sourceName, baseImage) VALUES 
+            ('AllNovelFull', 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTyjJn_YwCifVmvArmnCMIVroxl61obyCE5WQ&s'),
+            ('LightNovelPub', 'https://i.redd.it/ui97q7ehwqsa1.jpg');
         `);
         console.log('Succesfully inserted default sources');
     } catch (error) {
        console.error('Error creating Sources table ', error) 
+    }
+}
+
+interface SourcesRows{
+    id: number;
+    sourceName: string;
+    baseImage: string;
+}
+
+async function getSources() {
+    const db = await SQLite.openDatabaseAsync('luxreadDatabase', {
+        useNewConnection: true
+    });
+
+    try {
+        const allRows: SourcesRows[] = await db.getAllAsync(
+            `SELECT * FROM sources`,
+        );
+
+        const downloadedChapters = [];
+
+        for (const row of allRows) {
+            downloadedChapters.push({
+                id: row.id,
+                sourceName: row.sourceName,
+                baseImage: row.baseImage,
+            });
+        }
+
+        if (allRows.length === 0) {
+            console.log('No sources found');
+        }
+
+        return downloadedChapters;
+    } catch (error) {
+        console.error('Error fetching sources');
+        return [];
     }
 }
 
@@ -387,4 +425,4 @@ async function dropTable(tableName: string) {
         console.error(`Failed to drop table "${tableName}":`, error);
     }
 }
-export { clearTable, getAllNovelChapters, setupSourcesTable, setupLibraryNovelsTable, insertLibraryNovel, getAllLibraryNovels, dropTable, deleteLibraryNovel, deleteNovelChapters, getTableStructure, getNovelsBySource, setupNovelChaptersTable, upsertNovelChapter, setupDownloadedChaptersTable, getDownloadedChapters, insertDownloadedChapter };
+export { clearTable, getAllNovelChapters, setupSourcesTable, getSources, setupLibraryNovelsTable, insertLibraryNovel, getAllLibraryNovels, dropTable, deleteLibraryNovel, deleteNovelChapters, getTableStructure, getNovelsBySource, setupNovelChaptersTable, upsertNovelChapter, setupDownloadedChaptersTable, getDownloadedChapters, insertDownloadedChapter };
