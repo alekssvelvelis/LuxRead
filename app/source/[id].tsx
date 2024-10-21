@@ -37,7 +37,6 @@ const SourceList = () => {
   const [page, setPage] = useState<number>(1);
   const [loading, setLoading] = useState<boolean>(false);
   const router = useRouter();
-
   const [hasMore, setHasMore] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [searchPage, setSearchPage] = useState<number>(1);
@@ -102,12 +101,15 @@ const SourceList = () => {
     }
   }, [fetchFunctions]);
 
+  
+
   const handleSaveNovel = async (novel) => {
     try {
       const allNovelInfo = await fetchFunctions.fetchSingleNovel(novel.novelPageURL);
       const chapterCount = parseInt(allNovelInfo.chapterCount);
       const genres = String(allNovelInfo.genres);
-      const result = await insertLibraryNovel(allNovelInfo.title, allNovelInfo.author, allNovelInfo.description, genres, chapterCount, allNovelInfo.imageURL, allNovelInfo.url, sourceName);
+      console.log(allNovelInfo);
+      const result = await insertLibraryNovel(allNovelInfo.title, allNovelInfo.author, allNovelInfo.description, genres, chapterCount, allNovelInfo.imageURL, allNovelInfo.novelPageURL, sourceName);
       setQueriedNovels(prevQueriedNovels => [...prevQueriedNovels, { id: result, title: allNovelInfo.title }]); // Add the saved novel to queriedNovels
     } catch (error) {
       console.error('Error saving novel:', error);

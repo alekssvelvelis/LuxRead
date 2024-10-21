@@ -20,7 +20,6 @@ interface Data{
 
 export default function Library() {
   useEffect(() =>{
-
     // dropTable('libraryNovels');
     // dropTable('novelChapters');
     // dropTable('sources');
@@ -128,7 +127,6 @@ export default function Library() {
         <SearchBar onSearchChange={handleSearchQuery}/>
       </View>
       <ScrollView contentContainerStyle={styles.scrollViewContent} style={styles.scrollView}>
-        <Text>the perfect one for me.</Text>
         <View style={[styles.novelScrollView]}>
           {filteredNovels.length === 0 ? (
             <View style={{ position: 'relative',  justifyContent: 'center',  alignItems: 'center', paddingHorizontal: 20, paddingVertical: 40, marginTop: '50%'}}>

@@ -29,7 +29,8 @@ async function setupSourcesTable(){
         await db.execAsync(`
             INSERT INTO sources (sourceName, baseImage) VALUES 
             ('AllNovelFull', 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTyjJn_YwCifVmvArmnCMIVroxl61obyCE5WQ&s'),
-            ('LightNovelPub', 'https://i.redd.it/ui97q7ehwqsa1.jpg');
+            ('LightNovelPub', 'https://i.redd.it/ui97q7ehwqsa1.jpg'),
+            ('AllNovelBlog', 'https://allnovelfull.blog/img/logo.png')
         `);
         console.log('Succesfully inserted default sources');
     } catch (error) {

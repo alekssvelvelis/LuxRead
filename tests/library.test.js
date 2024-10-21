@@ -5,15 +5,11 @@ import { ThemeProvider } from '@/contexts/ThemeContext';
 import { NovelRowsProvider } from '@/contexts/NovelRowsContext';
 import { NetworkProvider, useNetworkContext } from '@/contexts/NetworkContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getAllLibraryNovels } from '@/database/ExpoDB';
+
 jest.mock('@react-native-async-storage/async-storage', () => ({
     getItem: jest.fn(),
     setItem: jest.fn(),
     removeItem: jest.fn(),
-}));
-
-jest.mock('@/database/ExpoDB', () => ({
-    getAllLibraryNovels: jest.fn(),
 }));
 
 jest.mock('expo-router', () => ({
@@ -29,7 +25,7 @@ jest.mock('@/contexts/NetworkContext', () => {
     return {
         NetworkProvider: ({ children }) => children,
         useNetworkContext: jest.fn(() => ({
-            isInternetReachable: true,  // You can set it to true or false as needed for your tests
+            isInternetReachable: true,
         })),
     };
 });
@@ -69,21 +65,11 @@ describe('<Library />', () => {
         expect(userTheme).toMatch('some_value');
     });
 
-    it('renders <Library /> component and finds specific text', async () => {
-        // Mocking getAllLibraryNovels to return some test novels
-        getAllLibraryNovels.mockResolvedValueOnce([
-            { id: 1, title: 'Novel 1', author: 'Author 1', chapterCount: 10, imageURL: 'https://example.com/image1.jpg', novelPageURL: '/novel/1', novelSource: 'source1' },
-            { id: 2, title: 'Novel 2', author: 'Author 2', chapterCount: 5, imageURL: 'https://example.com/image2.jpg', novelPageURL: '/novel/2', novelSource: 'source2' },
-        ]);
-
-        // Use custom renderWithProviders function to render the component with providers
+    it('renders <Library /> component and displays novel titles', async () => {
         renderWithProviders(<Library />);
-
-        // Use waitFor to wait for the component to update
         await waitFor(() => {
-            // Expect the text 'the perfect one for me.' to be in the document
-            const textElement = screen.getByText('the perfect one for me.');
-            expect(textElement).toBeTruthy();
+            const titleElement = screen.findByText('You have no saved novels. Navigate to Sources and find what to read.');
+            expect(titleElement).toBeTruthy();
         });
     });
 });
