@@ -139,7 +139,6 @@ const Synopsis = () => {
         // @ts-ignore since pathname only works this way. Can remove and try to fix error.
         pathname: `chapter/[id]`, 
         params: {
-          id: itemId,
           chapterPageURL: chapterPageURL,
           title: novelData.title,
           sourceName: sourceName,
@@ -150,13 +149,16 @@ const Synopsis = () => {
       console.error("Error fetching single novel:", error);
     }
   };
-
+  const [downloading, setDownloading] = useState(false);
   const handleDownloadChapter = async (chapterPageURL: string, chapterTitle: string, novelId: number) => {
+    setDownloading(true);
     try {
       const chapters = await fetchFunctions.fetchChapterContent(chapterPageURL);
       await insertDownloadedChapter(chapterTitle, chapters.content, novelId);
     } catch (error) {
       console.error("Error deleting novel:", error);
+    } finally {
+      setDownloading(false);
     }
   };
 
@@ -171,7 +173,7 @@ const Synopsis = () => {
         <Text style={{ fontSize: 16, color: chapterIndexOfItem >= defaultChapterIndex ? appliedTheme.colors.text : 'gray', width: '90%' }} numberOfLines={1} ellipsizeMode='tail'>
           {item.title}
         </Text>
-        {chapterIndexOfItem === defaultChapterIndex && <Text style={{position: 'absolute', color: appliedTheme.colors.text, top: 35, left: 0}}>Reading progress: {readingProgress.readerProgress}%</Text>}
+        {chapterIndexOfItem === defaultChapterIndex && <Text style={{position: 'absolute', color: appliedTheme.colors.text, top: 38, left: 0}}>Reading progress: {readingProgress.readerProgress}%</Text>}
         {novelData.id === "[id]" ? null : <MaterialIcons size={36} name="download" color={chapterIndexOfItem >= defaultChapterIndex ? appliedTheme.colors.text : 'gray'} style={{ zIndex: 3 }} onPress={() => handleDownloadChapter(item.url, item.title, novelId)}/> }
       </TouchableOpacity>
     );

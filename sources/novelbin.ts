@@ -1,8 +1,8 @@
 // @ts-ignore
 import cheerio from 'react-native-cheerio';
 import axios from 'axios';
-const sourceName = 'AllNovelFull';
-const sourceURL = `https://allnovelfull.blog`;
+const sourceName = 'NovelBin';
+const sourceURL = `https://novelbin.com/`;
 
 const fetchNovelImage = async (novelPageURL: string): Promise<string> => {
     try {
@@ -27,7 +27,7 @@ const fetchNovelImage = async (novelPageURL: string): Promise<string> => {
 
 const popularNovels = async (pageNumber: number) => {
     try {
-        const url = `${sourceURL}/sort/all-novel-full-popular?page=${pageNumber}`;
+        const url = `${sourceURL}sort/top-view-novel?page=${pageNumber}`;
         const result = await axios.get(url);
         const body = result.data;
         const loadedCheerio = cheerio.load(body);
@@ -61,7 +61,8 @@ const popularNovels = async (pageNumber: number) => {
 
 const searchNovels = async (novelName: string, pageNumber: number) => {
     try {
-        const url = `${sourceURL}/search?keyword=${novelName}&page=${pageNumber}`;
+        const url = `${sourceURL}search?keyword=${novelName}&page=${pageNumber}`;
+        console.log(url);
         const result = await axios.get(url);
         const body = result.data;
         const loadedCheerio = cheerio.load(body);
@@ -117,7 +118,6 @@ const fetchSingleNovel = async (novelPageURL: string) => {
             genres,
             novelPageURL: novelPageURL,
             chapterCount,
-            // chapters,
         };
     } catch (error) {
         console.error('Error fetching single novel:', error);
@@ -131,7 +131,7 @@ const fetchChapters = async (novelPageURL: string, chapterCount: number) => {
         const url = `${novelPageURL}#tab-chapters-title`;
         const parts = url.split('/');
         const novelTitle = parts[parts.length - 1];
-        const APIurl = `https://allnovelfull.blog/ajax/chapter-archive?novelId=${novelTitle}`
+        const APIurl = `https://novelbin.com/ajax/chapter-archive?novelId=${novelTitle}`
         const result = await axios.get(APIurl);
         const body = result.data;
         const loadedCheerio = cheerio.load(body);
@@ -181,7 +181,7 @@ const fetchChapterContent = async (chapterPageURL: string) => {
         const nextChapterElement = loadedCheerio('#next_chap');
         if (nextChapterElement.length && !nextChapterElement.hasClass('disabled')) {
             const nextChapter = nextChapterElement.attr('href');
-            const nextChapterURL = `${sourceURL}${nextChapter}`;
+            const nextChapterURL = `${nextChapter}`;
             if (nextChapter) {
                 chapterContent.closeChapters['nextChapter'] = nextChapterURL;
             }

@@ -34,7 +34,6 @@ interface ReaderOptions {
 }
 
 type typeSearchParams = {
-  id: number,
   chapterPageURL: string,
   sourceName: string,
   title: string,
@@ -43,13 +42,13 @@ type typeSearchParams = {
 
 const ChapterPage = () => {
   const [content, setContent] = useState<Content>({ title: '', content: [], closeChapters: {} });
+  const [chapterTitle, setChapterTitle] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
   const [isOverlayVisible, setIsOverlayVisible] = useState<boolean>(false);
   const [readerModalVisible, setReaderModalVisible] = useState<boolean>(false);
 
   const { appliedTheme } = useThemeContext();
   const propData = useLocalSearchParams<typeSearchParams>();
-  console.log(propData);
   const chapterPageURL: string | string[] = propData.chapterPageURL;
   const sourceName: string | string[] = propData.sourceName;
   const title: string | string[] = propData.title;
@@ -103,12 +102,14 @@ const ChapterPage = () => {
   useEffect(() => {
     const loadChapterContent = async () => {
       setLoading(true);
+
       try {
         const chapterContent = await fetchFunctions.fetchChapterContent(chapterPageURL);
-        // console.log(JSON.stringify(chapterContent, null, 2));
+        console.log("Fetched Chapter Content:", JSON.stringify(chapterContent,null,2));
         if (chapterContent) {
           setContent(chapterContent);
           setChapterText(chapterContent.content);
+          setChapterTitle(chapterContent.title);
         }
       } catch (error) {
         console.error('Error fetching chapter content', error, chapterPageURL, sourceName);
@@ -122,7 +123,6 @@ const ChapterPage = () => {
     }
   }, [fetchFunctions, chapterPageURL, sourceName]);
   // console.log(JSON.stringify(content, null, 2));
-
   const [chapterText, setChapterText] = useState<string>('');
   const { isSpeaking, handleSpeaking } = useSpeech(chapterText);
 
@@ -140,26 +140,23 @@ const ChapterPage = () => {
 
   const handleNavigateCloseChapter = async (chapterPageURL: string | undefined) => {
     try {
-      router.navigate({ 
+      router.push({ 
         // @ts-ignore since pathname only works this way. Can remove and try to fix error.
         pathname: `chapter/[id]`,
         params: {
           chapterPageURL: chapterPageURL,
           title: propData.title,
+          sourceName: sourceName,
         },
       });
     } catch (error) {
       console.error("Error fetching single novel:", error);
     }
   };
-  const overlayBase = appliedTheme.colors.elevation.level2;
-  const overlayBackgroundColor = rgbToRgba(overlayBase, 0.9);
+  const overlayBackgroundColor = rgbToRgba(appliedTheme.colors.elevation.level2, 0.9);
   
   const scrollViewRef = useRef<ScrollView>(null);
-
   const [scrollPercentage, setScrollPercentage] = useState(0);
-
-  // Store contentHeight and scrollViewHeight
   const [contentHeight, setContentHeight] = useState(0);
   const [scrollViewHeight, setScrollViewHeight] = useState(0);
 
@@ -175,7 +172,6 @@ const ChapterPage = () => {
     setContentHeight(height);
   };
 
-  // Use `onLayout` to capture scrollView height
   const onLayoutHandler = (event: any) => {
     const { height } = event.nativeEvent.layout;
     setScrollViewHeight(height);
@@ -235,13 +231,14 @@ const ChapterPage = () => {
         <Pressable onPress={toggleOverlay}>
           <Stack.Screen
             options={{
-              headerTitle: content.title || 'Loading...',
+              headerTitle: `${chapterTitle}`,
               headerStyle: { backgroundColor: appliedTheme.colors.elevation.level2 },
               headerTintColor: appliedTheme.colors.text,
               headerShown: false,
             }}
           />
           <View style={styles.contentContainer}>
+            <Text> {chapterTitle}</Text>
             {content.content.map((paragraph, index) => (
               <Text
                 key={index}
@@ -289,7 +286,10 @@ const ChapterPage = () => {
             </View>
             <View style={{width: '33%', justifyContent:'center', alignItems:'center'}}>
               {content.closeChapters['nextChapter'] &&
-                <Ionicons name={'arrow-forward'} size={32} color={appliedTheme.colors.text} onPress={() => handleNavigateCloseChapter(content.closeChapters['nextChapter'])}/>
+                <View>
+                  {/* <Text>{content.closeChapters['nextChapter']}</Text> */}
+                  <Ionicons name={'arrow-forward'} size={32} color={appliedTheme.colors.text} onPress={() => handleNavigateCloseChapter(content.closeChapters['nextChapter'])}/>
+                </View>
               }
             </View>
           </View>
