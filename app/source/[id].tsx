@@ -101,14 +101,13 @@ const SourceList = () => {
     }
   }, [fetchFunctions]);
 
-  
 
   const handleSaveNovel = async (novel) => {
     try {
       const allNovelInfo = await fetchFunctions.fetchSingleNovel(novel.novelPageURL);
       const chapterCount = parseInt(allNovelInfo.chapterCount);
       const genres = String(allNovelInfo.genres);
-      console.log(allNovelInfo);
+      // console.log(allNovelInfo, 'test123');
       const result = await insertLibraryNovel(allNovelInfo.title, allNovelInfo.author, allNovelInfo.description, genres, chapterCount, allNovelInfo.imageURL, allNovelInfo.novelPageURL, sourceName);
       setQueriedNovels(prevQueriedNovels => [...prevQueriedNovels, { id: result, title: allNovelInfo.title }]); // Add the saved novel to queriedNovels
     } catch (error) {
@@ -125,6 +124,10 @@ const SourceList = () => {
       setLoading(true);
     }
   }, [page, searchPage, searchQuery, fetchNovels]);
+
+  useEffect(() => {
+    // console.log(JSON.stringify(novels, null, 2));
+  }, [novels]);
 
   useEffect(()=>{
     if(!searchQuery){
@@ -149,7 +152,6 @@ const SourceList = () => {
   const handleNavigateToNovel = async (novelPageURL: string) => {
     try {
       const novelData = await fetchFunctions.fetchSingleNovel(novelPageURL);
-      console.log(novelData);
       router.navigate({ 
         // @ts-ignore since pathname only works this way. Can remove and try to fix error.
         pathname: `novel/[id]`, 

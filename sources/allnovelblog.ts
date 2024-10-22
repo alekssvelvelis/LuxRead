@@ -136,8 +136,9 @@ const fetchChapters = async (novelPageURL: string, chapterCount: number) => {
         const body = result.data;
         const loadedCheerio = cheerio.load(body);
         const rowToGet = loadedCheerio('.panel-body .row').eq(actualChapterCount);
-        const titlesAndHrefs = rowToGet.find('ul li a').map((_: number, el: cheerio.Element) => {
+        const titlesAndHrefs = rowToGet.find('ul li a').map((index: number, el: cheerio.Element) => {
             return {
+                id: index+1,
                 title: loadedCheerio(el).text().trim(),
                 url: `${loadedCheerio(el).attr('href')}`,
             };

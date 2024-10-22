@@ -114,7 +114,7 @@ const fetchSingleNovel = async (novelPageURL: string) => {
             description,
             author,
             genres,
-            url: novelPageURL,
+            novelPageURL,
             chapterCount,
             // chapters,
         };
@@ -131,7 +131,8 @@ const fetchChapters = async (novelPageURL: string, page: number) => {
         const body = result.data;
         const loadedCheerio = cheerio.load(body);
 
-        return loadedCheerio('.list-chapter li a').map((_: number, el: cheerio.Element) => ({
+        return loadedCheerio('.list-chapter li a').map((index: number, el: cheerio.Element) => ({
+            id: index+1,
             title: loadedCheerio(el).text().trim(),
             url: `${sourceURL}${loadedCheerio(el).attr('href')}`,
         })).get();

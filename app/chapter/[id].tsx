@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Pressable } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Pressable } from 'react-native';
 
 import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
 import { upsertNovelChapter } from '@/database/ExpoDB';
@@ -34,9 +34,11 @@ interface ReaderOptions {
 }
 
 type typeSearchParams = {
+  id: number,
   chapterPageURL: string,
   sourceName: string,
   title: string,
+  readerProgress?: number | undefined,
 };
 
 const ChapterPage = () => {
@@ -47,9 +49,11 @@ const ChapterPage = () => {
 
   const { appliedTheme } = useThemeContext();
   const propData = useLocalSearchParams<typeSearchParams>();
+  console.log(propData);
   const chapterPageURL: string | string[] = propData.chapterPageURL;
   const sourceName: string | string[] = propData.sourceName;
   const title: string | string[] = propData.title;
+  const readerProgress: number = propData.readerProgress ?? 0;
   const router = useRouter();
 
   const [readerOptions, setReaderOptions] = useState<ReaderOptions>({
@@ -148,24 +152,53 @@ const ChapterPage = () => {
       console.error("Error fetching single novel:", error);
     }
   };
-
   const overlayBase = appliedTheme.colors.elevation.level2;
   const overlayBackgroundColor = rgbToRgba(overlayBase, 0.9);
+  
+  const scrollViewRef = useRef<ScrollView>(null);
+
   const [scrollPercentage, setScrollPercentage] = useState(0);
+
+  // Store contentHeight and scrollViewHeight
+  const [contentHeight, setContentHeight] = useState(0);
+  const [scrollViewHeight, setScrollViewHeight] = useState(0);
+
   const handleScroll = (event: any) => {
-    const contentHeight = event.nativeEvent.contentSize.height;
-    const scrollViewHeight = event.nativeEvent.layoutMeasurement.height;
+    const newContentHeight = event.nativeEvent.contentSize.height;
+    const newScrollViewHeight = event.nativeEvent.layoutMeasurement.height;
     const scrollPosition = event.nativeEvent.contentOffset.y;
-    const scrollPercentage = parseFloat(((scrollPosition / (contentHeight - scrollViewHeight)) * 100).toFixed(1));
-    setScrollPercentage(Math.min(Math.max(scrollPercentage, 0), 100));
+    const newScrollPercentage = parseFloat(((scrollPosition / (newContentHeight - newScrollViewHeight)) * 100).toFixed(1));
+    setScrollPercentage(Math.min(Math.max(newScrollPercentage, 0), 100));
   };
+
+  const handleContentSizeChange = (_: number, height: number) => {
+    setContentHeight(height);
+  };
+
+  // Use `onLayout` to capture scrollView height
+  const onLayoutHandler = (event: any) => {
+    const { height } = event.nativeEvent.layout;
+    setScrollViewHeight(height);
+  };
+
+  const scrollToPosition = () => {
+    if (scrollViewRef.current && contentHeight && scrollViewHeight) {
+      const scrollPosition = ((contentHeight - scrollViewHeight) / 100) * readerProgress;
+      scrollViewRef.current.scrollTo({ y: scrollPosition, animated: true });
+    }
+  };
+
+  useEffect(() => {
+    if (contentHeight && scrollViewHeight) {
+      scrollToPosition();
+    }
+  }, [contentHeight, scrollViewHeight]);
 
   // ((contentHeight-scrollViewHeight)/100)*readerProgress) is used to calculate where it should autoscroll when opening a chapter
   const chapterNumber = content.title.match(/\d/);
   const chapterIndex = chapterNumber ? parseInt(chapterNumber[0], 10) : 1;
   const handleSaveChapterData = async (novelTitle: string, scrollPercentage: number, chapterIndex: number) => {
     try {
-      console.log(novelTitle, scrollPercentage, chapterIndex);
       await upsertNovelChapter(novelTitle, scrollPercentage, chapterIndex);
       handleBackPress();
     } catch (error) {
@@ -192,8 +225,11 @@ const ChapterPage = () => {
         </View>
       )}
       <ScrollView
+        ref={scrollViewRef}
         contentContainerStyle={[styles.container, { backgroundColor: appliedTheme.colors.background }]}
         onScroll={handleScroll}
+        onContentSizeChange={handleContentSizeChange}  // Captures content height after it renders
+        onLayout={onLayoutHandler} 
         scrollEventThrottle={16}
       >
         <Pressable onPress={toggleOverlay}>

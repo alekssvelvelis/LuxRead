@@ -206,12 +206,13 @@ const fetchChapters = async (novelPageURL: string, page: number) => {
         });
         const body = result.data;
         const loadedCheerio = cheerio.load(body);
-        const chapters: { title: string, url: string }[] = [];
+        const chapters: { id: number, title: string, url: string }[] = [];
 
-        loadedCheerio('.chapter-list li a').each((_: number, el: cheerio.Element) => {
+        loadedCheerio('.chapter-list li a').each((index: number, el: cheerio.Element) => {
+            const id = index+1; // starts from 0
             const title = loadedCheerio(el).attr('title') || '';
             const chapterUrl = `${sourceURL}${loadedCheerio(el).attr('href')}`;
-            chapters.push({ title, url: chapterUrl });
+            chapters.push({ id: id, title, url: chapterUrl });
         });
         return chapters;
     } catch (error) {

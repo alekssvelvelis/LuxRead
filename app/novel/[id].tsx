@@ -14,6 +14,7 @@ import { getAllNovelChapters, insertDownloadedChapter } from '@/database/ExpoDB'
 import NovelSkeleton from '@/components/skeletons/NovelSkeleton';
 
 interface Chapter {
+  id: number,
   title: string;
   url: string;
 };
@@ -39,7 +40,6 @@ type typeSearchParams = {
 const Synopsis = () => {
   const { appliedTheme } = useThemeContext();
   const { isConnected } = useNetwork();
-  // console.log(isConnected);
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
   const [chapterList, setChapterList] = useState<Chapter[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -52,7 +52,6 @@ const Synopsis = () => {
   const novelData = useLocalSearchParams<typeSearchParams>();
   const novelId = Number(novelData.id);
   const sourceName = novelData.sourceName;
-  // console.log(JSON.stringify(novelData,null,2));
   const genresArray = novelData.genres.split(',').map(genre => genre.trim());
   const imageURL = Array.isArray(novelData.imageURL) ? novelData.imageURL[0] : novelData.imageURL;
   const [showFullDescription, setShowFullDescription] = useState(false);
@@ -86,10 +85,9 @@ const Synopsis = () => {
       setLoading(true);
       try {
         const chapters = await fetchFunctions.fetchChapters(novelData.novelPageURL, pageNumber);
-        // console.log(JSON.stringify(chapters, null, 2));
-        if(chapters.error.message === "Network Error"){
-          console.log(1);
-        }
+        // if(chapters.error.message === "Network Error"){
+        //   console.log(1);
+        // }
         if (chapters && chapters.length > 0) {
           setChapterList((prevChapters) => [...prevChapters, ...chapters]);
           setHasMoreChapters(chapters.length > 0);
@@ -135,15 +133,17 @@ const Synopsis = () => {
     }, [])
   );
 
-  const handleNavigateToChapter = async (chapterPageURL: string) => {
+  const handleNavigateToChapter = async (chapterPageURL: string, itemId: number) => {
     try {
       router.navigate({
         // @ts-ignore since pathname only works this way. Can remove and try to fix error.
         pathname: `chapter/[id]`, 
         params: {
+          id: itemId,
           chapterPageURL: chapterPageURL,
           title: novelData.title,
           sourceName: sourceName,
+          ...(readingProgress.chapterIndex === itemId+1 && { readerProgress: readingProgress.readerProgress}),
         },
       });
     } catch (error) {
@@ -167,7 +167,7 @@ const Synopsis = () => {
       return <Text style={{color: appliedTheme.colors.text}}>You're offline, these are your downloaded chapters</Text>
     }
     return(
-      <TouchableOpacity key={item.title} style={[styles.chapterContainer, { paddingVertical: 12, position: 'relative' }]} onPress={() => handleNavigateToChapter(item.url)}>
+      <TouchableOpacity key={item.title} style={[styles.chapterContainer, { paddingVertical: 12, position: 'relative' }]} onPress={() => handleNavigateToChapter(item.url, index)}>
         <Text style={{ fontSize: 16, color: chapterIndexOfItem >= defaultChapterIndex ? appliedTheme.colors.text : 'gray', width: '90%' }} numberOfLines={1} ellipsizeMode='tail'>
           {item.title}
         </Text>
@@ -224,7 +224,7 @@ const Synopsis = () => {
       {chapterList.length > 0 && (
         <TouchableOpacity 
         style={[styles.readingButton, { backgroundColor: appliedTheme.colors.primary, justifyContent: 'center', alignItems: 'center' }]} 
-        onPress={() => readingProgress.chapterIndex > 0 ? handleNavigateToChapter(chapterList[readingProgress.chapterIndex - 1].url) : handleNavigateToChapter(chapterList[0].url)}>
+        onPress={() => readingProgress.chapterIndex > 0 ? handleNavigateToChapter(chapterList[readingProgress.chapterIndex - 1].url, chapterList[readingProgress.chapterIndex-1].id) : handleNavigateToChapter(chapterList[0].url, chapterList[0].id)}>
           <Text style={[styles.readingButtonText, { color: appliedTheme.colors.text }]} numberOfLines={1} ellipsizeMode='tail'>
             {readingProgress.chapterIndex > 0 ? `Continue reading ${chapterList[readingProgress.chapterIndex-1].title}` : `Start reading ${chapterList[0].title}`}
           </Text>
