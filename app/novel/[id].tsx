@@ -5,7 +5,7 @@ import { useThemeContext } from '@/contexts/ThemeContext';
 import { useNetwork } from '@/contexts/NetworkContext';
 import getSourceFunctions from '@/utils/getSourceFunctions';
 
-import { useLocalSearchParams, Stack, useRouter, useFocusEffect } from 'expo-router';
+import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import { Appbar } from 'react-native-paper';
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { Image } from 'expo-image'; //  takes priority over react-native image tag to read static images
@@ -94,9 +94,6 @@ const Synopsis = () => {
       setLoading(true);
       try {
         const chapters = await fetchFunctions.fetchChapters(novelData.novelPageURL, pageNumber);
-        // if(chapters.error.message === "Network Error"){
-        //   console.log(1);
-        // }
         if (chapters && chapters.length > 0) {
           setChapterList((prevChapters) => [...prevChapters, ...chapters]);
           setHasMoreChapters(chapters.length > 0);
@@ -123,9 +120,7 @@ const Synopsis = () => {
       setLoading(true);
       try {
         const downloadedChapters = await getDownloadedChapters(novelId);
-        // if(chapters.error.message === "Network Error"){
-        //   console.log(1);
-        // }
+        console.log(downloadedChapters);
         if (downloadedChapters && downloadedChapters.length > 0) {
           setDownloadedChapterList(downloadedChapters);
         } else {
@@ -140,7 +135,6 @@ const Synopsis = () => {
     };
     loadDownloadedChapters();
   }, [novelId]);
-  console.log(downloadedChapterList);
   const [readingProgress, setReadingProgress] = useState<novelProgress>({ id: 0, novelId: 0, readerProgress: 0, chapterIndex: 0 });
   useFocusEffect(
     useCallback(() => {
@@ -202,7 +196,15 @@ const Synopsis = () => {
     }
     return(
       <TouchableOpacity key={item.title} style={[styles.chapterContainer, { paddingVertical: 12, position: 'relative' }]} onPress={() => handleNavigateToChapter(item.url, index)}>
-        <Text style={{ fontSize: 16, color: chapterIndexOfItem >= defaultChapterIndex ? appliedTheme.colors.text : 'gray', width: '90%' }} numberOfLines={1} ellipsizeMode='tail'>
+        {chapterIndexOfItem >= defaultChapterIndex && (
+            <MaterialIcons 
+              name="adjust" 
+              size={16} 
+              color={appliedTheme.colors.primary} 
+              style={{  }} 
+            />
+          )}
+        <Text style={{ fontSize: 16, color: chapterIndexOfItem >= defaultChapterIndex ? appliedTheme.colors.text : 'gray', width: '80%', marginLeft: chapterIndexOfItem >= defaultChapterIndex ? -12 : 16 }} numberOfLines={1} ellipsizeMode='tail'>
           {item.title}
         </Text>
         {chapterIndexOfItem === defaultChapterIndex && <Text style={{position: 'absolute', color: appliedTheme.colors.text, top: 38, left: 0}}>Reading progress: {readingProgress.readerProgress}%</Text>}
@@ -210,7 +212,7 @@ const Synopsis = () => {
         ? 
         null
         : ( downloading && defaultChapterIndex === chapterIndexOfItem ? <ActivityIndicator size="large" color={appliedTheme.colors.primary}/> : (
-              <MaterialIcons size={36} name="download" color={chapterIndexOfItem >= defaultChapterIndex ? appliedTheme.colors.text : 'gray'} style={{ zIndex: 3 }} onPress={() => handleDownloadChapter(item.url, novelId)}/> 
+              <Ionicons size={36} name="download-outline" color={chapterIndexOfItem >= defaultChapterIndex ? appliedTheme.colors.text : 'gray'} style={{ zIndex: 3 }} onPress={() => handleDownloadChapter(item.url, novelId)}/> 
             )
           )
         }
@@ -219,16 +221,23 @@ const Synopsis = () => {
   };
 
   const RenderListHeader = () => (
+    
     <View style={{minWidth: '100%'}}>
-      <Stack.Screen
+      {/* <Stack.Screen
         options={{
           headerTitle: `${novelData.title}`,
           headerStyle: { backgroundColor: appliedTheme.colors.elevation.level2 },
           headerTintColor: appliedTheme.colors.text,
           headerShown: true,
-          headerShadowVisible: false,
         }}
-      />
+      /> */}
+      <Appbar.Header
+      mode='small'
+        style={{ backgroundColor: appliedTheme.colors.elevation.level2 }}
+      >
+        <Appbar.BackAction onPress={() => { router.back() }} color={appliedTheme.colors.text} style={{marginLeft: -8}}/>
+        <Appbar.Content title={novelData.title} titleStyle={{ color: appliedTheme.colors.text }} />
+      </Appbar.Header>
       <View style={{ flexDirection: 'row' }}>
         <View style={[styles.textContainer, { marginVertical: 24, }]}>
           <Text style={[styles.title, styles.moveRight, { color: appliedTheme.colors.text }]}>{novelData.title}</Text>

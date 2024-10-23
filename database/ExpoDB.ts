@@ -410,8 +410,31 @@ async function deleteNovelChapters(novelId: number) {
 async function clearTable(tableName: string) {
     const db = await SQLite.openDatabaseAsync('luxreadDatabase');
     try {
+
+        const allRows: DownloadedChapterRow[] = await db.getAllAsync(
+            `SELECT * FROM downloadedChapters`,
+        );
+
+        const downloadedChapters = [];
+
+        for (const row of allRows) {
+            downloadedChapters.push({
+                id: row.downloadId,
+                chapterTitle: row.chapterTitle,
+                chapterContent: row.chapterText,
+                novel_id: row.novel_id,
+            });
+        }
+
+        if (allRows.length === 0) {
+            console.log('No chapters downloaded');
+        }
+
+        console.log(downloadedChapters);
+
         await db.execAsync(`DELETE FROM ${tableName}`);
         console.log(`Table "${tableName}" cleared successfully.`);
+
     } catch (error) {
         console.error(`Failed to clear table "${tableName}":`, error);
     }
