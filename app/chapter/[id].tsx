@@ -238,7 +238,6 @@ const ChapterPage = () => {
             }}
           />
           <View style={styles.contentContainer}>
-            <Text> {chapterTitle}</Text>
             {content.content.map((paragraph, index) => (
               <Text
                 key={index}

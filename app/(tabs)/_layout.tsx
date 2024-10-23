@@ -11,7 +11,7 @@ export default () => {
         } else if (theme.startsWith('dark')) {
           StatusBar.setBarStyle('light-content', true); // Dark theme: light-content for status bar
         }
-      }, [theme]); // Re-run this when the theme changes
+      }, [theme]);
     return (
         <Tabs screenOptions={{ 
             tabBarActiveTintColor: appliedTheme.colors.primary, 
@@ -31,6 +31,11 @@ export default () => {
                     headerShown: false,
                     title: 'Library',
                     tabBarIcon: ({ color }) => <Ionicons size={28} name="book" color={color} />,
+                    tabBarStyle: {
+                        height: 75,
+                        backgroundColor: appliedTheme.colors.elevation.level2,
+                        borderTopWidth: 0,
+                    }
                 }}
             />
             <Tabs.Screen

@@ -6,7 +6,7 @@ import { useThemeContext } from '@/contexts/ThemeContext';
 import { useNovelRowsContext } from '@/contexts/NovelRowsContext';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Image } from 'expo-image'
-import { getAllLibraryNovels, deleteLibraryNovel, deleteNovelChapters, setupSourcesTable, clearTable, dropTable, setupLibraryNovelsTable, setupNovelChaptersTable, setupDownloadedChaptersTable} from '@/database/ExpoDB';
+import { getAllLibraryNovels, deleteLibraryNovel, deleteNovelChapters, getDownloadedChapters, setupSourcesTable, clearTable, dropTable, setupLibraryNovelsTable, setupNovelChaptersTable, setupDownloadedChaptersTable} from '@/database/ExpoDB';
 
 interface Data{
     id: number;
@@ -29,6 +29,7 @@ export default function Library() {
     // setupLibraryNovelsTable();
     // setupSourcesTable();
     // setupDownloadedChaptersTable();
+    // getDownloadedChapters(1);
   }, [])
   
   const { appliedTheme } = useThemeContext();

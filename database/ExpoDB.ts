@@ -235,7 +235,7 @@ async function getDownloadedChapters(novelId: number) {
 
     try {
         const allRows: DownloadedChapterRow[] = await db.getAllAsync(
-            `SELECT * FROM novelChapters WHERE novel_id = ?`,
+            `SELECT * FROM downloadedChapters WHERE novel_id = ?`,
             [novelId]
         );
 
@@ -243,7 +243,7 @@ async function getDownloadedChapters(novelId: number) {
 
         for (const row of allRows) {
             downloadedChapters.push({
-                id: row.id,
+                id: row.downloadId,
                 chapterTitle: row.chapterTitle,
                 chapterContent: row.chapterText,
                 novel_id: row.novel_id,

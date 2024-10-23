@@ -5,6 +5,7 @@ import { useNovelRowsContext } from '@/contexts/NovelRowsContext';
 import ThemeSelector from '@/components/settings/ThemeSelector';
 import Display from '@/components/settings/Display';
 import ReaderOptions from '@/components/settings/ReaderOptions';
+import Database from '@/components/settings/Database';
 export default function Settings() {
     const { setTheme, appliedTheme } = useThemeContext();
     const { setValue } = useNovelRowsContext();
@@ -24,6 +25,10 @@ export default function Settings() {
             <View style={[styles.infoContainer]}>
                 <Text style={{color: appliedTheme.colors.primary, marginTop: 32, marginHorizontal: 8, fontSize: 24}}>Reader Options</Text>
                 <ReaderOptions onOptionsChange={clearReaderOptions}/>
+            </View>
+            <View style={[styles.infoContainer]}>
+                <Text style={{color: appliedTheme.colors.primary, marginTop: 32, marginHorizontal: 8, fontSize: 24}}>Database</Text>
+                <Database />
             </View>
         </ScrollView>
     );
