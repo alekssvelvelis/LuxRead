@@ -17,13 +17,14 @@ import NovelSkeleton from '@/components/skeletons/NovelSkeleton';
 interface Chapter {
   id: number,
   title: string;
-  url: string;
+  chapterPageURL: string;
 };
 
 interface DownloadedChapter {
   id: number,
-  chapterTitle: string;
-  chapterContent: string | string[];
+  title: string;
+  content: string | string[];
+  chapterPageURL: string;
   novel_id: number,
 };
 
@@ -120,9 +121,10 @@ const Synopsis = () => {
       setLoading(true);
       try {
         const downloadedChapters = await getDownloadedChapters(novelId);
-        console.log(downloadedChapters);
+        // console.log(JSON.stringify(downloadedChapters, null, 2));
         if (downloadedChapters && downloadedChapters.length > 0) {
           setDownloadedChapterList(downloadedChapters);
+          // console.log(JSON.stringify(downloadedChapters,null,2));
         } else {
           setHasMoreChapters(false);
         }
@@ -141,7 +143,7 @@ const Synopsis = () => {
     const fetchNovelProgress = async () => {
       try {
         const novelProgress: novelProgress = await getAllNovelChapters(novelData.title);
-        // console.log(JSON.stringify(novelProgress, null, 2));
+        console.log(JSON.stringify(novelProgress, null, 2));
         if (!novelProgress) {
           return;
         }
@@ -160,6 +162,9 @@ const Synopsis = () => {
   );
 
   const handleNavigateToChapter = async (chapterPageURL: string, itemId: number) => {
+    // if(!isConnected){
+    //   const relevantChapterData = downloadedChapterList.find(chapter => chapter.chapterPageURL === chapterPageURL);
+    // }
     try {
       router.navigate({
         // @ts-ignore since pathname only works this way. Can remove and try to fix error.
@@ -180,7 +185,8 @@ const Synopsis = () => {
     setDownloading(true);
     try {
       const chapters = await fetchFunctions.fetchChapterContent(chapterPageURL);
-      await insertDownloadedChapter(chapters.title, chapters.content, novelId);
+      // console.log(chapters.content, 'asd123');
+      await insertDownloadedChapter(chapters.title, chapters.content, chapterPageURL, novelId);
     } catch (error) {
       console.error("Error deleting novel:", error);
     } finally {
@@ -189,30 +195,45 @@ const Synopsis = () => {
   };
 
   const RenderChapterItem = ({ item, index }: { item: Chapter, index: number }) => {
-    const chapterIndexOfItem = index + 1;
+    const trueChapterIndex = item.title.match(/Chapter\s+(\d+)/);
+    const chapterIndexOfItem = isConnected ? index+1 : Number(trueChapterIndex[1]);
     const defaultChapterIndex = readingProgress.chapterIndex || 0;
     if(!isConnected){
-      return <Text style={{color: appliedTheme.colors.text}}>You're offline, these are your downloaded chapters</Text>
-    }
-    return(
-      <TouchableOpacity key={item.title} style={[styles.chapterContainer, { paddingVertical: 12, position: 'relative' }]} onPress={() => handleNavigateToChapter(item.url, index)}>
+      return (
+        <TouchableOpacity key={item.title} style={[styles.chapterContainer, { paddingVertical: 12, position: 'relative', justifyContent: 'flex-start' }]} onPress={() => handleNavigateToChapter(item.chapterPageURL, index)}>
         {chapterIndexOfItem >= defaultChapterIndex && (
             <MaterialIcons 
-              name="adjust" 
-              size={16} 
+              name="adjust"
+              size={16}
+              color={appliedTheme.colors.primary} 
+            />
+          )}
+        <Text style={{ fontSize: 16, color: chapterIndexOfItem >= defaultChapterIndex ? appliedTheme.colors.text : 'gray', width: '80%', marginLeft: chapterIndexOfItem >= defaultChapterIndex ? 8 : 22, }} numberOfLines={1} ellipsizeMode='tail'>
+          {item.title}
+        </Text>
+        {chapterIndexOfItem === defaultChapterIndex && <Text style={{position: 'absolute', color: appliedTheme.colors.text, top: 34, left: 24}}>Reading progress: {readingProgress.readerProgress}%</Text>}
+        </TouchableOpacity>
+      );
+    }
+    return(
+      <TouchableOpacity key={item.title} style={[styles.chapterContainer, { paddingVertical: 12, position: 'relative' }]} onPress={() => handleNavigateToChapter(item.chapterPageURL, index)}>
+        {chapterIndexOfItem >= defaultChapterIndex && (
+            <MaterialIcons 
+              name="adjust"
+              size={16}
               color={appliedTheme.colors.primary} 
               style={{  }} 
             />
           )}
-        <Text style={{ fontSize: 16, color: chapterIndexOfItem >= defaultChapterIndex ? appliedTheme.colors.text : 'gray', width: '80%', marginLeft: chapterIndexOfItem >= defaultChapterIndex ? -12 : 16 }} numberOfLines={1} ellipsizeMode='tail'>
+        <Text style={{ fontSize: 16, color: chapterIndexOfItem >= defaultChapterIndex ? appliedTheme.colors.text : 'gray', width: '80%', marginLeft: chapterIndexOfItem >= defaultChapterIndex ? 12 : 28 }} numberOfLines={1} ellipsizeMode='tail'>
           {item.title}
         </Text>
-        {chapterIndexOfItem === defaultChapterIndex && <Text style={{position: 'absolute', color: appliedTheme.colors.text, top: 38, left: 0}}>Reading progress: {readingProgress.readerProgress}%</Text>}
+        {chapterIndexOfItem === defaultChapterIndex && <Text style={{position: 'absolute', color: appliedTheme.colors.text, top: 34, left: 28}}>Reading progress: {readingProgress.readerProgress}%</Text>}
         {novelData.id === "[id]" 
         ? 
         null
         : ( downloading && defaultChapterIndex === chapterIndexOfItem ? <ActivityIndicator size="large" color={appliedTheme.colors.primary}/> : (
-              <Ionicons size={36} name="download-outline" color={chapterIndexOfItem >= defaultChapterIndex ? appliedTheme.colors.text : 'gray'} style={{ zIndex: 3 }} onPress={() => handleDownloadChapter(item.url, novelId)}/> 
+              <Ionicons size={36} name="download-outline" color={chapterIndexOfItem >= defaultChapterIndex ? appliedTheme.colors.text : 'gray'} style={{ zIndex: 3 }} onPress={() => handleDownloadChapter(item.chapterPageURL, novelId)}/> 
             )
           )
         }
@@ -279,7 +300,7 @@ const Synopsis = () => {
       {chapterList.length > 0 && (
         <TouchableOpacity 
         style={[styles.readingButton, { backgroundColor: appliedTheme.colors.primary, justifyContent: 'center', alignItems: 'center' }]} 
-        onPress={() => readingProgress.chapterIndex > 0 ? handleNavigateToChapter(chapterList[readingProgress.chapterIndex - 1].url, chapterList[readingProgress.chapterIndex-1].id) : handleNavigateToChapter(chapterList[0].url, chapterList[0].id)}>
+        onPress={() => readingProgress.chapterIndex > 0 ? handleNavigateToChapter(chapterList[readingProgress.chapterIndex - 1].chapterPageURL, chapterList[readingProgress.chapterIndex-1].id) : handleNavigateToChapter(chapterList[0].chapterPageURL, chapterList[0].id)}>
           <Text style={[styles.readingButtonText, { color: appliedTheme.colors.text }]} numberOfLines={1} ellipsizeMode='tail'>
             {readingProgress.chapterIndex > 0 ? `Continue reading ${chapterList[readingProgress.chapterIndex-1].title}` : `Start reading ${chapterList[0].title}`}
           </Text>
@@ -295,9 +316,9 @@ const Synopsis = () => {
   return (
     <View style={[styles.container, {backgroundColor: appliedTheme.colors.elevation.level2}]}>
       <FlatList
-        data={chapterList}
+        data={isConnected ? chapterList : downloadedChapterList}
         renderItem={RenderChapterItem}
-        keyExtractor={(item) => item.url}
+        keyExtractor={(index) => index.title}
         onEndReached={handleLoadMore}
         onEndReachedThreshold={0.2}
         ListFooterComponent={
@@ -406,7 +427,7 @@ const styles = StyleSheet.create({
   chapterContainer: {
     flex: 1,
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
     alignItems: 'center'
   },
   totalChapters: {

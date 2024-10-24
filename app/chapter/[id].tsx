@@ -6,7 +6,7 @@ import { upsertNovelChapter } from '@/database/ExpoDB';
 import { Ionicons } from '@expo/vector-icons';
 
 import { useThemeContext } from '@/contexts/ThemeContext';
-
+import { useNetwork } from '@/contexts/NetworkContext';
 import getSourceFunctions from '@/utils/getSourceFunctions';
 import { getReaderOptions } from '@/utils/asyncStorage';
 import { rgbToRgba } from '@/utils/rgbToRgba';
@@ -14,8 +14,9 @@ import { rgbToRgba } from '@/utils/rgbToRgba';
 import { PullUpModal } from '@/components/PullUpModal';
 import ReaderOptions from '@/components/settings/ReaderOptions';
 import ChapterSkeleton from '@/components/skeletons/ChapterSkeleton';
-
 import { useSpeech } from '@/hooks/useSpeech';
+
+import { getDownloadedChapterContent } from '@/database/ExpoDB';
 
 interface Content {
   title: string;
@@ -37,6 +38,7 @@ type typeSearchParams = {
   chapterPageURL: string,
   sourceName: string,
   title: string,
+  chapterContent: object,
   readerProgress?: number | undefined,
 };
 
@@ -47,6 +49,7 @@ const ChapterPage = () => {
   const [isOverlayVisible, setIsOverlayVisible] = useState<boolean>(false);
   const [readerModalVisible, setReaderModalVisible] = useState<boolean>(false);
 
+  const { isConnected } = useNetwork();
   const { appliedTheme } = useThemeContext();
   const propData = useLocalSearchParams<typeSearchParams>();
   const chapterPageURL: string | string[] = propData.chapterPageURL;
@@ -54,6 +57,9 @@ const ChapterPage = () => {
   const title: string | string[] = propData.title;
   const readerProgress: number = propData.readerProgress ?? 0;
   const router = useRouter();
+
+  const [chapterText, setChapterText] = useState<string>('');
+  const { isSpeaking, handleSpeaking } = useSpeech(chapterText);
 
   const [readerOptions, setReaderOptions] = useState<ReaderOptions>({
     fontSize: 16,
@@ -102,19 +108,54 @@ const ChapterPage = () => {
   useEffect(() => {
     const loadChapterContent = async () => {
       setLoading(true);
-
-      try {
-        const chapterContent = await fetchFunctions.fetchChapterContent(chapterPageURL);
-        console.log("Fetched Chapter Content:", JSON.stringify(chapterContent,null,2));
-        if (chapterContent) {
-          setContent(chapterContent);
-          setChapterText(chapterContent.content);
-          setChapterTitle(chapterContent.title);
+      if (!isConnected) {
+        try {
+          // Fetch content from the database when offline
+          const offlineContent = await getDownloadedChapterContent(chapterPageURL);
+          if (offlineContent) {
+            setContent({
+              title: offlineContent.title,
+              content: JSON.parse(offlineContent.content),
+              closeChapters: {
+                prevChapter: undefined,
+                nextChapter: undefined,
+              },
+            });
+            setChapterTitle(offlineContent.title);
+            setChapterText(JSON.parse(offlineContent.content));
+          }
+        } catch (error) {
+          console.error('Error getting downloaded chapters inside of [id].tsx', error);
+        } finally {
+          setLoading(false);
         }
-      } catch (error) {
-        console.error('Error fetching chapter content', error, chapterPageURL, sourceName);
-      } finally {
-        setLoading(false);
+      }
+    
+      // Fetch online content if connected
+      if (isConnected) {
+        try {
+          const chapterContent = await fetchFunctions.fetchChapterContent(chapterPageURL);
+  
+          if (chapterContent && chapterContent.title && chapterContent.content) {
+            // console.log(JSON.stringify(chapterContent,null,2), 456456456)
+            setContent({
+              title: chapterContent.title,
+              content: chapterContent.content,
+              closeChapters: {
+                prevChapter: chapterContent.prevChapter,
+                nextChapter: chapterContent.nextChapter,
+              },
+            });
+            setChapterText(chapterContent.content);
+            setChapterTitle(chapterContent.title);
+          } else {
+            console.error('Chapter content fetched online is invalid or empty.');
+          }
+        } catch (error) {
+          console.error('Error fetching chapter content', error, chapterPageURL, sourceName);
+        } finally {
+          setLoading(false);
+        }
       }
     };
   
@@ -122,9 +163,6 @@ const ChapterPage = () => {
       loadChapterContent();
     }
   }, [fetchFunctions, chapterPageURL, sourceName]);
-  // console.log(JSON.stringify(content, null, 2));
-  const [chapterText, setChapterText] = useState<string>('');
-  const { isSpeaking, handleSpeaking } = useSpeech(chapterText);
 
   const handleBackPress = () => {
     router.back();
@@ -137,6 +175,13 @@ const ChapterPage = () => {
   const handleReaderOptionsOpen = () => {
     setReaderModalVisible(!readerModalVisible);
   };
+
+  // READ THIS BRO
+
+  // THE PROBLEM IS CHAPTER DOWNLOADED TEXT GETTING SAVED WRONG FORMAT
+  // THEY ARE NOT SPLIT STRINGS IN AN ARRAY
+  // IT IS 1 STRING IN AN ARRAY
+  // WORK ON IT TOMORROW
 
   const handleNavigateCloseChapter = async (chapterPageURL: string | undefined) => {
     try {
@@ -191,8 +236,15 @@ const ChapterPage = () => {
   }, [contentHeight, scrollViewHeight]);
 
   // ((contentHeight-scrollViewHeight)/100)*readerProgress) is used to calculate where it should autoscroll when opening a chapter
-  const chapterNumber = content.title.match(/\d/);
+
+  useEffect(() => {
+    // console.log(content.content, 'inside of useeffect');
+    console.log(Array.isArray(content.content));
+  },[content])
+
+  const chapterNumber = chapterTitle.match(/\d/);
   const chapterIndex = chapterNumber ? parseInt(chapterNumber[0], 10) : 1;
+  // console.log(content.content, 'teset123', Array.isArray(content.content));
   const handleSaveChapterData = async (novelTitle: string, scrollPercentage: number, chapterIndex: number) => {
     try {
       await upsertNovelChapter(novelTitle, scrollPercentage, chapterIndex);
@@ -238,23 +290,28 @@ const ChapterPage = () => {
             }}
           />
           <View style={styles.contentContainer}>
-            {content.content.map((paragraph, index) => (
-              <Text
-                key={index}
-                style={[
-                  styles.chapterText,
-                  {
-                    color: appliedTheme.colors.text,
-                    fontSize: readerOptions.fontSize,
-                    lineHeight: readerOptions.lineHeight,
-                    textAlign: readerOptions.textAlign,
-                    fontFamily: readerOptions.fontFamily,
-                  },
-                ]}
-              >
-                {paragraph}
-              </Text>
-            ))}
+            {/* {!isConnected && chapterText.map(paragraph, index) => ()} */}
+            {content.content.length > 0 ? (
+              content.content.map((paragraph, index) => (
+                <Text
+                  key={index}
+                  style={[
+                    styles.chapterText,
+                    {
+                      color: appliedTheme.colors.text,
+                      fontSize: readerOptions.fontSize,
+                      lineHeight: readerOptions.lineHeight,
+                      textAlign: readerOptions.textAlign,
+                      fontFamily: readerOptions.fontFamily,
+                    },
+                  ]}
+                >
+                  {paragraph}
+                </Text>
+              ))
+            ) : (
+              <Text style={{ color: appliedTheme.colors.text }}>No content available.</Text>
+            )}
           </View>
           <View style={{ width: '100%', alignItems: 'center' }}>
             <Text style={[styles.readingButtonText, { color: appliedTheme.colors.text, marginVertical: 4, marginTop: 12, width: '100%', textAlign: 'center' }]}>

@@ -206,13 +206,13 @@ const fetchChapters = async (novelPageURL: string, page: number) => {
         });
         const body = result.data;
         const loadedCheerio = cheerio.load(body);
-        const chapters: { id: number, title: string, url: string }[] = [];
+        const chapters: { id: number, title: string, chapterPageURL: string }[] = [];
 
         loadedCheerio('.chapter-list li a').each((index: number, el: cheerio.Element) => {
             const id = index+1; // starts from 0
             const title = loadedCheerio(el).attr('title') || '';
             const chapterUrl = `${sourceURL}${loadedCheerio(el).attr('href')}`;
-            chapters.push({ id: id, title, url: chapterUrl });
+            chapters.push({ id: id, title, chapterPageURL: chapterUrl });
         });
         return chapters;
     } catch (error) {
@@ -251,8 +251,9 @@ const fetchChapterContent = async (chapterPageURL: string) => {
 
         loadedCheerio('#chapter-container p').each((_: number, el: cheerio.Element) => {
             chapterContent.content.push(loadedCheerio(el).text().trim());
+            // console.log(loadedCheerio(el).text().trim());
         });
-
+        // console.log(chapterContent.content, ' inside of lightnovelpub.ts');
         const nextChapterElement = loadedCheerio('.nextchap');
         if (nextChapterElement && !nextChapterElement.hasClass('isDisabled')) {
             const nextChapter = nextChapterElement.attr('href');

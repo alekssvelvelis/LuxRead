@@ -140,7 +140,7 @@ const fetchChapters = async (novelPageURL: string, chapterCount: number) => {
             return {
                 id: index+1,
                 title: loadedCheerio(el).text().trim(),
-                url: `${loadedCheerio(el).attr('href')}`,
+                chapterPageURL: `${loadedCheerio(el).attr('href')}`,
             };
         }).get();
         return titlesAndHrefs;

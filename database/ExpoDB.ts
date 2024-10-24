@@ -192,6 +192,7 @@ async function setupDownloadedChaptersTable(){
                 downloadId INTEGER PRIMARY KEY AUTOINCREMENT,
                 chapterTitle TEXT NOT NULL,
                 chapterText TEXT NOT NULL,
+                chapterPageURL TEXT NOT NULL,
                 novel_id INTEGER NOT NULL,
                 FOREIGN KEY (novel_id) REFERENCES libraryNovels(id) ON DELETE CASCADE ON UPDATE CASCADE
                 UNIQUE (chapterTitle, novel_id)
@@ -203,17 +204,18 @@ async function setupDownloadedChaptersTable(){
     }
 }
 
-async function insertDownloadedChapter(chapterTitle: string, chapterText: string, novel_id: number) {
+async function insertDownloadedChapter(chapterTitle: string, chapterText: string, chapterPageURL: string, novel_id: number) {
     const db = await SQLite.openDatabaseAsync('luxreadDatabase', {
         useNewConnection: true
     });
     try {
+        const serializedChapterText = JSON.stringify(chapterText);
         const result = await db.runAsync(
-          `INSERT INTO downloadedChapters (chapterTitle, chapterText, novel_id) VALUES (?, ?, ?)`,
-          [chapterTitle, chapterText, novel_id]
+          `INSERT INTO downloadedChapters (chapterTitle, chapterText, chapterPageURL, novel_id) VALUES (?, ?, ?, ?)`,
+          [chapterTitle, serializedChapterText, chapterPageURL, novel_id]
         );
         if(result){
-            console.log(`Chapter ${chapterTitle}, for novel with id ${novel_id} succesfully added`);
+            // console.log(serializedChapterText);
         }
     } catch (error) {
         console.error('Insert for TABLE libraryNovels failed due to:', error);
@@ -225,6 +227,7 @@ interface DownloadedChapterRow{
     downloadId: number;
     chapterTitle: string;
     chapterText: string | string[];
+    chapterPageURL: string;
     novel_id: number;
 }
 
@@ -235,7 +238,7 @@ async function getDownloadedChapters(novelId: number) {
 
     try {
         const allRows: DownloadedChapterRow[] = await db.getAllAsync(
-            `SELECT * FROM downloadedChapters WHERE novel_id = ?`,
+            `SELECT * FROM downloadedChapters WHERE novel_id = ? ORDER BY CAST(SUBSTR(chapterTitle, INSTR(chapterTitle, ' ') + 1) AS INTEGER) ASC`,
             [novelId]
         );
 
@@ -244,8 +247,9 @@ async function getDownloadedChapters(novelId: number) {
         for (const row of allRows) {
             downloadedChapters.push({
                 id: row.downloadId,
-                chapterTitle: row.chapterTitle,
-                chapterContent: row.chapterText,
+                title: row.chapterTitle,
+                content: row.chapterText,
+                chapterPageURL: row.chapterPageURL,
                 novel_id: row.novel_id,
             });
         }
@@ -260,6 +264,70 @@ async function getDownloadedChapters(novelId: number) {
         return [];
     }
 }
+interface DownloadedChapterContent {
+    title: string;
+    content: string[] | string;
+    closeChapters: { [chapterTitle: string]: string | undefined};
+}
+
+async function getDownloadedChapterContent(chapterPageURL: string): Promise<DownloadedChapterContent | null> {
+    const db = await SQLite.openDatabaseAsync('luxreadDatabase', {
+        useNewConnection: true
+    });
+
+    try {
+        // Fetch the current chapter and its novel_id
+        const currentChapterResult = await db.getAllAsync(
+            `SELECT chapterTitle, chapterText, novel_id FROM downloadedChapters WHERE chapterPageURL = ?`,
+            [chapterPageURL]
+        );
+
+        if (!currentChapterResult || currentChapterResult.length === 0) {
+            console.log('No chapter found with the provided URL');
+            return null;
+        }
+        
+        const currentChapter = currentChapterResult[0] as DownloadedChapterRow;
+        // console.log(currentChapter.chapterText);
+        const novelId = currentChapter.novel_id;
+
+        // Fetch all chapter titles and URLs for the novel
+        const allChaptersResult: DownloadedChapterRow[] = await db.getAllAsync(
+            `SELECT chapterTitle, chapterPageURL FROM downloadedChapters WHERE novel_id = ?`,
+            [novelId]
+        );
+
+        if (!allChaptersResult || allChaptersResult.length === 0) {
+            console.log('No chapters found for this novel');
+            return null;
+        }
+
+        // Extract the current chapter's number from the title (e.g., "Chapter 1 - A New Beginning")
+        const extractChapterNumber = (title: string): number => {
+            const match = title.match(/Chapter\s+(\d+)/);
+            return match ? parseInt(match[1], 10) : -1;
+        };
+
+        const currentChapterNumber = extractChapterNumber(currentChapter.chapterTitle);
+
+        // console.log(currentChapterNumber);
+
+        const downloadedChapterContent: DownloadedChapterContent = {
+            title: currentChapter.chapterTitle,
+            content: currentChapter.chapterText,
+            closeChapters: {
+                prevChapter: undefined,
+                nextChapter: undefined,
+            }
+        };
+
+        return downloadedChapterContent;
+    } catch (error) {
+        console.error('Error fetching downloaded chapter content:', error);
+        return null;
+    }
+}
+
 
 interface ChapterRow{
     id: number;
@@ -408,33 +476,12 @@ async function deleteNovelChapters(novelId: number) {
 }
 
 async function clearTable(tableName: string) {
-    const db = await SQLite.openDatabaseAsync('luxreadDatabase');
+    const db = await SQLite.openDatabaseAsync('luxreadDatabase', {
+        useNewConnection: true
+    });
     try {
-
-        const allRows: DownloadedChapterRow[] = await db.getAllAsync(
-            `SELECT * FROM downloadedChapters`,
-        );
-
-        const downloadedChapters = [];
-
-        for (const row of allRows) {
-            downloadedChapters.push({
-                id: row.downloadId,
-                chapterTitle: row.chapterTitle,
-                chapterContent: row.chapterText,
-                novel_id: row.novel_id,
-            });
-        }
-
-        if (allRows.length === 0) {
-            console.log('No chapters downloaded');
-        }
-
-        console.log(downloadedChapters);
-
         await db.execAsync(`DELETE FROM ${tableName}`);
         console.log(`Table "${tableName}" cleared successfully.`);
-
     } catch (error) {
         console.error(`Failed to clear table "${tableName}":`, error);
     }
@@ -449,4 +496,4 @@ async function dropTable(tableName: string) {
         console.error(`Failed to drop table "${tableName}":`, error);
     }
 }
-export { clearTable, getAllNovelChapters, setupSourcesTable, getSources, setupLibraryNovelsTable, insertLibraryNovel, getAllLibraryNovels, dropTable, deleteLibraryNovel, deleteNovelChapters, getTableStructure, getNovelsBySource, setupNovelChaptersTable, upsertNovelChapter, setupDownloadedChaptersTable, getDownloadedChapters, insertDownloadedChapter };
+export { clearTable, getAllNovelChapters, setupSourcesTable, getSources, setupLibraryNovelsTable, insertLibraryNovel, getAllLibraryNovels, dropTable, deleteLibraryNovel, deleteNovelChapters, getTableStructure, getNovelsBySource, setupNovelChaptersTable, upsertNovelChapter, setupDownloadedChaptersTable, getDownloadedChapters, insertDownloadedChapter, getDownloadedChapterContent };
