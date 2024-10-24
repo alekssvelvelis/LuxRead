@@ -50,7 +50,6 @@ export default function Library() {
         }
       };
       fetchNovels();
-      // console.log(JSON.stringify(novelsData, null, 2));
     }, [])
   );
   

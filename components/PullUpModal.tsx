@@ -4,7 +4,6 @@ import {
     Dimensions,
     View,
     StyleSheet,
-    Text,
     Animated,
     SafeAreaView,
     Pressable,
@@ -22,7 +21,7 @@ interface PullUpModalProps {
 }
 
 export function PullUpModal({ visible, onClose, children }: PullUpModalProps) {
-    const { theme, appliedTheme } = useThemeContext();
+    const { appliedTheme } = useThemeContext();
     const [slideAnimation] = useState(new Animated.Value(height)); // Initial position off-screen
     const [fadeAnimation] = useState(new Animated.Value(0)); // Initial opacity
     const [isVisible, setIsVisible] = useState(visible);

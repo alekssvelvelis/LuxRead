@@ -46,7 +46,7 @@ export const getNovelRows = async (key: string): Promise<string | null> => {
   return null;
 };
 
-export const saveReaderOptions = async (options: string[]) => {
+export const saveReaderOptions = async (options: object) => {
   try {
     await AsyncStorage.setItem(READER_OPTIONS_KEY, JSON.stringify(options));
   } catch (error) {

@@ -296,10 +296,6 @@ async function getDownloadedChapterContent(chapterPageURL: string): Promise<Down
             [novelId]
         );
 
-        // if(allChaptersResult){
-        //     console.log(allChaptersResult);
-        // }
-
         if (!allChaptersResult || allChaptersResult.length === 0) {
             console.log('No chapters found for this novel');
             return null;
@@ -309,13 +305,10 @@ async function getDownloadedChapterContent(chapterPageURL: string): Promise<Down
             const match = title.match(/Chapter\s+(\d+)/);
             return match ? parseInt(match[1], 10) : -1;
         };
-
         const currentChapterNumber = extractChapterNumber(currentChapter.chapterTitle);
 
         const nextChapter = allChaptersResult.find(chapters => extractChapterNumber(chapters.chapterTitle) === currentChapterNumber+1);
         const prevChapter = allChaptersResult.find(chapters => extractChapterNumber(chapters.chapterTitle) === currentChapterNumber-1);
-
-        // console.log(currentChapterNumber);
 
         const downloadedChapterContent: DownloadedChapterContent = {
             title: currentChapter.chapterTitle,

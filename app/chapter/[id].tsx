@@ -38,8 +38,7 @@ type typeSearchParams = {
   chapterPageURL: string,
   sourceName: string,
   title: string,
-  chapterContent: object,
-  readerProgress?: number | undefined,
+  readerProgress?: number,
 };
 
 const ChapterPage = () => {
@@ -110,20 +109,20 @@ const ChapterPage = () => {
       setLoading(true);
       if (!isConnected) {
         try {
-          // Fetch content from the database when offline
           const offlineContent = await getDownloadedChapterContent(chapterPageURL);
           // console.log(JSON.stringify(offlineContent,null,2), 'test');
           if (offlineContent) {
+            const contentString = Array.isArray(offlineContent.content) ? offlineContent.content.join(' ') : offlineContent.content;
             setContent({
               title: offlineContent.title,
-              content: JSON.parse(offlineContent.content),
+              content: JSON.parse(contentString),
               closeChapters: {
                 prevChapter: offlineContent.closeChapters.prevChapter,
                 nextChapter: offlineContent.closeChapters.nextChapter,
               },
             });
             setChapterTitle(offlineContent.title);
-            setChapterText(JSON.parse(offlineContent.content));
+            setChapterText(JSON.parse(contentString));
           }
         } catch (error) {
           console.error('Error getting downloaded chapters inside of [id].tsx', error);
@@ -132,13 +131,10 @@ const ChapterPage = () => {
         }
       }
     
-      // Fetch online content if connected
       if (isConnected) {
         try {
           const chapterContent = await fetchFunctions.fetchChapterContent(chapterPageURL);
-  
           if (chapterContent && chapterContent.title && chapterContent.content) {
-            // console.log(JSON.stringify(chapterContent,null,2), 456456456)
             setContent({
               title: chapterContent.title,
               content: chapterContent.content,
@@ -176,13 +172,6 @@ const ChapterPage = () => {
   const handleReaderOptionsOpen = () => {
     setReaderModalVisible(!readerModalVisible);
   };
-
-  // READ THIS BRO
-
-  // THE PROBLEM IS CHAPTER DOWNLOADED TEXT GETTING SAVED WRONG FORMAT
-  // THEY ARE NOT SPLIT STRINGS IN AN ARRAY
-  // IT IS 1 STRING IN AN ARRAY
-  // WORK ON IT TOMORROW
 
   const handleNavigateCloseChapter = async (chapterPageURL: string | undefined) => {
     try {
@@ -290,7 +279,6 @@ const ChapterPage = () => {
             }}
           />
           <View style={styles.contentContainer}>
-            {/* {!isConnected && chapterText.map(paragraph, index) => ()} */}
             {content.content.length > 0 ? (
               content.content.map((paragraph, index) => (
                 <Text

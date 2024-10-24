@@ -162,9 +162,6 @@ const Synopsis = () => {
   );
 
   const handleNavigateToChapter = async (chapterPageURL: string, itemId: number) => {
-    // if(!isConnected){
-    //   const relevantChapterData = downloadedChapterList.find(chapter => chapter.chapterPageURL === chapterPageURL);
-    // }
     try {
       router.navigate({
         // @ts-ignore since pathname only works this way. Can remove and try to fix error.
@@ -180,6 +177,7 @@ const Synopsis = () => {
       console.error("Error fetching single novel:", error);
     }
   };
+
   const [downloading, setDownloading] = useState(false);
   const handleDownloadChapter = async (chapterPageURL: string, novelId: number) => {
     setDownloading(true);
@@ -195,7 +193,7 @@ const Synopsis = () => {
   };
 
   const RenderChapterItem = ({ item, index }: { item: Chapter, index: number }) => {
-    const trueChapterIndex = item.title.match(/Chapter\s+(\d+)/);
+    const trueChapterIndex = item.title.match(/Chapter\s+(\d+)/) || '1';
     const chapterIndexOfItem = isConnected ? index+1 : Number(trueChapterIndex[1]);
     const defaultChapterIndex = readingProgress.chapterIndex || 0;
     if(!isConnected){

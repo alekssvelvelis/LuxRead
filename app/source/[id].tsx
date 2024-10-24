@@ -13,6 +13,20 @@ import SearchBar from '@/components/SearchBar';
 import SourcesSkeleton from '@/components/skeletons/SourcesSkeleton';
 import NetInfoHelper from '@/components/NetInfoHelper';
 
+interface Novels {
+  title: string,
+  imageURL: string,
+  author: string,
+  chapterCount: number,
+  novelPageURL: string,
+  sourceName: string,
+}
+
+interface queriedNovels {
+  id: number,
+  title: string,
+}
+
 const SourceList = () => {
   const { isConnected } = useNetwork();
   const { sourceName } = useLocalSearchParams();
@@ -32,8 +46,8 @@ const SourceList = () => {
     );
   }
 
-  const [novels, setNovels] = useState<object>([]);
-  const [queriedNovels, setQueriedNovels] = useState<object>([]);
+  const [novels, setNovels] = useState<Novels[]>([]);
+  const [queriedNovels, setQueriedNovels] = useState<queriedNovels[]>([]);
   const [page, setPage] = useState<number>(1);
   const [loading, setLoading] = useState<boolean>(false);
   const router = useRouter();
@@ -66,31 +80,30 @@ const SourceList = () => {
   }, []);
 
   const handleSearchQuery = (query: string) => {
+    setLoading(true);
     setSearchQuery(query);
     setSearchPage(1);
   };
 
-  const fetchNovels = useCallback(async (pageNumber = 1, searchQuery = null) => {
+  const fetchNovels = useCallback(async (pageNumber = 1, searchQuery = '') => {
     if (!fetchFunctions) {
-      // console.log("fetchFunctions is not available");
       return;
     }
     setLoading(true);
     const fetchFunction = searchQuery ? fetchFunctions.searchNovels : fetchFunctions.popularNovels;
     try {
       const novelsData = await fetchFunction(searchQuery || pageNumber, pageNumber);
-      // console.log(JSON.stringify(novelsData, null, 2));
       if (searchQuery) { 
         if (pageNumber === 1) {
           setNovels(novelsData);
         } else {
-          setNovels(prevNovels => [...prevNovels, ...novelsData]);
+          setNovels(novels => [...novels, ...novelsData]);
         }
       } else {
         if (pageNumber === 1) {
           setNovels(novelsData);
         } else {
-          setNovels(prevNovels => [...prevNovels, ...novelsData]);
+          setNovels(novels => [...novels, ...novelsData]);
         }
       }
       setHasMore(novelsData.length >= 15); 
@@ -102,14 +115,14 @@ const SourceList = () => {
   }, [fetchFunctions]);
 
 
-  const handleSaveNovel = async (novel) => {
+  const handleSaveNovel = async (novel: Novels) => {
     try {
       const allNovelInfo = await fetchFunctions.fetchSingleNovel(novel.novelPageURL);
       const chapterCount = parseInt(allNovelInfo.chapterCount);
       const genres = String(allNovelInfo.genres);
       // console.log(allNovelInfo, 'test123');
-      const result = await insertLibraryNovel(allNovelInfo.title, allNovelInfo.author, allNovelInfo.description, genres, chapterCount, allNovelInfo.imageURL, allNovelInfo.novelPageURL, sourceName);
-      setQueriedNovels(prevQueriedNovels => [...prevQueriedNovels, { id: result, title: allNovelInfo.title }]); // Add the saved novel to queriedNovels
+      const result = await insertLibraryNovel(allNovelInfo.title, allNovelInfo.author, allNovelInfo.description, genres, chapterCount, allNovelInfo.imageURL, allNovelInfo.novelPageURL, sourceNameString);
+      setQueriedNovels(prevQueriedNovels => [prevQueriedNovels, { id: result, title: allNovelInfo.title }]); // Add the saved novel to queriedNovels
     } catch (error) {
       console.error('Error saving novel:', error);
     }
@@ -117,24 +130,16 @@ const SourceList = () => {
   
   useEffect(() => {
     if (searchQuery) {
+      setNovels([]);
+      setLoading(true);
       fetchNovels(searchPage, searchQuery);
-      setLoading(true);
     } else {
-      fetchNovels(page);
-      setLoading(true);
-    }
-  }, [page, searchPage, searchQuery, fetchNovels]);
-
-  useEffect(() => {
-    // console.log(JSON.stringify(novels, null, 2));
-  }, [novels]);
-
-  useEffect(()=>{
-    if(!searchQuery){
       setNovels([]);
       setPage(1);
+      setLoading(true);
+      fetchNovels(page);
     }
-  }, [searchQuery])
+  }, [page, searchPage, searchQuery, fetchNovels]);
 
   const handleLoadMore = () => {
     if (!loading && hasMore) {
@@ -165,10 +170,10 @@ const SourceList = () => {
     }
   };
 
-  const renderItem = ({ item }) => {
+  const renderItem = ({ item }: { item: Novels}) => {
     const isQueriedNovel = queriedNovels.some(queriedNovel => queriedNovel.title === item.title);
     return (
-      <TouchableOpacity 
+      <TouchableOpacity
         style={[styles.novelItem, { width: novelWidth }]} 
         onPress={() => handleNavigateToNovel(item.novelPageURL)} 
         onLongPress={() => handleSaveNovel(item)}
