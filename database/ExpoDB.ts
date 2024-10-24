@@ -276,7 +276,6 @@ async function getDownloadedChapterContent(chapterPageURL: string): Promise<Down
     });
 
     try {
-        // Fetch the current chapter and its novel_id
         const currentChapterResult = await db.getAllAsync(
             `SELECT chapterTitle, chapterText, novel_id FROM downloadedChapters WHERE chapterPageURL = ?`,
             [chapterPageURL]
@@ -297,12 +296,15 @@ async function getDownloadedChapterContent(chapterPageURL: string): Promise<Down
             [novelId]
         );
 
+        // if(allChaptersResult){
+        //     console.log(allChaptersResult);
+        // }
+
         if (!allChaptersResult || allChaptersResult.length === 0) {
             console.log('No chapters found for this novel');
             return null;
         }
 
-        // Extract the current chapter's number from the title (e.g., "Chapter 1 - A New Beginning")
         const extractChapterNumber = (title: string): number => {
             const match = title.match(/Chapter\s+(\d+)/);
             return match ? parseInt(match[1], 10) : -1;
@@ -310,14 +312,17 @@ async function getDownloadedChapterContent(chapterPageURL: string): Promise<Down
 
         const currentChapterNumber = extractChapterNumber(currentChapter.chapterTitle);
 
+        const nextChapter = allChaptersResult.find(chapters => extractChapterNumber(chapters.chapterTitle) === currentChapterNumber+1);
+        const prevChapter = allChaptersResult.find(chapters => extractChapterNumber(chapters.chapterTitle) === currentChapterNumber-1);
+
         // console.log(currentChapterNumber);
 
         const downloadedChapterContent: DownloadedChapterContent = {
             title: currentChapter.chapterTitle,
             content: currentChapter.chapterText,
             closeChapters: {
-                prevChapter: undefined,
-                nextChapter: undefined,
+                prevChapter: prevChapter?.chapterPageURL,
+                nextChapter: nextChapter?.chapterPageURL,
             }
         };
 

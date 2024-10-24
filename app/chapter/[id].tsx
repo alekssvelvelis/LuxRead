@@ -112,13 +112,14 @@ const ChapterPage = () => {
         try {
           // Fetch content from the database when offline
           const offlineContent = await getDownloadedChapterContent(chapterPageURL);
+          // console.log(JSON.stringify(offlineContent,null,2), 'test');
           if (offlineContent) {
             setContent({
               title: offlineContent.title,
               content: JSON.parse(offlineContent.content),
               closeChapters: {
-                prevChapter: undefined,
-                nextChapter: undefined,
+                prevChapter: offlineContent.closeChapters.prevChapter,
+                nextChapter: offlineContent.closeChapters.nextChapter,
               },
             });
             setChapterTitle(offlineContent.title);
@@ -237,14 +238,13 @@ const ChapterPage = () => {
 
   // ((contentHeight-scrollViewHeight)/100)*readerProgress) is used to calculate where it should autoscroll when opening a chapter
 
-  useEffect(() => {
-    // console.log(content.content, 'inside of useeffect');
-    console.log(Array.isArray(content.content));
-  },[content])
+  // useEffect(() => {
+  //   console.log(content.content, 'inside of useeffect');
+  //   console.log(Array.isArray(content.content));
+  // },[content])
 
   const chapterNumber = chapterTitle.match(/\d/);
   const chapterIndex = chapterNumber ? parseInt(chapterNumber[0], 10) : 1;
-  // console.log(content.content, 'teset123', Array.isArray(content.content));
   const handleSaveChapterData = async (novelTitle: string, scrollPercentage: number, chapterIndex: number) => {
     try {
       await upsertNovelChapter(novelTitle, scrollPercentage, chapterIndex);
@@ -333,20 +333,15 @@ const ChapterPage = () => {
         <View style={[styles.footer, { backgroundColor: overlayBackgroundColor }]}>
           <View style={{ width: '90%', flexDirection: 'row', justifyContent: 'space-around'}}>
             <View style={{width: '33%', justifyContent:'center', alignItems:'center'}}>
-              {/* {content.closeChapters['prevChapter'] && */}
-                <Ionicons name={'arrow-back'} size={32} color={content.closeChapters['prevChapter'] ? appliedTheme.colors.text : 'rgba(255,255,255,0.5)'} onPress={content.closeChapters['prevChapter'] ? () => handleNavigateCloseChapter(content.closeChapters['prevChapter']) : null}/> 
-              {/* } */}
+                <Ionicons name={'arrow-back'} size={32} color={content.closeChapters['prevChapter'] ? appliedTheme.colors.text : 'rgba(255,255,255,0.5)'} onPress={content.closeChapters['prevChapter'] ? () => handleNavigateCloseChapter(content.closeChapters['prevChapter']) : undefined}/> 
             </View>
             <View style={{width: '33%', justifyContent:'center', alignItems:'center'}}>
               <Ionicons name={'cog'} size={32} color={appliedTheme.colors.text} onPress={handleReaderOptionsOpen} />
             </View>
             <View style={{width: '33%', justifyContent:'center', alignItems:'center'}}>
-              {content.closeChapters['nextChapter'] &&
                 <View>
-                  {/* <Text>{content.closeChapters['nextChapter']}</Text> */}
-                  <Ionicons name={'arrow-forward'} size={32} color={appliedTheme.colors.text} onPress={() => handleNavigateCloseChapter(content.closeChapters['nextChapter'])}/>
+                  <Ionicons name={'arrow-forward'} size={32} color={content.closeChapters['nextChapter'] ? appliedTheme.colors.text : 'rgba(255,255,255,0.5)'} onPress={content.closeChapters['nextChapter'] ?() => handleNavigateCloseChapter(content.closeChapters['nextChapter']) : undefined}/>
                 </View>
-              }
             </View>
           </View>
         </View>
