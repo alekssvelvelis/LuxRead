@@ -79,7 +79,7 @@ const popularNovels = async (pageNumber: number) => {
 
             return Promise.all(promises).then(results => results.filter(Boolean)); // Filter out undefined values
         } catch (error) {
-              console.error('axios error ', error)
+            console.error('axios error ', error);
         }  
     } catch (error) {
         console.error('Failure to fetch popular novels at', sourceName, 'with url', sourceURL, 'throws', error);

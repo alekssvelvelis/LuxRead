@@ -17,7 +17,7 @@ export default () => {
             tabBarActiveTintColor: appliedTheme.colors.primary, 
             tabBarStyle: {
                 height: 75,
-                backgroundColor: appliedTheme.colors.elevation.level2,
+                backgroundColor: appliedTheme.colors.elevation.level3,
                 borderTopWidth: 0,
             },
             tabBarLabelStyle: {
@@ -33,7 +33,7 @@ export default () => {
                     tabBarIcon: ({ color }) => <Ionicons size={28} name="book" color={color} />,
                     tabBarStyle: {
                         height: 75,
-                        backgroundColor: appliedTheme.colors.elevation.level2,
+                        backgroundColor: appliedTheme.colors.elevation.level3,
                         borderTopWidth: 0,
                     }
                 }}

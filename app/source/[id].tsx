@@ -35,7 +35,7 @@ const SourceList = () => {
 
   if(!isConnected){
     return(
-      <View style={[styles.container, {backgroundColor: appliedTheme.colors.background}]}>
+      <View style={[styles.container, {backgroundColor: appliedTheme.colors.elevation.level2}]}>
         <Stack.Screen 
           options={{
             headerShown: false,
@@ -50,11 +50,11 @@ const SourceList = () => {
   const [queriedNovels, setQueriedNovels] = useState<queriedNovels[]>([]);
   const [page, setPage] = useState<number>(1);
   const [loading, setLoading] = useState<boolean>(false);
-  const router = useRouter();
   const [hasMore, setHasMore] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [searchPage, setSearchPage] = useState<number>(1);
 
+  const router = useRouter();
   const [fetchFunctions, setFetchFunctions] = useState<any>(null);
   useEffect(() => {
     if (sourceNameString) {
@@ -80,6 +80,7 @@ const SourceList = () => {
   }, []);
 
   const handleSearchQuery = (query: string) => {
+    setNovels([]); // matching skeleton loader requirements below
     setLoading(true);
     setSearchQuery(query);
     setSearchPage(1);
@@ -120,7 +121,6 @@ const SourceList = () => {
       const allNovelInfo = await fetchFunctions.fetchSingleNovel(novel.novelPageURL);
       const chapterCount = parseInt(allNovelInfo.chapterCount);
       const genres = String(allNovelInfo.genres);
-      // console.log(allNovelInfo, 'test123');
       const result = await insertLibraryNovel(allNovelInfo.title, allNovelInfo.author, allNovelInfo.description, genres, chapterCount, allNovelInfo.imageURL, allNovelInfo.novelPageURL, sourceNameString);
       setQueriedNovels(prevQueriedNovels => [prevQueriedNovels, { id: result, title: allNovelInfo.title }]); // Add the saved novel to queriedNovels
     } catch (error) {
@@ -130,12 +130,12 @@ const SourceList = () => {
   
   useEffect(() => {
     if (searchQuery) {
-      setNovels([]);
+      // setNovels([]);
       setLoading(true);
       fetchNovels(searchPage, searchQuery);
     } else {
-      setNovels([]);
-      setPage(1);
+      // setNovels([]);
+      // setPage(1);
       setLoading(true);
       fetchNovels(page);
     }
@@ -194,7 +194,7 @@ const SourceList = () => {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: appliedTheme.colors.background }]}>
+    <View style={[styles.container, { backgroundColor: appliedTheme.colors.elevation.level2 }]}>
       <Stack.Screen 
         options={{
           headerShown: false,
@@ -203,6 +203,10 @@ const SourceList = () => {
       <View style={styles.header}>
         <SearchBar onSearchChange={handleSearchQuery}/>
       </View>
+      {loading && novels.length === 0 ? ( 
+        // Show skeleton loader if loading is true and no novels have been loaded yet
+      <SourcesSkeleton />
+      ) : (
       <FlatList
         data={novels}
         renderItem={renderItem}
@@ -213,6 +217,7 @@ const SourceList = () => {
         onEndReachedThreshold={0.5}
         ListFooterComponent={loading ?  <SourcesSkeleton/> : null}
       />
+      )}
     </View>
   );
 };

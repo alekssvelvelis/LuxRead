@@ -45,7 +45,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearchChange }) => {
 
   return (
     <View style={{ flex: 1, alignItems: 'center', marginTop: 28 }}>
-      <View style={[styles.searchbarContainer, { backgroundColor: appliedTheme.colors.elevation.level2 }]}>
+      <View style={[styles.searchbarContainer, { backgroundColor: appliedTheme.colors.elevation.level3 }]}>
         <Pressable style={styles.searchbar}>
           <Ionicons 
             name={isCoreTab ? 'search-outline' : 'arrow-back'} 

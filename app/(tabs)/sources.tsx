@@ -46,7 +46,7 @@ export default function Sources() {
     };
 
     return (
-        <View style={[styles.container, {backgroundColor: appliedTheme.colors.background}]}>
+        <View style={[styles.container, {backgroundColor: appliedTheme.colors.elevation.level2}]}>
             <View style={styles.header}><SearchBar onSearchChange={handleSearchQuery}/></View>
             <ScrollView contentContainerStyle={styles.scrollViewContent} style={styles.scrollView}>
                 {filteredSources.length === 0 ? (
@@ -58,7 +58,7 @@ export default function Sources() {
                 ) : (
                     filteredSources.map((filteredSource, index) => { 
                     return(
-                        <TouchableOpacity key={index} onPress={() => handleSourcePress(filteredSource.sourceName)} style={[styles.sourceContainer, {backgroundColor: appliedTheme.colors.elevation.level2}]}>
+                        <TouchableOpacity key={index} onPress={() => handleSourcePress(filteredSource.sourceName)} style={[styles.sourceContainer, {backgroundColor: appliedTheme.colors.elevation.level3}]}>
                             <Image style={styles.sourceImage} source={{uri : filteredSource.baseImage}}></Image>
                             <Text style={[styles.sourceText, {color: appliedTheme.colors.text}]}>{filteredSource.sourceName}</Text>
                             <Entypo style={[styles.bookmark, {}]} size={40} name="bookmarks" color={appliedTheme.colors.onSurfaceVariant}/>

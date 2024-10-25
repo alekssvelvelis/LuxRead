@@ -122,7 +122,7 @@ export default function Library() {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: appliedTheme.colors.background }]}>
+    <View style={[styles.container, { backgroundColor: appliedTheme.colors.elevation.level2 }]}>
       <View style={styles.header}>
         <SearchBar onSearchChange={handleSearchQuery}/>
       </View>

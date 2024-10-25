@@ -309,7 +309,7 @@ const Synopsis = () => {
     </View>
   );
 
-  if (isInitialLoading) return <View style={{backgroundColor: appliedTheme.colors.background}}><NovelSkeleton/></View>;
+  if (isInitialLoading) return <View style={{backgroundColor: appliedTheme.colors.elevation.level2}}><NovelSkeleton/></View>;
 
   return (
     <View style={[styles.container, {backgroundColor: appliedTheme.colors.elevation.level2}]}>

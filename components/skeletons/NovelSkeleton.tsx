@@ -9,7 +9,7 @@ const NovelSkeleton = () => {
     const ShimmerPlaceholder = createShimmerPlaceholder(LinearGradient);
 
     return(
-        <View style={{minWidth: '100%', minHeight: '100%', marginTop: 56, backgroundColor: appliedTheme.colors.background}}>
+        <View style={{minWidth: '100%', minHeight: '100%', marginTop: 56, backgroundColor: appliedTheme.colors.elevation.level2}}>
             <Stack.Screen
                 options={{
                 headerTitle: `Loading`,

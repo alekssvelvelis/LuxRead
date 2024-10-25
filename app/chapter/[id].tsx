@@ -227,11 +227,6 @@ const ChapterPage = () => {
 
   // ((contentHeight-scrollViewHeight)/100)*readerProgress) is used to calculate where it should autoscroll when opening a chapter
 
-  // useEffect(() => {
-  //   console.log(content.content, 'inside of useeffect');
-  //   console.log(Array.isArray(content.content));
-  // },[content])
-
   const chapterNumber = chapterTitle.match(/\d/);
   const chapterIndex = chapterNumber ? parseInt(chapterNumber[0], 10) : 1;
   const handleSaveChapterData = async (novelTitle: string, scrollPercentage: number, chapterIndex: number) => {
@@ -245,7 +240,7 @@ const ChapterPage = () => {
 
   if (loading) {
     return (
-      <View style={{ flex: 1, backgroundColor: appliedTheme.colors.background }}>
+      <View style={{ flex: 1, backgroundColor: appliedTheme.colors.elevation.level2 }}>
         <ChapterSkeleton></ChapterSkeleton>
       </View>
     );
@@ -263,7 +258,7 @@ const ChapterPage = () => {
       )}
       <ScrollView
         ref={scrollViewRef}
-        contentContainerStyle={[styles.container, { backgroundColor: appliedTheme.colors.background }]}
+        contentContainerStyle={[styles.container, { backgroundColor: appliedTheme.colors.elevation.level2 }]}
         onScroll={handleScroll}
         onContentSizeChange={handleContentSizeChange}  // Captures content height after it renders
         onLayout={onLayoutHandler} 

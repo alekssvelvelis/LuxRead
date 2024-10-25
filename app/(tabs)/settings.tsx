@@ -13,7 +13,7 @@ export default function Settings() {
       return;
     }
     return (
-        <ScrollView contentContainerStyle={[styles.container, { backgroundColor: appliedTheme.colors.background }]}>
+        <ScrollView contentContainerStyle={[styles.container, { backgroundColor: appliedTheme.colors.elevation.level2 }]}>
             <View style={[styles.infoContainer]}>
                 <Text style={{color: appliedTheme.colors.primary, marginTop: 32, marginHorizontal: 8, fontSize: 24}}>Appearance</Text>
                 <ThemeSelector onThemeChange={setTheme} />
