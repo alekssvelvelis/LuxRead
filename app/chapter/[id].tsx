@@ -139,8 +139,8 @@ const ChapterPage = () => {
               title: chapterContent.title,
               content: chapterContent.content,
               closeChapters: {
-                prevChapter: chapterContent.prevChapter,
-                nextChapter: chapterContent.nextChapter,
+                prevChapter: chapterContent.closeChapters.prevChapter,
+                nextChapter: chapterContent.closeChapters.nextChapter,
               },
             });
             setChapterText(chapterContent.content);
@@ -213,6 +213,7 @@ const ChapterPage = () => {
   };
 
   const scrollToPosition = () => {
+    console.log(readerProgress);
     if (scrollViewRef.current && contentHeight && scrollViewHeight) {
       const scrollPosition = ((contentHeight - scrollViewHeight) / 100) * readerProgress;
       scrollViewRef.current.scrollTo({ y: scrollPosition, animated: true });

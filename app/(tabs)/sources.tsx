@@ -26,7 +26,6 @@ export default function Sources() {
           };
           fetchSources();
       }, []);
-    //   console.log(JSON.stringify(sources, null, 2));
 
     const [query, setQuery] = useState("");
     const [filteredSources, setFilteredSources] = useState(sources);
