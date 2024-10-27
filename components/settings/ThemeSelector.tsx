@@ -17,14 +17,15 @@ const ThemeSelector = ({ onThemeChange }: { onThemeChange: (theme: string) => vo
         onThemeChange(theme);
     };
 
-    // Adjust the StatusBar content based on the active theme
-    useEffect(() => {
-        if (activeTheme.startsWith('light')) {
-            StatusBar.setBarStyle('dark-content', true); // Light theme, so dark content on the status bar
-        } else if (activeTheme.startsWith('dark')) {
-            StatusBar.setBarStyle('light-content', true); // Dark theme, so light content on the status bar
-        }
-    }, [activeTheme]); // Re-run the effect when the activeTheme changes
+    // ignore for now
+    // useEffect(() => {
+    //     StatusBar.setBackgroundColor(appliedTheme.colors.elevation.level2);
+    //     if (activeTheme.startsWith('light')) {
+    //         StatusBar.setBarStyle('dark-content', true);
+    //     } else if (activeTheme.startsWith('dark')) {
+    //         StatusBar.setBarStyle('light-content', true);
+    //     }
+    // }, [activeTheme]);
 
     return (
         <View style={[styles.container, { width: screenWidth - 20 }]}>
