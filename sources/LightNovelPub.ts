@@ -17,7 +17,7 @@ const fetchRelevantOfNovel = async (novelPageURL: string): Promise<ExtraTableDat
     try {
         const result = await axios.get(novelPageURL, {
             headers: {
-              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.82 Safari/537.36',
+              'User-Agent': 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Mobile Safari/537.36',
             }
         });
         const body = result.data;
@@ -35,7 +35,8 @@ const fetchRelevantOfNovel = async (novelPageURL: string): Promise<ExtraTableDat
 }
 
 const popularNovels = async (pageNumber: number) => {
-    const limit = pLimit(3); // runs 3 requests asynchronously, so 15 / 3 = 5 batches to run (3 at a time)
+    console.log(1);
+    const limit = pLimit(1); // runs 3 requests asynchronously, so 15 / 3 = 5 batches to run (3 at a time)
     // When considering the pLimit, average time to fetch novels is calculated with as said below:
     // Given 15 novels and considering a 1000ms or 1s sleep, pLimit will need to run 5 batches of renders to get the novels.
     // Since we sleep 1000 for each batch, we have a minimum of 5 seconds. Considering overhead, we can say it will take twice as long.
@@ -47,12 +48,12 @@ const popularNovels = async (pageNumber: number) => {
         try {
             const response = await axios.get(url, {
               headers: {
+                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.82 Safari/537.36',
               }
             });
             const loadedCheerio = cheerio.load(response.data);
             const novelList = loadedCheerio('.novel-list > .novel-item');
-            
             const promises = novelList.map((_: number, element: cheerio.Element) =>  // _ used as a replacement for index, index is required by .map but not used here
                 limit(async () => { // Limit each request to avoid overwhelming the server
                     const title = loadedCheerio(element).find('.novel-title a').text().trim();
@@ -76,12 +77,14 @@ const popularNovels = async (pageNumber: number) => {
                     return;
                 })
             ).get();
-
             return Promise.all(promises).then(results => results.filter(Boolean)); // Filter out undefined values
         } catch (error) {
-            console.error('axios error ', error);
+            console.error(`axios error for URL ${url}: `, error);
+            // console.log(error.response);
+            // console.log('Error Headers:', error.response.headers);
+            // console.log('Error Data:', error.response.data);
         }  
-    } catch (error) {
+    } catch (error) {        
         console.error('Failure to fetch popular novels at', sourceName, 'with url', sourceURL, 'throws', error);
         return [];
     }

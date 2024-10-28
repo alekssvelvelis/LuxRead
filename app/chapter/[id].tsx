@@ -188,7 +188,7 @@ const ChapterPage = () => {
       console.error("Error fetching single novel:", error);
     }
   };
-  const overlayBackgroundColor = rgbToRgba(appliedTheme.colors.elevation.level2, 0.9);
+  const overlayBackgroundColor = rgbToRgba(appliedTheme.colors.elevation.level3, 0.9);
   
   const scrollViewRef = useRef<ScrollView>(null);
   const [scrollPercentage, setScrollPercentage] = useState(0);
@@ -227,9 +227,8 @@ const ChapterPage = () => {
   }, [contentHeight, scrollViewHeight]);
 
   // ((contentHeight-scrollViewHeight)/100)*readerProgress) is used to calculate where it should autoscroll when opening a chapter
-
-  const chapterNumber = chapterTitle.match(/\d/);
-  const chapterIndex = chapterNumber ? parseInt(chapterNumber[0], 10) : 1;
+  const chapterNumber = chapterTitle.match(/\d+/)?.[0];
+  const chapterIndex = chapterNumber ? parseInt(chapterNumber, 10) : 1;
   const handleSaveChapterData = async (novelTitle: string, scrollPercentage: number, chapterIndex: number) => {
     try {
       await upsertNovelChapter(novelTitle, scrollPercentage, chapterIndex);

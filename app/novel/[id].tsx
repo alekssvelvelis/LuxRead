@@ -143,7 +143,6 @@ const Synopsis = () => {
     const fetchNovelProgress = async () => {
       try {
         const novelProgress: novelProgress = await getAllNovelChapters(novelData.title);
-        console.log(JSON.stringify(novelProgress, null, 2));
         if (!novelProgress) {
           return;
         }
@@ -162,6 +161,8 @@ const Synopsis = () => {
   );
 
   const handleNavigateToChapter = async (chapterPageURL: string, itemId: number) => {
+    console.log(itemId, 'itemId in navigation');
+    console.log(readingProgress.chapterIndex, 'readingprogress chapterindex in navigation');
     try {
       router.navigate({
         // @ts-ignore since pathname only works this way. Can remove and try to fix error.
@@ -170,13 +171,14 @@ const Synopsis = () => {
           chapterPageURL: chapterPageURL,
           title: novelData.title,
           sourceName: sourceName,
-          ...(readingProgress.chapterIndex === itemId+1 && { readerProgress: readingProgress.readerProgress}),
+          ...(readingProgress.chapterIndex === itemId && { readerProgress: readingProgress.readerProgress}),
         },
       });
     } catch (error) {
       console.error("Error fetching single novel:", error);
     }
   };
+
 
   const [downloading, setDownloading] = useState<string | null>(null);
 
@@ -194,6 +196,10 @@ const Synopsis = () => {
     }
   };
 
+  // useEffect(() => {
+  //   console.log(readingProgress);
+  // },[readingProgress]);
+
   const RenderChapterItem = ({ item, index }: { item: Chapter, index: number }) => {
     const trueChapterIndex = item.title.match(/Chapter\s+(\d+)/) || '1';
     const chapterIndexOfItem = isConnected ? index+1 : Number(trueChapterIndex[1]);
@@ -202,7 +208,7 @@ const Synopsis = () => {
 
     if(!isConnected){
       return (
-        <TouchableOpacity key={item.title} style={[styles.chapterContainer, { paddingVertical: 12, position: 'relative', justifyContent: 'flex-start' }]} onPress={() => handleNavigateToChapter(item.chapterPageURL, index)}>
+        <TouchableOpacity key={item.title} style={[styles.chapterContainer, { paddingVertical: 12, position: 'relative', justifyContent: 'flex-start' }]} onPress={() => handleNavigateToChapter(item.chapterPageURL, chapterIndexOfItem)}>
         {chapterIndexOfItem >= defaultChapterIndex && (
             <MaterialIcons 
               name="adjust"
@@ -217,8 +223,8 @@ const Synopsis = () => {
         </TouchableOpacity>
       );
     }
-    return (
-      <TouchableOpacity key={item.title} style={[styles.chapterContainer, { paddingVertical: 12, position: 'relative' }]} onPress={() => handleNavigateToChapter(item.chapterPageURL, index)}>
+    return (  //OFFSET INDEX BY 1
+      <TouchableOpacity key={item.title} style={[styles.chapterContainer, { paddingVertical: 12, position: 'relative' }]} onPress={() => handleNavigateToChapter(item.chapterPageURL, chapterIndexOfItem)}> 
         {chapterIndexOfItem >= defaultChapterIndex && (
           <MaterialIcons name="adjust" size={16} color={appliedTheme.colors.primary} />
         )}
@@ -280,7 +286,7 @@ const Synopsis = () => {
           </View>
         </View>
         <View style={styles.imageContainer}>
-          <Image source={{ uri: imageURL }} style={[styles.image]} contentFit='contain' />
+          <Image source={{ uri: imageURL }} style={[styles.image, {}]} contentFit='contain'/>
         </View>
       </View>
       <View style={styles.descriptionContainer}>
@@ -326,7 +332,7 @@ const Synopsis = () => {
             <Text style={{ textAlign: 'center', color: appliedTheme.colors.text, marginTop: 24 }}>No more chapters</Text>
           ) : null
         }
-        ListHeaderComponent={RenderListHeader}
+        ListHeaderComponent={<RenderListHeader />}
       />
       
       <PullUpModal
