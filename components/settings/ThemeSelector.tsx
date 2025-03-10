@@ -17,16 +17,6 @@ const ThemeSelector = ({ onThemeChange }: { onThemeChange: (theme: string) => vo
         onThemeChange(theme);
     };
 
-    // ignore for now
-    // useEffect(() => {
-    //     StatusBar.setBackgroundColor(appliedTheme.colors.elevation.level2);
-    //     if (activeTheme.startsWith('light')) {
-    //         StatusBar.setBarStyle('dark-content', true);
-    //     } else if (activeTheme.startsWith('dark')) {
-    //         StatusBar.setBarStyle('light-content', true);
-    //     }
-    // }, [activeTheme]);
-
     return (
         <View style={[styles.container, { width: screenWidth - 20 }]}>
             <Text style={[styles.header, { color: appliedTheme.colors.text }]}>Light Themes</Text>

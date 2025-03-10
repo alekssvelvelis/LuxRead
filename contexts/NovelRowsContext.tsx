@@ -1,7 +1,5 @@
-// NovelRowsContext.tsx
-
-import React, { createContext, useState, useContext, ReactNode } from 'react';
-import { storeNovelRows, getNovelRows } from '@/utils/asyncStorage';
+import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
+import { saveItem, getItem } from '@/utils/asyncStorage';
 
 type NovelRowsContextType = {
     value: string;
@@ -9,13 +7,14 @@ type NovelRowsContextType = {
 };
 
 const NovelRowsContext = createContext<NovelRowsContextType | undefined>(undefined);
-export const NovelRowsProvider = ({children}:  { children: ReactNode } ) => {
+
+export const NovelRowsProvider = ({ children }: { children: ReactNode }) => {
     const [value, setValue] = useState<string>('1'); // Initial value for TS
 
-    useState(() => {
+    useEffect(() => {
         const loadNovelRows = async () => {
             try {
-                const savedValue = await getNovelRows('NovelRows');
+                const savedValue = await getItem('NovelRows');
                 if (savedValue) {
                     setValue(savedValue);
                 }
@@ -25,11 +24,11 @@ export const NovelRowsProvider = ({children}:  { children: ReactNode } ) => {
         };
 
         loadNovelRows();
-    });
+    }, []);
 
     const updateValue = async (newValue: string) => {
         setValue(newValue);
-        await storeNovelRows('NovelRows', newValue);
+        await saveItem('NovelRows', newValue);
     };
 
     return (

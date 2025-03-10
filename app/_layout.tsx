@@ -1,19 +1,14 @@
 import React from 'react';
 import { Stack } from "expo-router";
-import { ThemeProvider } from "@/contexts/ThemeContext";
-import { NovelRowsProvider } from "@/contexts/NovelRowsContext";
-import { NetworkProvider } from "@/contexts/NetworkContext";
+import AppContextProvider from "@/contexts/AppContextProvider";
+
 const StackLayout = () => {
     return(
-        <ThemeProvider>
-            <NovelRowsProvider>
-            <NetworkProvider>
+        <AppContextProvider>
             <Stack>
                 <Stack.Screen name="(tabs)" options={{headerShown: false}}/>
             </Stack>
-            </NetworkProvider>
-            </NovelRowsProvider>
-        </ThemeProvider>
+        </AppContextProvider>
     );
 }
 

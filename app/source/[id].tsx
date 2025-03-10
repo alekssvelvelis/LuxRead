@@ -204,20 +204,24 @@ const SourceList = () => {
         <SearchBar onSearchChange={handleSearchQuery}/>
       </View>
       {loading && novels.length === 0 ? ( 
-        // Show skeleton loader if loading is true and no novels have been loaded yet
-      <SourcesSkeleton />
-      ) : (
-      <FlatList
-        data={novels}
-        renderItem={renderItem}
-        keyExtractor={(_, index) => index.toString()}
-        numColumns={2}
-        contentContainerStyle={styles.scrollViewContent}
-        onEndReached={handleLoadMore}
-        onEndReachedThreshold={0.5}
-        ListFooterComponent={loading ?  <SourcesSkeleton/> : null}
-      />
-      )}
+  // Show skeleton loader if loading is true and no novels have been loaded yet
+  <SourcesSkeleton />
+) : (
+  novels.length === 0 ? (
+    <Text style={{ color: appliedTheme.colors.text, fontSize: 24, position: 'absolute', top: 400, left: 40 }}>No novels found with this query.</Text>
+  ) : (
+    <FlatList
+      data={novels}
+      renderItem={renderItem}
+      keyExtractor={(_, index) => index.toString()}
+      numColumns={2}
+      contentContainerStyle={styles.scrollViewContent}
+      onEndReached={handleLoadMore}
+      onEndReachedThreshold={0.5}
+      ListFooterComponent={loading ? <SourcesSkeleton /> : null}
+    />
+  )
+)}
     </View>
   );
 };

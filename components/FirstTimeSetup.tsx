@@ -21,9 +21,9 @@ const FirstLaunchSetup: React.FC<{ children: React.ReactNode }> = ({ children })
     const initializeApp = async () => {
       try {
         const isFirstLaunch = await AsyncStorage.getItem(FIRST_LAUNCH_KEY);
-        console.log('first launch');
+        // console.log('first launch');
         if (isFirstLaunch === null) {
-          console.log('first launch is null');
+          // console.log('first launch is null');
           await setupNovelChaptersTable();
           await setupLibraryNovelsTable();
           await setupSourcesTable();
@@ -35,7 +35,7 @@ const FirstLaunchSetup: React.FC<{ children: React.ReactNode }> = ({ children })
         console.error('Error during first launch setup', error);
       } finally {
         setIsLoading(false);
-        console.log('first launch finally');
+        // console.log('first launch finally');
       }
     };
 

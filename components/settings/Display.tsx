@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, Text, Dimensions, Modal, Animated, Pressable } from 'react-native';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { Button, RadioButton, Text as PaperText } from 'react-native-paper';
-import { storeNovelRows, getNovelRows } from '@/utils/asyncStorage';
+import { saveNovelRows, getNovelRows } from '@/utils/asyncStorage';
 
 const Display = ({ onNovelRowsChange }: { onNovelRowsChange: (rows: string) => void }) => {
     const screenWidth = Dimensions.get('screen').width;
@@ -14,7 +14,7 @@ const Display = ({ onNovelRowsChange }: { onNovelRowsChange: (rows: string) => v
     useEffect(() => {
         const loadInitialValue = async () => {
             try {
-                const savedValue = await getNovelRows('NovelRows');
+                const savedValue = await getNovelRows();
                 if (savedValue) {
                     setValue(savedValue);
                 }
@@ -27,7 +27,7 @@ const Display = ({ onNovelRowsChange }: { onNovelRowsChange: (rows: string) => v
     }, []);
 
     useEffect(() => {
-        storeNovelRows('NovelRows', value);
+        saveNovelRows(value);
     }, [value]);
 
     const openModal = () => {
