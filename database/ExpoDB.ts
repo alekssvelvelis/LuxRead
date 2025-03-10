@@ -34,7 +34,7 @@ async function setupSourcesTable(){
         `);
         console.log('Succesfully inserted default sources');
     } catch (error) {
-       console.error('Error creating Sources table ', error) 
+       console.error('Error creating Sources table ', error);
     }
 }
 
@@ -51,7 +51,7 @@ async function getSources() {
 
     try {
         const allRows: SourcesRows[] = await db.getAllAsync(
-            `SELECT * FROM sources`,
+            `SELECT * FROM sources ORDER BY sourceName ASC`,
         );
 
         const downloadedChapters = [];

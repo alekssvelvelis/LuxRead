@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { StyleSheet, View, Text, ScrollView, Dimensions, TouchableOpacity } from 'react-native';
-
 import SearchBar from '@/components/SearchBar';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { useNovelRowsContext } from '@/contexts/NovelRowsContext';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Image } from 'expo-image'
-import { getAllLibraryNovels, deleteLibraryNovel, deleteNovelChapters, getDownloadedChapters, setupSourcesTable, clearTable, dropTable, setupLibraryNovelsTable, setupNovelChaptersTable, setupDownloadedChaptersTable} from '@/database/ExpoDB';
+import { getAllLibraryNovels, deleteLibraryNovel, deleteNovelChapters } from '@/database/ExpoDB';
 
 interface Data{
     id: number;
@@ -19,18 +18,6 @@ interface Data{
 }
 
 export default function Library() {
-  useEffect(() =>{
-    // dropTable('libraryNovels');
-    // dropTable('novelChapters');
-    // dropTable('sources');
-    // dropTable('downloadedChapters');
-    // console.log(JSON.stringify(getTableStructure('sources'), null, 2));
-    // setupNovelChaptersTable();
-    // setupLibraryNovelsTable();
-    // setupSourcesTable();
-    // setupDownloadedChaptersTable();
-    // getDownloadedChapters(1);
-  }, [])
   
   const { appliedTheme } = useThemeContext();
   const { value: novelRows } = useNovelRowsContext();

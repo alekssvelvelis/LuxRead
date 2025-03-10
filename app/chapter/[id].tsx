@@ -35,6 +35,7 @@ interface ReaderOptions {
 }
 
 type typeSearchParams = {
+  id?: string | number,
   chapterPageURL: string,
   sourceName: string,
   title: string,
@@ -213,7 +214,6 @@ const ChapterPage = () => {
   };
 
   const scrollToPosition = () => {
-    console.log(readerProgress);
     if (scrollViewRef.current && contentHeight && scrollViewHeight) {
       const scrollPosition = ((contentHeight - scrollViewHeight) / 100) * readerProgress;
       scrollViewRef.current.scrollTo({ y: scrollPosition, animated: true });
@@ -230,6 +230,10 @@ const ChapterPage = () => {
   const chapterNumber = chapterTitle.match(/\d+/)?.[0];
   const chapterIndex = chapterNumber ? parseInt(chapterNumber, 10) : 1;
   const handleSaveChapterData = async (novelTitle: string, scrollPercentage: number, chapterIndex: number) => {
+    if(propData.id === "[id]"){
+      handleBackPress();
+      return;
+    }
     try {
       await upsertNovelChapter(novelTitle, scrollPercentage, chapterIndex);
       handleBackPress();

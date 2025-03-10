@@ -35,8 +35,7 @@ const fetchRelevantOfNovel = async (novelPageURL: string): Promise<ExtraTableDat
 }
 
 const popularNovels = async (pageNumber: number) => {
-    console.log(1);
-    const limit = pLimit(1); // runs 3 requests asynchronously, so 15 / 3 = 5 batches to run (3 at a time)
+    const limit = pLimit(3); // runs 3 requests asynchronously, so 15 / 3 = 5 batches to run (3 at a time)
     // When considering the pLimit, average time to fetch novels is calculated with as said below:
     // Given 15 novels and considering a 1000ms or 1s sleep, pLimit will need to run 5 batches of renders to get the novels.
     // Since we sleep 1000 for each batch, we have a minimum of 5 seconds. Considering overhead, we can say it will take twice as long.
@@ -118,7 +117,7 @@ const searchVerifyToken = async () => {
             headers: {
               'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.82 Safari/537.36',
             }
-          });
+        });
         const loadedCheerio = cheerio.load(response.data);
         const verifyToken = loadedCheerio('input[name="__LNRequestVerifyToken"]').attr('value');
         return verifyToken;

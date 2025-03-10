@@ -1,65 +1,40 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const THEME_KEY = 'userTheme';
-// const NUMBER_KEY = 3;
 const READER_OPTIONS_KEY = 'readerOptions';
+const NOVEL_ROWS = 'novelRows';
 
-export const saveUserTheme = async (theme: string) => {
+export const saveItem = async (key: string, value: string) => {
   try {
-    await AsyncStorage.setItem(THEME_KEY, theme);
-    // console.log('Theme saved successfully1');
+    await AsyncStorage.setItem(key, value);
   } catch (error) {
-    console.error('Error saving theme', error);
+    console.error(`Error saving ${key}`, error);
   }
 };
 
-export const getUserTheme = async (): Promise<string | null> => {
-  try {
-    const theme = await AsyncStorage.getItem(THEME_KEY);
-    return theme;
-  } catch (error) {
-    console.error('Error retrieving theme', error);
-    return null;
-  }
-};
-
-export const storeNovelRows = async (key: string, value: string): Promise<void> => {
-  try {
-    await AsyncStorage.setItem(key, value.toString());
-    // console.log('Novel row preference stored successfully');
-  } catch (e) {
-    console.error('Failed to store the number (utils/asyncStorage.ts)', e);
-  }
-};
-
-export const getNovelRows = async (key: string): Promise<string | null> => {
+export const getItem = async (key: string): Promise<string | null> => {
   try {
     const value = await AsyncStorage.getItem(key);
-    if (value !== null) {
-      // const string = parseFloat(value);
-      // console.log('Retrieved number:', value);
-      return value;
-    }
-  } catch (e) {
-    console.error('Failed to retrieve the number', e);
-  }
-  return null;
-};
-
-export const saveReaderOptions = async (options: object) => {
-  try {
-    await AsyncStorage.setItem(READER_OPTIONS_KEY, JSON.stringify(options));
+    return value;
   } catch (error) {
-    console.error('Error saving reader options', error);
-  }
-};
-
-export const getReaderOptions = async (READER_KEY: string): Promise<string | null> => {
-  try {
-    const readerOptions = await AsyncStorage.getItem(READER_KEY);
-    return readerOptions;
-  } catch (error) {
-    console.error('Error retrieving reader options', error);
+    console.error(`Error retrieving ${key}`, error);
     return null;
+  }
+};
+
+export const saveUserTheme = async (theme: string) => saveItem(THEME_KEY, theme);
+export const getUserTheme = async (): Promise<string | null> => getItem(THEME_KEY);
+
+export const saveReaderOptions = async (options: object) => saveItem(READER_OPTIONS_KEY, JSON.stringify(options));
+export const getReaderOptions = async (): Promise<string | null> => getItem(READER_OPTIONS_KEY);
+
+export const saveNovelRows = async(number: string) => saveItem(NOVEL_ROWS, number);
+export const getNovelRows = async(): Promise<string | null> => getItem(NOVEL_ROWS);
+
+export const clearStorage = async () => {
+  try {
+    await AsyncStorage.clear();
+  } catch (error) {
+    console.error('Error clearing storage', error);
   }
 };

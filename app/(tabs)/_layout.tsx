@@ -8,20 +8,22 @@ export default () => {
     useEffect(() => {
         if (theme.startsWith('light')) {
           StatusBar.setBarStyle('dark-content', true); // Light theme: dark-content for status bar
+          StatusBar.setBackgroundColor(appliedTheme.colors.elevation.level2, true);
         } else if (theme.startsWith('dark')) {
           StatusBar.setBarStyle('light-content', true); // Dark theme: light-content for status bar
+          StatusBar.setBackgroundColor(appliedTheme.colors.elevation.level2, true);
         }
       }, [theme]);
     return (
         <Tabs screenOptions={{ 
-            tabBarActiveTintColor: appliedTheme.colors.primary, 
+            tabBarActiveTintColor: appliedTheme.colors.primary,
+            tabBarInactiveTintColor: appliedTheme.colors.text.primary,
             tabBarStyle: {
-                height: 75,
-                backgroundColor: appliedTheme.colors.elevation.level3,
+                height: 60,
+                backgroundColor: appliedTheme.colors.elevation.level4,
                 borderTopWidth: 0,
             },
             tabBarLabelStyle: {
-                marginBottom: 12,
                 fontSize: 12,
             },
         }}>
@@ -31,11 +33,6 @@ export default () => {
                     headerShown: false,
                     title: 'Library',
                     tabBarIcon: ({ color }) => <Ionicons size={28} name="book" color={color} />,
-                    tabBarStyle: {
-                        height: 75,
-                        backgroundColor: appliedTheme.colors.elevation.level3,
-                        borderTopWidth: 0,
-                    }
                 }}
             />
             <Tabs.Screen

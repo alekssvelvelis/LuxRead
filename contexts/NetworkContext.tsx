@@ -28,5 +28,5 @@ export const NetworkProvider = ({children}:  { children: ReactNode } ) => {
     );
 };
 
-// Custom hook to consume the network context in other components
+// Custom hook to utilize the network context in other components
 export const useNetwork = () => useContext(NetworkContext);

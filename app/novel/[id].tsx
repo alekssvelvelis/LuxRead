@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, memo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator } from 'react-native';
 
 import { useThemeContext } from '@/contexts/ThemeContext';
@@ -63,11 +63,19 @@ const Synopsis = () => {
   const novelId = Number(novelData.id);
   const sourceName = novelData.sourceName;
   const genresArray = novelData.genres.split(',').map(genre => genre.trim());
-  const imageURL = Array.isArray(novelData.imageURL) ? novelData.imageURL[0] : novelData.imageURL;
+  const MemoizedImage = memo(({ uri }: { uri: string }) => (
+    <Image source={{ uri }} style={[styles.image, { borderColor: 'red', borderWidth: 2 }]} contentFit="contain" />
+  ));
+  
+  const imageURL = useMemo(() => {
+    return Array.isArray(novelData.imageURL) ? novelData.imageURL[0] : novelData.imageURL;
+  }, [novelData.imageURL]);
   const [showFullDescription, setShowFullDescription] = useState(false);
   const toggleDescription = () => {
     setShowFullDescription(!showFullDescription);
   };
+
+  console.log(novelData);
 
   const handleLoadMore = () => {
     if (!loading && hasMoreChapters) {
@@ -161,8 +169,8 @@ const Synopsis = () => {
   );
 
   const handleNavigateToChapter = async (chapterPageURL: string, itemId: number) => {
-    console.log(itemId, 'itemId in navigation');
-    console.log(readingProgress.chapterIndex, 'readingprogress chapterindex in navigation');
+    // console.log(itemId, 'itemId in navigation');
+    // console.log(readingProgress.chapterIndex, 'readingprogress chapterindex in navigation');
     try {
       router.navigate({
         // @ts-ignore since pathname only works this way. Can remove and try to fix error.
@@ -172,6 +180,7 @@ const Synopsis = () => {
           title: novelData.title,
           sourceName: sourceName,
           ...(readingProgress.chapterIndex === itemId && { readerProgress: readingProgress.readerProgress}),
+          ...(Number.isInteger(novelId) && { id: novelId}),
         },
       });
     } catch (error) {
@@ -196,10 +205,6 @@ const Synopsis = () => {
     }
   };
 
-  // useEffect(() => {
-  //   console.log(readingProgress);
-  // },[readingProgress]);
-
   const RenderChapterItem = ({ item, index }: { item: Chapter, index: number }) => {
     const trueChapterIndex = item.title.match(/Chapter\s+(\d+)/) || '1';
     const chapterIndexOfItem = isConnected ? index+1 : Number(trueChapterIndex[1]);
@@ -223,28 +228,31 @@ const Synopsis = () => {
         </TouchableOpacity>
       );
     }
-    return (  //OFFSET INDEX BY 1
-      <TouchableOpacity key={item.title} style={[styles.chapterContainer, { paddingVertical: 12, position: 'relative' }]} onPress={() => handleNavigateToChapter(item.chapterPageURL, chapterIndexOfItem)}> 
+    return (
+      <TouchableOpacity key={item.title} style={[styles.chapterContainer, { paddingVertical: 12, position: 'relative' }]} onPress={() => handleNavigateToChapter(item.chapterPageURL, chapterIndexOfItem)}>
         {chapterIndexOfItem >= defaultChapterIndex && (
           <MaterialIcons name="adjust" size={16} color={appliedTheme.colors.primary} />
         )}
         <Text style={{ fontSize: 16, color: chapterIndexOfItem >= defaultChapterIndex ? appliedTheme.colors.text : 'gray', width: '80%', marginLeft: chapterIndexOfItem >= defaultChapterIndex ? 12 : 28, }} numberOfLines={1} ellipsizeMode="tail">
           {item.title}
         </Text>
-        {chapterIndexOfItem === defaultChapterIndex && <Text style={{position: 'absolute', color: appliedTheme.colors.text, top: 36, left: 28}}>Reading progress: {readingProgress.readerProgress}%</Text>}
-        {downloading === item.chapterPageURL ? (
-          <ActivityIndicator size="large" color={appliedTheme.colors.primary} />
-        ) : isChapterDownloaded ? (
-          <MaterialIcons size={36} name="file-download-done" color={chapterIndexOfItem >= defaultChapterIndex ? appliedTheme.colors.text : 'gray'} style={{ zIndex: 3 }} />
-        ) : (
-          <Ionicons size={36} name="download-outline" color={chapterIndexOfItem >= defaultChapterIndex ? appliedTheme.colors.text : 'gray'} style={{ zIndex: 3 }} onPress={() => handleDownloadChapter(item.chapterPageURL, novelId)} />
+        {chapterIndexOfItem === defaultChapterIndex && <Text style={{ position: 'absolute', color: appliedTheme.colors.text, top: 36, left: 28 }}>Reading progress: {readingProgress.readerProgress}%</Text>}
+        
+        {/* Conditionally render download icon */}
+        {novelData.id !== "[id]" && (  // Check if novelData.id does not equal "[id]"
+          downloading === item.chapterPageURL ? (
+            <ActivityIndicator size="large" color={appliedTheme.colors.primary} />
+          ) : isChapterDownloaded ? (
+            <MaterialIcons size={36} name="file-download-done" color={chapterIndexOfItem >= defaultChapterIndex ? appliedTheme.colors.text : 'gray'} style={{ zIndex: 3 }} />
+          ) : (
+            <Ionicons size={36} name="download-outline" color={chapterIndexOfItem >= defaultChapterIndex ? appliedTheme.colors.text : 'gray'} style={{ zIndex: 3 }} onPress={() => handleDownloadChapter(item.chapterPageURL, novelId)} />
+          )
         )}
-      </TouchableOpacity>
-    );
+    </TouchableOpacity>
+  );
   };
 
-  const RenderListHeader = () => (
-    
+  const RenderListHeader = memo(() => (
     <View style={{minWidth: '100%'}}>
       {/* <Stack.Screen
         options={{
@@ -286,7 +294,7 @@ const Synopsis = () => {
           </View>
         </View>
         <View style={styles.imageContainer}>
-          <Image source={{ uri: imageURL }} style={[styles.image, {}]} contentFit='contain'/>
+          <Image source={{ uri: imageURL }} style={[styles.image, {borderColor: 'red', borderWidth: 2, }]} contentFit='contain'/>
         </View>
       </View>
       <View style={styles.descriptionContainer}>
@@ -311,7 +319,7 @@ const Synopsis = () => {
        <View style={{ flexDirection: 'row'}}>
       </View>
     </View>
-  );
+  ));
 
   if (isInitialLoading) return <View style={{backgroundColor: appliedTheme.colors.elevation.level2}}><NovelSkeleton/></View>;
 
