@@ -1,7 +1,13 @@
 import * as SQLite from 'expo-sqlite';
 
+async function openDatabase() {
+    return await SQLite.openDatabaseAsync('luxreadDatabase', {
+        useNewConnection: true
+    });
+}
+
 async function getTableStructure(tableName: string) {
-    const db = await SQLite.openDatabaseAsync('luxreadDatabase');
+    const db = await openDatabase();
     try {
         const tableInfo = await db.getAllAsync(`PRAGMA table_info(${tableName});`);
         console.log(`Structure of table "${tableName}":`, tableInfo);
@@ -13,7 +19,7 @@ async function getTableStructure(tableName: string) {
 }
 
 async function setupSourcesTable(){
-    const db = await SQLite.openDatabaseAsync('luxreadDatabase');
+    const db = await openDatabase();
     try {
         await db.execAsync(`
             PRAGMA journal_mode = WAL;
@@ -32,7 +38,7 @@ async function setupSourcesTable(){
             ('LightNovelPub', 'https://i.redd.it/ui97q7ehwqsa1.jpg'),
             ('NovelBin', 'https://novelbin.com/img/logo.png')
         `);
-        console.log('Succesfully inserted default sources');
+        console.log('Successfully inserted default sources');
     } catch (error) {
        console.error('Error creating Sources table ', error);
     }
@@ -45,9 +51,7 @@ interface SourcesRows{
 }
 
 async function getSources() {
-    const db = await SQLite.openDatabaseAsync('luxreadDatabase', {
-        useNewConnection: true
-    });
+    const db = await openDatabase();
 
     try {
         const allRows: SourcesRows[] = await db.getAllAsync(
@@ -76,7 +80,7 @@ async function getSources() {
 }
 
 async function setupLibraryNovelsTable(){
-    const db = await SQLite.openDatabaseAsync('luxreadDatabase');
+    const db = await openDatabase();
     try {
         await db.execAsync(`
             PRAGMA journal_mode = WAL;
@@ -91,6 +95,7 @@ async function setupLibraryNovelsTable(){
                 imageURL TEXT NOT NULL,
                 novelPageURL TEXT NOT NULL,
                 novelSource TEXT NOT NULL,
+                novelStatus TEXT NOT NULL,
                 UNIQUE(title, author, novelPageURL),
                 FOREIGN KEY (novelSource) REFERENCES sources(sourceName) ON DELETE CASCADE ON UPDATE CASCADE
             );
@@ -101,15 +106,13 @@ async function setupLibraryNovelsTable(){
     }
 }
 
-async function insertLibraryNovel(title: string, author: string, description: string, genres: string, chapterCount: number, imageURL: string, novelPageURL: string, novelSource: string) {
-    const db = await SQLite.openDatabaseAsync('luxreadDatabase', {
-        useNewConnection: true
-    });
+async function insertLibraryNovel(title: string, author: string, description: string, genres: string, chapterCount: number, imageURL: string, novelPageURL: string, novelSource: string, novelStatus: string) {
+    const db = await openDatabase();
     try {
         console.log(novelPageURL);
         const result = await db.runAsync(
-          `INSERT INTO libraryNovels (title, author, description, genres, chapterCount, imageURL, novelPageURL, novelSource) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-          [title, author, description, genres, chapterCount, imageURL, novelPageURL, novelSource]
+          `INSERT INTO libraryNovels (title, author, description, genres, chapterCount, imageURL, novelPageURL, novelSource, novelStatus) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [title, author, description, genres, chapterCount, imageURL, novelPageURL, novelSource, novelStatus]
         );
         console.log(`Novel ${title}, written by ${author} succesfully added. Extra data: ${imageURL} and ${novelPageURL} and ${result.lastInsertRowId}`);
         return result.lastInsertRowId;
@@ -125,7 +128,7 @@ async function insertLibraryNovel(title: string, author: string, description: st
 }
 
 async function setupNovelChaptersTable(){
-    const db = await SQLite.openDatabaseAsync('luxreadDatabase');
+    const db = await openDatabase();
     try {
         await db.execAsync(`
             PRAGMA journal_mode = WAL;
@@ -146,9 +149,7 @@ async function setupNovelChaptersTable(){
 }
 
 async function upsertNovelChapter(novelTitle: string, readerProgress: number, chapterIndex: number) {
-    const db = await SQLite.openDatabaseAsync('luxreadDatabase', {
-        useNewConnection: true
-    });
+    const db = await openDatabase();
     try {
         const novelRow: NovelRow[] = await db.getAllAsync(
             `SELECT id FROM libraryNovels WHERE title = ?`,
@@ -183,7 +184,7 @@ async function upsertNovelChapter(novelTitle: string, readerProgress: number, ch
 }
 
 async function setupDownloadedChaptersTable(){
-    const db = await SQLite.openDatabaseAsync('luxreadDatabase');
+    const db = await openDatabase();
     try {
         await db.execAsync(`
             PRAGMA journal_mode = WAL;
@@ -205,9 +206,7 @@ async function setupDownloadedChaptersTable(){
 }
 
 async function insertDownloadedChapter(chapterTitle: string, chapterText: string, chapterPageURL: string, novel_id: number) {
-    const db = await SQLite.openDatabaseAsync('luxreadDatabase', {
-        useNewConnection: true
-    });
+    const db = await openDatabase();
     try {
         const serializedChapterText = JSON.stringify(chapterText);
         const result = await db.runAsync(
@@ -232,9 +231,7 @@ interface DownloadedChapterRow{
 }
 
 async function getDownloadedChapters(novelId: number) {
-    const db = await SQLite.openDatabaseAsync('luxreadDatabase', {
-        useNewConnection: true
-    });
+    const db = await openDatabase();
 
     try {
         const allRows: DownloadedChapterRow[] = await db.getAllAsync(
@@ -271,9 +268,7 @@ interface DownloadedChapterContent {
 }
 
 async function getDownloadedChapterContent(chapterPageURL: string): Promise<DownloadedChapterContent | null> {
-    const db = await SQLite.openDatabaseAsync('luxreadDatabase', {
-        useNewConnection: true
-    });
+    const db = await openDatabase();
 
     try {
         const currentChapterResult = await db.getAllAsync(
@@ -335,9 +330,7 @@ interface ChapterRow{
 }
 
 async function getAllNovelChapters(novelTitle: string) {
-    const db = await SQLite.openDatabaseAsync('luxreadDatabase', {
-        useNewConnection: true
-    });
+    const db = await openDatabase();
 
     try {
         const novelRow: NovelRow[] = await db.getAllAsync(
@@ -392,9 +385,7 @@ interface NovelRow {
 }
 
 async function getAllLibraryNovels(tableName: string) {
-    const db = await SQLite.openDatabaseAsync('luxreadDatabase', {
-        useNewConnection: true
-    });
+    const db = await openDatabase();
     try {
         const allRows: NovelRow[] = await db.getAllAsync(`SELECT * FROM ${tableName}`);
         const librarySavedNovels = []
@@ -424,9 +415,7 @@ async function getAllLibraryNovels(tableName: string) {
 }
 
 async function getNovelsBySource(novelSource: string) {
-    const db = await SQLite.openDatabaseAsync('luxreadDatabase', {
-        useNewConnection: true
-    });
+    const db = await openDatabase();
     try {
         const allRows: NovelRow[] = await db.getAllAsync(
             `SELECT id, title FROM libraryNovels WHERE novelSource = ?`,
@@ -451,9 +440,7 @@ async function getNovelsBySource(novelSource: string) {
 
 
 async function deleteLibraryNovel(novelId: number) {
-    const db = await SQLite.openDatabaseAsync('luxreadDatabase', {
-        useNewConnection: true
-    });
+    const db = await openDatabase();
     try {
         await db.execAsync(`DELETE FROM libraryNovels WHERE id = ${novelId}`);
         console.log(`Table "libraryNovels" ${novelId} cleared successfully.`);
@@ -462,9 +449,7 @@ async function deleteLibraryNovel(novelId: number) {
     }
 }
 async function deleteNovelChapters(novelId: number) {
-    const db = await SQLite.openDatabaseAsync('luxreadDatabase', {
-        useNewConnection: true
-    });
+    const db = await openDatabase();
     try {
         await db.execAsync(`DELETE FROM novelChapters WHERE novel_id = ${novelId}`);
         console.log(`Table "novelChapters" ${novelId} cleared successfully.`);
@@ -474,9 +459,7 @@ async function deleteNovelChapters(novelId: number) {
 }
 
 async function clearTable(tableName: string) {
-    const db = await SQLite.openDatabaseAsync('luxreadDatabase', {
-        useNewConnection: true
-    });
+    const db = await openDatabase();
     try {
         await db.execAsync(`DELETE FROM ${tableName}`);
         console.log(`Table "${tableName}" cleared successfully.`);
@@ -486,7 +469,7 @@ async function clearTable(tableName: string) {
 }
 
 async function dropTable(tableName: string) {
-    const db = await SQLite.openDatabaseAsync('luxreadDatabase');
+    const db = await openDatabase();
     try {
         await db.execAsync(`DROP TABLE IF EXISTS ${tableName}`);
         console.log(`Table "${tableName}" dropped successfully.`);

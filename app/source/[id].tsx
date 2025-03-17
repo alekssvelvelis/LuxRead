@@ -121,7 +121,8 @@ const SourceList = () => {
       const allNovelInfo = await fetchFunctions.fetchSingleNovel(novel.novelPageURL);
       const chapterCount = parseInt(allNovelInfo.chapterCount);
       const genres = String(allNovelInfo.genres);
-      const result = await insertLibraryNovel(allNovelInfo.title, allNovelInfo.author, allNovelInfo.description, genres, chapterCount, allNovelInfo.imageURL, allNovelInfo.novelPageURL, sourceNameString);
+      console.log(allNovelInfo);
+      const result = await insertLibraryNovel(allNovelInfo.title, allNovelInfo.author, allNovelInfo.description, genres, chapterCount, allNovelInfo.imageURL, allNovelInfo.novelPageURL, sourceNameString, allNovelInfo.novelStatus);
       setQueriedNovels(prevQueriedNovels => [prevQueriedNovels, { id: result, title: allNovelInfo.title }]); // Add the saved novel to queriedNovels
     } catch (error) {
       console.error('Error saving novel:', error);

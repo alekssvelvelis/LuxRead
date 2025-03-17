@@ -2,6 +2,7 @@
 import cheerio from 'react-native-cheerio';
 import pLimit from 'p-limit';
 import axios from 'axios';
+import UserAgent from 'user-agents';
 const sourceName = 'LightNovelPub';
 const sourceURL = `https://www.lightnovelpub.com`;
 
@@ -11,6 +12,10 @@ interface ExtraTableData{
 };
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+const randomizeUserAgent = () => {
+    return new UserAgent();
+}
 
 const fetchRelevantOfNovel = async (novelPageURL: string): Promise<ExtraTableData> => {
     await sleep(1000);
@@ -183,6 +188,8 @@ const fetchSingleNovel = async (novelPageURL: string) => {
         const author = loadedCheerio('.novel-info .author a span').text().trim();
         const chapterCount = loadedCheerio('.header-stats strong').text().match(/\d+/) || '0';
         const genres = loadedCheerio('.categories li').find('a').map((_: number, el: cheerio.Element) => loadedCheerio(el).text()).toArray().join(',');
+        const novelStatus = loadedCheerio('.header-stats span:last-child strong').text().trim();
+
         return {
             title,
             imageURL,
@@ -191,6 +198,7 @@ const fetchSingleNovel = async (novelPageURL: string) => {
             genres,
             novelPageURL: novelPageURL,
             chapterCount,
+            novelStatus
         };
     } catch (error) {
         console.error('Failure to fetch single novel at', sourceName, 'with url', sourceURL, 'throws', error);

@@ -118,6 +118,7 @@ const fetchSingleNovel = async (novelPageURL: string) => {
         const chapterCountText = loadedCheerio('.chapter-title').text();
         const chapterCount = parseInt(chapterCountText.match(/\d+/)?.[0] || '0', 10);
         const genres = loadedCheerio('.info h3:contains("Genre:")').nextAll('a').map((_: number, el: cheerio.Element) => loadedCheerio(el).text().trim()).get();
+        const novelStatus = loadedCheerio('.info h3:contains("Status:")').next('a').text().trim();
 
         return {
             title,
@@ -125,8 +126,9 @@ const fetchSingleNovel = async (novelPageURL: string) => {
             description,
             author,
             genres,
-            novelPageURL: novelPageURL,
+            novelPageURL,
             chapterCount,
+            novelStatus,
         };
     } catch (error) {
         console.error('Error fetching single novel:', error);

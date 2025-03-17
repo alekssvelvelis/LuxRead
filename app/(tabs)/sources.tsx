@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Button, Modal } from "react-native";
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { Entypo } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import SearchBar from '@/components/SearchBar';
 import { getSources } from '@/database/ExpoDB';
+import { WebView } from 'react-native-webview';
+
 interface SourceData {
     id: number,
     sourceName: string,
     baseImage: string,
 }
+
 export default function Sources() {
     const { appliedTheme } = useThemeContext();
     const router = useRouter();
@@ -44,6 +47,16 @@ export default function Sources() {
         router.navigate({ pathname: `source/[id]`, params: { sourceName } });
     };
 
+    const [webViewVisible, setWebViewVisible] = useState(false);
+
+    const openWebView = () => {
+        setWebViewVisible(true);
+    };
+
+    const closeWebView = () => {
+        setWebViewVisible(false);
+    };
+
     return (
         <View style={[styles.container, {backgroundColor: appliedTheme.colors.elevation.level2}]}>
             <View style={styles.header}><SearchBar onSearchChange={handleSearchQuery}/></View>
@@ -66,6 +79,13 @@ export default function Sources() {
                 })
             )}
             </ScrollView>
+            <View style={styles.buttonContainer}>
+                <Button title="Open LightNovelPub" onPress={openWebView} color={appliedTheme.colors.primary} />
+            </View>
+            <Modal visible={webViewVisible} onRequestClose={closeWebView}>
+                <WebView source={{ uri: 'https://www.lightnovelpub.com' }} />
+                <Button title="Close" onPress={closeWebView} />
+            </Modal>
         </View>
     );
 }
@@ -107,5 +127,9 @@ const styles = StyleSheet.create({
     bookmark: {
         position: 'absolute',
         right: 8,
+    },
+    buttonContainer: {
+        padding: 20,
+        alignItems: 'center',
     },
   });

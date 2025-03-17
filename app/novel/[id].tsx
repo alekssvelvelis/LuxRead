@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback, memo, useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect, useCallback, useRef, memo, useMemo } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Animated, FlatList, ActivityIndicator, Share } from 'react-native';
 
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { useNetwork } from '@/contexts/NetworkContext';
@@ -45,6 +45,7 @@ type typeSearchParams = {
   sourceName: string,
   title: string,
   chapterCount: string,
+  novelStatus: string,
 };
 const Synopsis = () => {
   const { appliedTheme } = useThemeContext();
@@ -191,6 +192,80 @@ const Synopsis = () => {
 
   const [downloading, setDownloading] = useState<string | null>(null);
 
+  const ExpandableDescription = (description: string) => {
+    const [expanded, setExpanded] = useState(false);
+    const [fullHeight, setFullHeight] = useState<number | null>(null);
+    const [collapsedHeight, setCollapsedHeight] = useState<number | null>(null);
+    const animatedHeight = useRef(new Animated.Value(0)).current;
+    const animationDuration = 300;
+    const rotateAnim = useRef(new Animated.Value(0)).current;
+  
+    const toggle = () => {
+      const finalValue = expanded ? collapsedHeight : fullHeight;
+      Animated.timing(animatedHeight, {
+        toValue: finalValue,
+        duration: animationDuration,
+        useNativeDriver: false,
+      }).start();
+      Animated.timing(rotateAnim, {
+        toValue: expanded ? 0 : 1,
+        duration: animationDuration,
+        useNativeDriver: true,
+      }).start();
+      setExpanded(!expanded);
+    };
+  
+    const arrowRotation = rotateAnim.interpolate({
+      inputRange: [0, 1],
+      outputRange: ['0deg', '180deg'],
+    });
+  
+    const onFullTextLayout = (event) => {
+      const { height } = event.nativeEvent.layout;
+      // Delay setting fullHeight to ensure the text is fully rendered
+      setFullHeight(height);
+      if (collapsedHeight !== null) {
+        animatedHeight.setValue(collapsedHeight);
+      }
+      console.log(height);
+    };
+  
+    const onCollapsedTextLayout = (event) => {
+      if (collapsedHeight === null) {
+        const { height } = event.nativeEvent.layout;
+        setCollapsedHeight(height);
+        animatedHeight.setValue(height);
+        console.log(height);
+      }
+    };
+  
+    return (
+      <View style={{width: '100%'}}>
+        <Animated.View style={[, { height: animatedHeight, }]}>
+          <Text style={[ { color: appliedTheme.colors.text }]}>
+            {description}
+          </Text>
+        </Animated.View>
+        {(fullHeight && collapsedHeight && fullHeight > collapsedHeight) && (
+          <TouchableOpacity onPress={toggle} activeOpacity={0.1} style={{}}>
+            <Animated.View style={{ transform: [{ rotate: arrowRotation }], alignSelf: 'center', marginTop: 8, marginBottom: 12}}>
+              <Ionicons size={32} name="chevron-down" color={appliedTheme.colors.primary} />
+            </Animated.View>
+          </TouchableOpacity>
+        )}
+        {/* Hidden views for measuring heights */}
+        <View style={{ position: 'absolute', opacity: 0, pointerEvents: 'none' }}>
+          <Text onLayout={onFullTextLayout}>
+            {description}
+          </Text>
+          <Text numberOfLines={3} onLayout={onCollapsedTextLayout}>
+            {description}
+          </Text>
+        </View>
+      </View>
+    );
+  };
+
   const handleDownloadChapter = async (chapterPageURL: string, novelId: number) => {
     setDownloading(chapterPageURL);
     try {
@@ -204,6 +279,16 @@ const Synopsis = () => {
       setDownloading(null);
     }
   };
+
+  const shareNovel = async () => {
+    try {
+      await Share.share({
+        message: `${novelData.novelPageURL}`,
+      });
+    } catch (error) {
+      console.error('Error sharing novel');
+    }
+  }
 
   const RenderChapterItem = ({ item, index }: { item: Chapter, index: number }) => {
     const trueChapterIndex = item.title.match(/Chapter\s+(\d+)/) || '1';
@@ -262,51 +347,44 @@ const Synopsis = () => {
           headerShown: true,
         }}
       /> */}
-      <Appbar.Header
-      mode='small'
-        style={{ backgroundColor: appliedTheme.colors.elevation.level2 }}
-      >
+      <Appbar.Header mode='small' style={{ backgroundColor: appliedTheme.colors.elevation.level2 }}>
         <Appbar.BackAction onPress={() => { router.back() }} color={appliedTheme.colors.text} style={{marginLeft: -8}}/>
         <Appbar.Content title={novelData.title} titleStyle={{ color: appliedTheme.colors.text }} />
+        <Appbar.Action icon={() => (<MaterialIcons name="share" size={24} color={appliedTheme.colors.text} />)} onPress={() => shareNovel()}/>
       </Appbar.Header>
       <View style={{ flexDirection: 'row' }}>
-        <View style={[styles.textContainer, { marginVertical: 24, }]}>
-          <Text style={[styles.title, styles.moveRight, { color: appliedTheme.colors.text }]}>{novelData.title}</Text>
-          <View style={{ flexDirection: 'row' }}>
-            <Ionicons size={20} name="person-outline" style={styles.moveRight} color={appliedTheme.colors.text} />
-            <Text style={[styles.chapters, { color: appliedTheme.colors.text }]}>{novelData.author}</Text>
-          </View>
-          <FlatList
-            data={genresArray}
-            horizontal
-            keyExtractor={(item) => item}
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={[styles.genreContainer, {} ]}
-            renderItem={({ item }) => (
-              <View style={[styles.genrePill, { backgroundColor: appliedTheme.colors.primary }]}>
-                <Text style={[styles.genreText, { color: appliedTheme.colors.text }]}>{item}</Text>
-              </View>
-            )}
-          />
-          <View style={{ flexDirection: 'row' }}>
-            <Ionicons size={24} name="book-outline" style={styles.moveRight} color={appliedTheme.colors.text} />
-            <Text style={[styles.chapters, { color: appliedTheme.colors.text, fontSize: 16 }]}>{novelData.chapterCount} Chapters</Text>
-          </View>
-        </View>
         <View style={styles.imageContainer}>
-          <Image source={{ uri: imageURL }} style={[styles.image, {borderColor: 'red', borderWidth: 2, }]} contentFit='contain'/>
+          <Image source={{ uri: imageURL }} style={[styles.image, {}]} contentFit='contain'/>
+        </View>
+        <View style={[styles.textContainer, { marginVertical: 24, }]}>
+          <Text style={[styles.title, styles.moveRight, { color: appliedTheme.colors.primary }]}>{novelData.title}</Text>
+          <View style={{ flexDirection: 'row' }}>
+            <Ionicons size={20} name="person-outline" style={styles.moveRight} color={appliedTheme.colors.onSurfaceVariant} />
+            <Text style={[styles.chapters, { color: appliedTheme.colors.onSurfaceVariant }]}>{novelData.author}</Text>
+          </View>
+          <View style={{ flexDirection: 'row' }}>
+            <Ionicons size={24} name="book-outline" style={styles.moveRight} color={appliedTheme.colors.onSurfaceVariant} />
+            <Text style={[styles.chapters, { color: appliedTheme.colors.onSurfaceVariant, fontSize: 14 }]}>{novelData.chapterCount} Chapters {novelData.novelStatus ? '/ ' + novelData.novelStatus : '/ Unknown'}</Text>
+          </View>
+          <View style={{ flexDirection: 'row' }}>
+            <MaterialIcons size={24} name="source" style={styles.moveRight} color={appliedTheme.colors.onSurfaceVariant} />
+            <Text style={[styles.chapters, { color: appliedTheme.colors.onSurfaceVariant, fontSize: 14 }]}>{novelData.sourceName}</Text>
+          </View>
         </View>
       </View>
-      <View style={styles.descriptionContainer}>
-        <Text style={[styles.description, { color: appliedTheme.colors.text }]} numberOfLines={showFullDescription ? undefined : 3}>
-          {novelData.description}
-        </Text>
-        <TouchableOpacity onPress={toggleDescription} style={styles.toggleButton}>
-          <Text style={[styles.toggleButtonText, { color: appliedTheme.colors.primary }]}>
-            {showFullDescription ? 'Show less' : 'Show more'}
-          </Text>
-        </TouchableOpacity>
-      </View>
+      <FlatList
+        data={genresArray}
+        horizontal
+        keyExtractor={(item) => item}
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={[styles.genreContainer, {} ]}
+        renderItem={({ item }) => (
+          <View style={[styles.genrePill, { backgroundColor: appliedTheme.colors.primary }]}>
+            <Text style={[styles.genreText, { color: appliedTheme.colors.text }]}>{item}</Text>
+          </View>
+        )}
+      />
+      {ExpandableDescription(novelData.description)}
       {chapterList.length > 0 && (
         <TouchableOpacity 
         style={[styles.readingButton, { backgroundColor: appliedTheme.colors.primary, justifyContent: 'center', alignItems: 'center' }]} 

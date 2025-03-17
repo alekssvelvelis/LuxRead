@@ -6,7 +6,7 @@ import { useNovelRowsContext } from '@/contexts/NovelRowsContext';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Image } from 'expo-image'
 import { getAllLibraryNovels, deleteLibraryNovel, deleteNovelChapters } from '@/database/ExpoDB';
-
+import { dropTable, setupDownloadedChaptersTable, setupLibraryNovelsTable, setupNovelChaptersTable, setupSourcesTable } from '@/database/ExpoDB';
 interface Data{
     id: number;
     title: string;
@@ -18,7 +18,18 @@ interface Data{
 }
 
 export default function Library() {
-  
+  useEffect(() =>{
+    // dropTable('libraryNovels');
+    // dropTable('novelChapters');
+    // dropTable('sources');
+    // dropTable('downloadedChapters');
+    // console.log(JSON.stringify(getTableStructure('sources'), null, 2));
+    // setupNovelChaptersTable();
+    // setupLibraryNovelsTable();
+    // setupSourcesTable();
+    // setupDownloadedChaptersTable();
+    // getDownloadedChapters(1);
+  }, [])
   const { appliedTheme } = useThemeContext();
   const { value: novelRows } = useNovelRowsContext();
   const router = useRouter();
