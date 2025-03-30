@@ -9,7 +9,7 @@ interface ReaderOptionsProps {
   onOptionsChange: (options: { fontSize: number; lineHeight: number; textAlign: string; fontFamily: string }) => void;
 }
 
-const ReaderOptions: React.FC<ReaderOptionsProps> = ({ onOptionsChange }) => {
+const ReaderSetting: React.FC<ReaderOptionsProps> = ({ onOptionsChange }) => {
   const { appliedTheme } = useThemeContext();
 
   const [fontSize, setFontSize] = useState<number | null>(null);
@@ -138,7 +138,7 @@ const ReaderOptions: React.FC<ReaderOptionsProps> = ({ onOptionsChange }) => {
   );
 }
 
-export default ReaderOptions;
+export default ReaderSetting;
 
 const styles = StyleSheet.create({
   pullupModalItemContainer: {

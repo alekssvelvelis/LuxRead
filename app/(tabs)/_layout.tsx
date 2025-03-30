@@ -7,10 +7,10 @@ export default () => {
     const { theme, appliedTheme } = useThemeContext();
     useEffect(() => {
         if (theme.startsWith('light')) {
-          StatusBar.setBarStyle('dark-content', true); // Light theme: dark-content for status bar
+          StatusBar.setBarStyle('dark-content', true);
           StatusBar.setBackgroundColor(appliedTheme.colors.elevation.level2, true);
         } else if (theme.startsWith('dark')) {
-          StatusBar.setBarStyle('light-content', true); // Dark theme: light-content for status bar
+          StatusBar.setBarStyle('light-content', true);
           StatusBar.setBackgroundColor(appliedTheme.colors.elevation.level2, true);
         }
       }, [theme]);
@@ -49,11 +49,8 @@ export default () => {
                     headerShown: false,
                     title: 'Settings',
                     tabBarIcon: ({ color }) => <Ionicons size={28} name="cog" color={color} />,
+                    popToTopOnBlur: true,
                 }}
-            />
-            <Tabs.Screen name="list" options={{ 
-                href: null,
-            }}
             />
         </Tabs>
     );

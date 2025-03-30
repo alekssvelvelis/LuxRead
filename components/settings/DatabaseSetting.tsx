@@ -3,7 +3,7 @@ import { View, StyleSheet, Text, Dimensions, Modal, Animated, Pressable } from '
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { Button } from 'react-native-paper';
 import { clearTable } from '@/database/ExpoDB';
-const Database = () => {
+const DatabaseSetting = () => {
     const screenWidth = Dimensions.get('screen').width;
     const { appliedTheme } = useThemeContext();
     const [visible, setVisible] = useState<boolean>(false);
@@ -85,7 +85,7 @@ const Database = () => {
     );
 };
 
-export default Database;
+export default DatabaseSetting;
 
 const styles = StyleSheet.create({
     container: {

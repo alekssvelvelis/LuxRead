@@ -4,7 +4,7 @@ import { useThemeContext } from '@/contexts/ThemeContext';
 import { Button, RadioButton, Text as PaperText } from 'react-native-paper';
 import { saveNovelRows, getNovelRows } from '@/utils/asyncStorage';
 
-const Display = ({ onNovelRowsChange }: { onNovelRowsChange: (rows: string) => void }) => {
+const DisplaySetting = ({ onNovelRowsChange }: { onNovelRowsChange: (rows: string) => void }) => {
     const screenWidth = Dimensions.get('screen').width;
     const { appliedTheme } = useThemeContext();
     const [visible, setVisible] = useState<boolean>(false);
@@ -110,7 +110,7 @@ const Display = ({ onNovelRowsChange }: { onNovelRowsChange: (rows: string) => v
     );
 };
 
-export default Display;
+export default DisplaySetting;
 
 const styles = StyleSheet.create({
     container: {

@@ -12,7 +12,7 @@ import { getReaderOptions } from '@/utils/asyncStorage';
 import { rgbToRgba } from '@/utils/rgbToRgba';
 
 import { PullUpModal } from '@/components/PullUpModal';
-import ReaderOptions from '@/components/settings/ReaderOptions';
+import ReaderSetting from '@/components/settings/ReaderSetting';
 import ChapterSkeleton from '@/components/skeletons/ChapterSkeleton';
 import { useSpeech } from '@/hooks/useSpeech';
 
@@ -337,7 +337,7 @@ const ChapterPage = () => {
       {readerModalVisible && (
         <PullUpModal visible={readerModalVisible} onClose={handleReaderOptionsOpen}>
           <Text style={{ color: appliedTheme.colors.primary, fontSize: 24 }}>Reader options</Text>
-          <ReaderOptions onOptionsChange={handleOptionsChange}/>
+          <ReaderSetting onOptionsChange={handleOptionsChange}/>
         </PullUpModal>
       )}
     </View>
