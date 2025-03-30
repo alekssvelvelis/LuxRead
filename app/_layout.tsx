@@ -1,4 +1,5 @@
 import React from 'react';
+import { View } from 'react-native';
 import { Stack } from "expo-router";
 import AppContextProvider from "@/contexts/AppContextProvider";
 import { useThemeContext } from '@/contexts/ThemeContext';
@@ -15,11 +16,13 @@ const StackLayout = () => {
 function StackNavigator() {
     const { appliedTheme } = useThemeContext();
     return (
-        <Stack screenOptions={{
-            contentStyle: { backgroundColor: appliedTheme.colors.elevation.level2 }
-        }}>
-            <Stack.Screen name="(tabs)" options={{headerShown: false}}/>
-        </Stack>
+        <View style={{ flexGrow: 1, backgroundColor: appliedTheme.colors.elevation.level2 }}>
+            <Stack screenOptions={{
+                contentStyle: { backgroundColor: 'red'}
+            }}>
+                <Stack.Screen name="(tabs)" options={{headerShown: false}}/>
+            </Stack>
+        </View>
     );
 }
 
