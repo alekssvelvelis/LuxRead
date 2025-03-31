@@ -12,7 +12,6 @@ const StackLayout = () => {
     );
 }
 
-// Separated to access theme context
 function StackNavigator() {
     const { appliedTheme } = useThemeContext();
     return (

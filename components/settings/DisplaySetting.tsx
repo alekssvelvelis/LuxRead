@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, Text, Dimensions, Modal, Animated, Pressable } from 'react-native';
+import { View, StyleSheet, Text, Dimensions, Modal, Pressable } from 'react-native';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { Button, RadioButton, Text as PaperText } from 'react-native-paper';
 import { saveNovelRows, getNovelRows } from '@/utils/asyncStorage';
@@ -8,7 +8,6 @@ const DisplaySetting = ({ onNovelRowsChange }: { onNovelRowsChange: (rows: strin
     const screenWidth = Dimensions.get('screen').width;
     const { appliedTheme } = useThemeContext();
     const [visible, setVisible] = useState<boolean>(false);
-    const [fadeAnimation] = useState(new Animated.Value(0));
     const [value, setValue] = useState<string>('1');
 
     useEffect(() => {
@@ -32,19 +31,10 @@ const DisplaySetting = ({ onNovelRowsChange }: { onNovelRowsChange: (rows: strin
 
     const openModal = () => {
         setVisible(true);
-        Animated.timing(fadeAnimation, {
-            toValue: 1,
-            duration: 300,
-            useNativeDriver: true,
-        }).start();
     };
 
     const closeModal = () => {
-        Animated.timing(fadeAnimation, {
-            toValue: 0,
-            duration: 300,
-            useNativeDriver: true,
-        }).start(() => setVisible(false));
+        setVisible(false);
     };
 
     return (
@@ -61,20 +51,18 @@ const DisplaySetting = ({ onNovelRowsChange }: { onNovelRowsChange: (rows: strin
             {visible && (
                 <Modal
                     transparent={true}
-                    animationType="none"
+                    animationType="fade"
                     visible={visible}
                     onRequestClose={closeModal}
+                    statusBarTranslucent={true}
                 >
                     <Pressable style={styles.overlay} onPress={closeModal}>
-                        <Animated.View style={[styles.overlay, { opacity: fadeAnimation }]} />
+                        <View style={[styles.overlay]} />
                     </Pressable>
                     <View style={[styles.modalContent, { backgroundColor: appliedTheme.colors.surfaceVariant }]}>
-                        <View style={{ width: '100%' }}>
+                        <View style={{width: '100%'}}>
                             <Text style={{ color: appliedTheme.colors.primary, justifyContent: 'flex-start', fontSize: 24 }}>Grid layout</Text>
                             <Text style={{ color: appliedTheme.colors.text, justifyContent: 'flex-start' }}>Novels per row: {value}</Text>
-                        </View>
-                        
-                        <View style={{ width: '100%' }}>
                             <RadioButton.Group onValueChange={newValue => setValue(newValue)} value={value}>
                                 <Pressable onPress={() => {setValue('1'), onNovelRowsChange('1')}} android_ripple={{color: appliedTheme.colors.elevation.level1}}>
                                     <View style={styles.radioButtonContainer}>
@@ -100,8 +88,8 @@ const DisplaySetting = ({ onNovelRowsChange }: { onNovelRowsChange: (rows: strin
                                         <PaperText style={[styles.radioButtonText, {color: appliedTheme.colors.text}]}>Small</PaperText>
                                     </View>
                                 </Pressable>
+                                <Button onPress={closeModal} textColor={appliedTheme.colors.text}>Close</Button>
                             </RadioButton.Group>
-                            <Button onPress={closeModal} textColor={appliedTheme.colors.text}>Close</Button>
                         </View>
                     </View>
                 </Modal>
