@@ -17,7 +17,7 @@ function StackNavigator() {
     return (
         <View style={{ flexGrow: 1, backgroundColor: appliedTheme.colors.elevation.level2 }}>
             <Stack screenOptions={{
-                contentStyle: { backgroundColor: 'red'}
+                contentStyle: { backgroundColor: appliedTheme.colors.elevation.level2}
             }}>
                 <Stack.Screen name="(tabs)" options={{headerShown: false}}/>
             </Stack>

@@ -21,7 +21,7 @@ const ReaderSetting: React.FC<ReaderOptionsProps> = ({ onOptionsChange }) => {
   useEffect(() => {
     const loadReaderOptions = async () => {
       try {
-        const options = await getReaderOptions('readerOptions');
+        const options = await getReaderOptions();
         if (options) {
           const { fontSize, lineHeight, textAlign, fontFamily } = JSON.parse(options);
           setFontSize(fontSize || 16);

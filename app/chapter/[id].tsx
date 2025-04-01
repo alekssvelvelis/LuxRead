@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Pressable } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Pressable, StatusBar } from 'react-native';
 
 import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
 import { upsertNovelChapter } from '@/database/ExpoDB';
@@ -50,7 +50,7 @@ const ChapterPage = () => {
   const [readerModalVisible, setReaderModalVisible] = useState<boolean>(false);
 
   const { isConnected } = useNetwork();
-  const { appliedTheme } = useThemeContext();
+  const { theme, appliedTheme } = useThemeContext();
   const propData = useLocalSearchParams<typeSearchParams>();
   const chapterPageURL: string | string[] = propData.chapterPageURL;
   const sourceName: string | string[] = propData.sourceName;
@@ -71,7 +71,7 @@ const ChapterPage = () => {
   useEffect(() => {
     const loadReaderOptions = async () => {
       try {
-        const options = await getReaderOptions('readerOptions');
+        const options = await getReaderOptions();
         if (options) {
           const { fontSize, lineHeight, textAlign, fontFamily } = JSON.parse(options);
           setReaderOptions({
@@ -168,6 +168,7 @@ const ChapterPage = () => {
 
   const toggleOverlay = () => {
     setIsOverlayVisible(!isOverlayVisible);
+    StatusBar.setBackgroundColor(isOverlayVisible ? appliedTheme.colors.elevation.level2 : appliedTheme.colors.elevation.level3, true);
   };
 
   const handleReaderOptionsOpen = () => {
@@ -255,7 +256,7 @@ const ChapterPage = () => {
         <View style={[styles.header, { backgroundColor: overlayBackgroundColor, flexDirection: 'row' }]}>
           <View style={{flex: 1, flexDirection: 'row', marginBottom: 6}}>
             <Ionicons name={'arrow-back'} size={32} color={appliedTheme.colors.text} style={{ marginLeft: '2%' }} onPress={() => handleSaveChapterData(title, scrollPercentage, chapterIndex)} />
-            <Text style={{ color: appliedTheme.colors.text, fontSize: 20, marginBottom: 4, marginLeft: 12, maxWidth: '80%' }} numberOfLines={1}>{content.title}</Text>
+            <Text style={{ color: appliedTheme.colors.text, fontSize: 20, marginBottom: 4, marginLeft: 12, maxWidth: '75%' }} numberOfLines={1}>{content.title}</Text>
             {isSpeaking ? <Ionicons name={'pause-circle-outline'} size={32} color={appliedTheme.colors.text} style={{ marginLeft: '3%', position: 'absolute', right: 8 }} onPress={() => handleSpeaking()}/> : <Ionicons name={'play-circle-outline'} size={32} color={appliedTheme.colors.text} style={{ marginLeft: '3%', position: 'absolute', right: 8 }} onPress={() => handleSpeaking()}/>}
           </View>
         </View>
@@ -320,14 +321,14 @@ const ChapterPage = () => {
         <View style={[styles.footer, { backgroundColor: overlayBackgroundColor }]}>
           <View style={{ width: '90%', flexDirection: 'row', justifyContent: 'space-around'}}>
             <View style={{width: '33%', justifyContent:'center', alignItems:'center'}}>
-                <Ionicons name={'arrow-back'} size={32} color={content.closeChapters['prevChapter'] ? appliedTheme.colors.text : 'rgba(255,255,255,0.5)'} onPress={content.closeChapters['prevChapter'] ? () => handleNavigateCloseChapter(content.closeChapters['prevChapter']) : undefined}/> 
+                <Ionicons name={'arrow-back'} size={32} color={content.closeChapters['prevChapter'] ? appliedTheme.colors.text : appliedTheme.colors.secondary} onPress={content.closeChapters['prevChapter'] ? () => handleNavigateCloseChapter(content.closeChapters['prevChapter']) : undefined}/> 
             </View>
             <View style={{width: '33%', justifyContent:'center', alignItems:'center'}}>
               <Ionicons name={'cog'} size={32} color={appliedTheme.colors.text} onPress={handleReaderOptionsOpen} />
             </View>
             <View style={{width: '33%', justifyContent:'center', alignItems:'center'}}>
                 <View>
-                  <Ionicons name={'arrow-forward'} size={32} color={content.closeChapters['nextChapter'] ? appliedTheme.colors.text : 'rgba(255,255,255,0.5)'} onPress={content.closeChapters['nextChapter'] ?() => handleNavigateCloseChapter(content.closeChapters['nextChapter']) : undefined}/>
+                  <Ionicons name={'arrow-forward'} size={32} color={content.closeChapters['nextChapter'] ? appliedTheme.colors.text : appliedTheme.colors.secondary} onPress={content.closeChapters['nextChapter'] ?() => handleNavigateCloseChapter(content.closeChapters['nextChapter']) : undefined}/>
                 </View>
             </View>
           </View>
@@ -368,7 +369,7 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    height: 70,
+    height: 50,
     zIndex: 1,
     justifyContent: 'flex-start',
     alignItems: 'flex-end',

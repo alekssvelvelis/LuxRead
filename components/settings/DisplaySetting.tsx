@@ -1,21 +1,24 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, Text, Dimensions, Modal, Pressable } from 'react-native';
+import { View, StyleSheet, Text, Dimensions, Pressable } from 'react-native';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { Button, RadioButton, Text as PaperText } from 'react-native-paper';
 import { saveNovelRows, getNovelRows } from '@/utils/asyncStorage';
+import ModalComponent from '../ModalComponent';
 
 const DisplaySetting = ({ onNovelRowsChange }: { onNovelRowsChange: (rows: string) => void }) => {
     const screenWidth = Dimensions.get('screen').width;
     const { appliedTheme } = useThemeContext();
-    const [visible, setVisible] = useState<boolean>(false);
-    const [value, setValue] = useState<string>('1');
+    const [novelRowsModalVisible, setNovelRowsModalVisible] = useState<boolean>(false);
+    const [bookLayoutModalVisible, setBookLayoutModalVisible] = useState<boolean>(false);
+    const [novelsRowValue, setNovelsRowValue] = useState<string>('1');
+    const [bookLayoutValue, setBookLayoutValue] = useState<string>('Title in book cover');
 
     useEffect(() => {
         const loadInitialValue = async () => {
             try {
                 const savedValue = await getNovelRows();
                 if (savedValue) {
-                    setValue(savedValue);
+                    setNovelsRowValue(savedValue);
                 }
             } catch (error) {
                 console.error('Failed to load the novel rows from storage:', error);
@@ -26,73 +29,107 @@ const DisplaySetting = ({ onNovelRowsChange }: { onNovelRowsChange: (rows: strin
     }, []);
 
     useEffect(() => {
-        saveNovelRows(value);
-    }, [value]);
+        saveNovelRows(novelsRowValue);
+    }, [novelsRowValue]);
 
-    const openModal = () => {
-        setVisible(true);
+    const openNovelRowsModal = () => {
+        setNovelRowsModalVisible(true);
     };
 
-    const closeModal = () => {
-        setVisible(false);
+    const closeNovelRowsModal = () => {
+        setNovelRowsModalVisible(false);
+    };
+
+    const openBookLayoutModal = () => {
+        setBookLayoutModalVisible(true);
+    };
+
+    const closeBookLayoutModal = () => {
+        setBookLayoutModalVisible(false);
     };
 
     return (
         <View style={[styles.container, { width: screenWidth - 20 }]}>
             <Text style={[styles.header, { color: appliedTheme.colors.text }]}>Library screen</Text>
             <Pressable
-                onPress={openModal}
+                onPress={openNovelRowsModal}
                 android_ripple={{ color: appliedTheme.colors.secondary }}
                 style={styles.pressable}
             >
                 <Text style={[styles.label, { color: appliedTheme.colors.text }]}>Novels per row</Text>
-                <Text style={[styles.currentValue, { color: appliedTheme.colors.text }]}>Currently displaying: {value}</Text>
+                <Text style={[styles.currentValue, { color: appliedTheme.colors.text }]}>Currently displaying: {novelsRowValue}</Text>
             </Pressable>
-            {visible && (
-                <Modal
-                    transparent={true}
-                    animationType="fade"
-                    visible={visible}
-                    onRequestClose={closeModal}
-                    statusBarTranslucent={true}
-                >
-                    <Pressable style={styles.overlay} onPress={closeModal}>
-                        <View style={[styles.overlay]} />
-                    </Pressable>
-                    <View style={[styles.modalContent, { backgroundColor: appliedTheme.colors.surfaceVariant }]}>
-                        <View style={{width: '100%'}}>
-                            <Text style={{ color: appliedTheme.colors.primary, justifyContent: 'flex-start', fontSize: 24 }}>Grid layout</Text>
-                            <Text style={{ color: appliedTheme.colors.text, justifyContent: 'flex-start' }}>Novels per row: {value}</Text>
-                            <RadioButton.Group onValueChange={newValue => setValue(newValue)} value={value}>
-                                <Pressable onPress={() => {setValue('1'), onNovelRowsChange('1')}} android_ripple={{color: appliedTheme.colors.elevation.level1}}>
-                                    <View style={styles.radioButtonContainer}>
-                                        <RadioButton.Android value="1"  uncheckedColor={appliedTheme.colors.onSurfaceVariant} color={appliedTheme.colors.primary}/>
-                                        <PaperText style={[styles.radioButtonText, {color: appliedTheme.colors.text}]}>Extra large</PaperText>
-                                    </View>
-                                </Pressable>
-                                <Pressable onPress={() => {setValue('2'), onNovelRowsChange('2')}} android_ripple={{color: appliedTheme.colors.elevation.level1}}>
-                                    <View style={styles.radioButtonContainer}>
-                                        <RadioButton.Android value="2" uncheckedColor={appliedTheme.colors.onSurfaceVariant} color={appliedTheme.colors.primary}/>
-                                        <PaperText style={[styles.radioButtonText, {color: appliedTheme.colors.text}]}>Large</PaperText>
-                                    </View>
-                                </Pressable>
-                                <Pressable onPress={() => {setValue('3'), onNovelRowsChange('3')}} android_ripple={{color: appliedTheme.colors.elevation.level1}}>
-                                    <View style={styles.radioButtonContainer}>
-                                        <RadioButton.Android value="3" uncheckedColor={appliedTheme.colors.onSurfaceVariant} color={appliedTheme.colors.primary}/>
-                                        <PaperText style={[styles.radioButtonText, {color: appliedTheme.colors.text}]}>Medium</PaperText>
-                                    </View>
-                                </Pressable>
-                                <Pressable onPress={() => {setValue('4'), onNovelRowsChange('4')}} android_ripple={{color: appliedTheme.colors.elevation.level1}}>
-                                    <View style={styles.radioButtonContainer}>
-                                        <RadioButton.Android value="4" uncheckedColor={appliedTheme.colors.onSurfaceVariant} color={appliedTheme.colors.primary}/>
-                                        <PaperText style={[styles.radioButtonText, {color: appliedTheme.colors.text}]}>Small</PaperText>
-                                    </View>
-                                </Pressable>
-                                <Button onPress={closeModal} textColor={appliedTheme.colors.text}>Close</Button>
-                            </RadioButton.Group>
-                        </View>
+            {novelRowsModalVisible && (
+                <ModalComponent visible={novelRowsModalVisible} onClose={closeNovelRowsModal}>
+                    <View style={{width: '100%'}}>
+                        <Text style={{ color: appliedTheme.colors.primary, justifyContent: 'flex-start', fontSize: 24 }}>Grid layout</Text>
+                        <Text style={{ color: appliedTheme.colors.text, justifyContent: 'flex-start' }}>Novels per row: {novelsRowValue}</Text>
+                        <RadioButton.Group onValueChange={newValue => setNovelsRowValue(newValue)} value={novelsRowValue}>
+                            <Pressable onPress={() => {setNovelsRowValue('1'), onNovelRowsChange('1')}} android_ripple={{color: appliedTheme.colors.elevation.level1}}>
+                                <View style={styles.radioButtonContainer}>
+                                    <RadioButton.Android value="1"  uncheckedColor={appliedTheme.colors.onSurfaceVariant} color={appliedTheme.colors.primary}/>
+                                    <PaperText style={[styles.radioButtonText, {color: appliedTheme.colors.text}]}>Extra large</PaperText>
+                                </View>
+                            </Pressable>
+                            <Pressable onPress={() => {setNovelsRowValue('2'), onNovelRowsChange('2')}} android_ripple={{color: appliedTheme.colors.elevation.level1}}>
+                                <View style={styles.radioButtonContainer}>
+                                    <RadioButton.Android value="2" uncheckedColor={appliedTheme.colors.onSurfaceVariant} color={appliedTheme.colors.primary}/>
+                                    <PaperText style={[styles.radioButtonText, {color: appliedTheme.colors.text}]}>Large</PaperText>
+                                </View>
+                            </Pressable>
+                            <Pressable onPress={() => {setNovelsRowValue('3'), onNovelRowsChange('3')}} android_ripple={{color: appliedTheme.colors.elevation.level1}}>
+                                <View style={styles.radioButtonContainer}>
+                                    <RadioButton.Android value="3" uncheckedColor={appliedTheme.colors.onSurfaceVariant} color={appliedTheme.colors.primary}/>
+                                    <PaperText style={[styles.radioButtonText, {color: appliedTheme.colors.text}]}>Medium</PaperText>
+                                </View>
+                            </Pressable>
+                            <Pressable onPress={() => {setNovelsRowValue('4'), onNovelRowsChange('4')}} android_ripple={{color: appliedTheme.colors.elevation.level1}}>
+                                <View style={styles.radioButtonContainer}>
+                                    <RadioButton.Android value="4" uncheckedColor={appliedTheme.colors.onSurfaceVariant} color={appliedTheme.colors.primary}/>
+                                    <PaperText style={[styles.radioButtonText, {color: appliedTheme.colors.text}]}>Small</PaperText>
+                                </View>
+                            </Pressable>
+                            <Button onPress={closeNovelRowsModal} textColor={appliedTheme.colors.text}>Close</Button>
+                        </RadioButton.Group>
                     </View>
-                </Modal>
+                </ModalComponent>
+            )}
+            <Pressable
+                onPress={openBookLayoutModal}
+                android_ripple={{ color: appliedTheme.colors.secondary }}
+                style={styles.pressable}
+            >
+                <Text style={[styles.label, { color: appliedTheme.colors.text }]}>Novel design layout</Text>
+                <Text style={[styles.currentValue, { color: appliedTheme.colors.text }]}>Currently using: {bookLayoutValue}</Text>
+            </Pressable>
+            {bookLayoutModalVisible && (
+                <ModalComponent visible={bookLayoutModalVisible} onClose={closeBookLayoutModal}>
+                    <View style={{width: '100%'}}>
+                        <Text style={{ color: appliedTheme.colors.primary, justifyContent: 'flex-start', fontSize: 24 }}>Library novel layout</Text>
+                        <Text style={{ color: appliedTheme.colors.text, justifyContent: 'flex-start' }}>Current novel layout: {bookLayoutValue}</Text>
+                        <RadioButton.Group onValueChange={newValue => setNovelsRowValue(newValue)} value={bookLayoutValue}>
+                            <Pressable onPress={() => {setNovelsRowValue('1'), onNovelRowsChange('1')}} android_ripple={{color: appliedTheme.colors.elevation.level1}}>
+                                <View style={styles.radioButtonContainer}>
+                                    <RadioButton.Android value="1"  uncheckedColor={appliedTheme.colors.onSurfaceVariant} color={appliedTheme.colors.primary}/>
+                                    <PaperText style={[styles.radioButtonText, {color: appliedTheme.colors.text}]}>Title under novel</PaperText>
+                                </View>
+                            </Pressable>
+                            <Pressable onPress={() => {setNovelsRowValue('2'), onNovelRowsChange('2')}} android_ripple={{color: appliedTheme.colors.elevation.level1}}>
+                                <View style={styles.radioButtonContainer}>
+                                    <RadioButton.Android value="2" uncheckedColor={appliedTheme.colors.onSurfaceVariant} color={appliedTheme.colors.primary}/>
+                                    <PaperText style={[styles.radioButtonText, {color: appliedTheme.colors.text}]}>Title on novel cover</PaperText>
+                                </View>
+                            </Pressable>
+                            <Pressable onPress={() => {setNovelsRowValue('3'), onNovelRowsChange('3')}} android_ripple={{color: appliedTheme.colors.elevation.level1}}>
+                                <View style={styles.radioButtonContainer}>
+                                    <RadioButton.Android value="3" uncheckedColor={appliedTheme.colors.onSurfaceVariant} color={appliedTheme.colors.primary}/>
+                                    <PaperText style={[styles.radioButtonText, {color: appliedTheme.colors.text}]}>No title</PaperText>
+                                </View>
+                            </Pressable>
+                            <Button onPress={closeBookLayoutModal} textColor={appliedTheme.colors.text}>Close</Button>
+                        </RadioButton.Group>
+                    </View>
+                </ModalComponent>
             )}
         </View>
     );

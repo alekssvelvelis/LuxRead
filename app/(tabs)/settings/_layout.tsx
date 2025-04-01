@@ -18,7 +18,7 @@ export default function SettingsLayout() {
                 <Stack.Screen name="index" options={{headerShown: false}}/>
                 <Stack.Screen name="appearance" options={{ title: "Appearance" }} />
                 <Stack.Screen name="display" options={{ title: "Display" }} />
-                <Stack.Screen name="reader" options={{ title: "Reader" }} />
+                <Stack.Screen name="reader" options={{ title: "Reading options" }} />
                 <Stack.Screen name="database" options={{ title: "Database" }} />
                 <Stack.Screen name="about" options={{ title: "About" }} />
             </Stack>

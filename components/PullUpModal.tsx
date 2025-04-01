@@ -17,13 +17,11 @@ interface PullUpModalProps {
     visible: boolean;
     onClose: () => void;
     children?: React.ReactNode;
-
 }
 
 export function PullUpModal({ visible, onClose, children }: PullUpModalProps) {
     const { appliedTheme } = useThemeContext();
     const [slideAnimation] = useState(new Animated.Value(height)); // Initial position off-screen
-    const [fadeAnimation] = useState(new Animated.Value(0)); // Initial opacity
     const [isVisible, setIsVisible] = useState(visible);
 
     useEffect(() => {
@@ -42,31 +40,22 @@ export function PullUpModal({ visible, onClose, children }: PullUpModalProps) {
                 duration: 300,
                 useNativeDriver: true,
             }),
-            Animated.timing(fadeAnimation, {
-                toValue: 1,
-                duration: 300,
-                useNativeDriver: true,
-            })
         ]).start();
     };
 
     const animateOut = () => {
+        setIsVisible(false);
         Animated.parallel([
             Animated.timing(slideAnimation, {
                 toValue: height,
                 duration: 300,
                 useNativeDriver: true,
             }),
-            Animated.timing(fadeAnimation, {
-                toValue: 0,
-                duration: 300,
-                useNativeDriver: true,
-            })
-        ]).start(() => setIsVisible(false));
+        ]).start();
     };
     return (
-        <Modal animationType="fade" transparent={true} visible={isVisible}  style={{position: 'absolute', top: 0, right: 0, left: 0, bottom: 0, backgroundColor: 'rgba(255,0,0,1)'}}>
-            <AnimatedPressable style={[styles.overlay, { opacity: fadeAnimation }]} onPress={onClose}>
+        <Modal animationType="fade" transparent={true} visible={isVisible} statusBarTranslucent={true}  style={{position: 'absolute', top: 0, right: 0, left: 0, bottom: 0}}>
+            <AnimatedPressable style={[styles.overlay]} onPress={onClose}>
                 <View style={styles.overlayContent}>
                     <TouchableWithoutFeedback>
                         <Animated.View style={[styles.modalContainer, { transform: [{ translateY: slideAnimation }], backgroundColor: appliedTheme.colors.surfaceVariant }]}>

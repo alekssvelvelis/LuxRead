@@ -1,15 +1,59 @@
-import React from 'react';
-import { View, StyleSheet} from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView} from 'react-native';
 import ReaderSetting from '@/components/settings/ReaderSetting';
 import { useThemeContext } from '@/contexts/ThemeContext';
+import { getReaderOptions } from '@/utils/asyncStorage';
+interface ReaderOptions {
+  fontSize: number,
+  lineHeight: number,
+  textAlign: string,
+  fontFamily: string
+}
+
 const Reader = () => {
     const { appliedTheme } = useThemeContext();
     const clearReaderOptions = () => {
       return;
     }
+
+    const [readerOptions, setReaderOptions] = useState<ReaderOptions>({
+        fontSize: 16,
+        lineHeight: 25,
+        textAlign: 'left',
+        fontFamily: 'Roboto'
+      });
+
+      useEffect(() => {
+        const loadReaderOptions = async () => {
+          try {
+            const options = await getReaderOptions();
+            if (options) {
+              const { fontSize, lineHeight, textAlign, fontFamily } = JSON.parse(options);
+              setReaderOptions({
+                fontSize: fontSize || 16,
+                lineHeight: lineHeight || 25,
+                textAlign: textAlign || 'left',
+                fontFamily: fontFamily || 'Roboto',
+              });
+            }
+          } catch (error) {
+            console.error('Error loading reader options', error);
+          }
+        };
+    
+        loadReaderOptions();
+      }, [clearReaderOptions]);
+
     return (
         <View style={[styles.container, { backgroundColor: appliedTheme.colors.elevation.level2}]}>
-            <ReaderSetting onOptionsChange={clearReaderOptions}/>
+          <ReaderSetting onOptionsChange={clearReaderOptions}/>
+          <ScrollView style={{width: '95%', padding: 8, backgroundColor: appliedTheme.colors.surfaceVariant, maxHeight: 200}}>
+            <View style={{marginBottom: 12}}>
+              <Text style={{color: appliedTheme.colors.text, fontSize: readerOptions.fontSize, lineHeight: readerOptions.lineHeight, textAlign: readerOptions.textAlign, fontFamily: readerOptions.fontFamily,}}>
+              A frail-looking young man with pale skin and dark circles under his eyes was sitting on a rusty bench across from the police station. He was cradling a cup of coffee in his hands — not the cheap synthetic type slum rats like him had access to, but the real deal.
+              </Text>
+            </View>
+          </ScrollView>
         </View>
     )
 }
