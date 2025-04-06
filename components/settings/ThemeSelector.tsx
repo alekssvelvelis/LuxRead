@@ -1,21 +1,20 @@
 
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Dimensions, ScrollView, TouchableOpacity, StatusBar } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, Dimensions, ScrollView, TouchableOpacity } from 'react-native';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { subThemes, SubThemesType, darkTheme, lightTheme } from '@/constants/themes';
 
-const ThemeSelector = ({ onThemeChange }: { onThemeChange: (theme: string) => void }) => {
-    const { theme, appliedTheme } = useThemeContext();
+const ThemeSelector = () => {
+    const { setTheme, theme, appliedTheme } = useThemeContext();
     const [activeTheme, setActiveTheme] = useState<string>(theme);
     const themes: string[] = ['light-default', 'light-ruby', 'light-aquamarine', 'light-citrine', 'dark-default', 'dark-ruby', 'dark-aquamarine', 'dark-citrine'];
     const screenWidth: number = Dimensions.get('screen').width;
 
     const lightThemes = themes.filter(theme => theme.startsWith('light'));
     const darkThemes = themes.filter(theme => theme.startsWith('dark'));
-
     const handleThemeChange = (theme: string) => {
         setActiveTheme(theme);
-        onThemeChange(theme);
+        setTheme(theme);
     };
 
     return (
@@ -52,7 +51,6 @@ const ThemeSelector = ({ onThemeChange }: { onThemeChange: (theme: string) => vo
                     );
                 })}
             </ScrollView>
-
             <Text style={[styles.header, { color: appliedTheme.colors.text }]}>Dark Themes</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.themesContainer}>
                 {darkThemes.map(theme => {
@@ -95,6 +93,7 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         justifyContent: 'flex-start',
+        maxHeight: 350,
     },
     header: {
         fontSize: 16,
@@ -102,9 +101,7 @@ const styles = StyleSheet.create({
         marginBottom: 10,
     },
     themesContainer: {
-        flexDirection: 'row',
         overflow: 'scroll',
-        marginBottom: 20,
     },
     themeSingleContainer: {
         display: 'flex',

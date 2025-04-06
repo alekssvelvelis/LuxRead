@@ -3,22 +3,30 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const THEME_KEY = 'userTheme';
 const READER_OPTIONS_KEY = 'readerOptions';
 const NOVEL_ROWS = 'novelRows';
+const PURE_BLACK_MODE = 'pure-black';
 
-export const saveItem = async (key: string, value: string) => {
+export const saveItem = async (key: string, value: any) => {
   try {
-    await AsyncStorage.setItem(key, value);
+    const stringValue = typeof value === 'string' ? value : JSON.stringify(value);
+    await AsyncStorage.setItem(key, stringValue);
   } catch (error) {
     console.error(`Error saving ${key}`, error);
   }
 };
 
-export const getItem = async (key: string): Promise<string | null> => {
+export const getItem: {
+  (key: string): Promise<string | null>;
+  (key: string, bool: true): Promise<boolean>;
+} = async (key: string, bool?: boolean): Promise<any> => {
   try {
     const value = await AsyncStorage.getItem(key);
+    if (bool) {
+      return value !== null ? JSON.parse(value) : false;
+    }
     return value;
   } catch (error) {
     console.error(`Error retrieving ${key}`, error);
-    return null;
+    return bool ? false : null;
   }
 };
 
@@ -30,6 +38,12 @@ export const getReaderOptions = async (): Promise<string | null> => getItem(READ
 
 export const saveNovelRows = async(number: string) => saveItem(NOVEL_ROWS, number);
 export const getNovelRows = async(): Promise<string | null> => getItem(NOVEL_ROWS);
+
+export const savePureBlackMode = async (enabled: boolean) => {
+  await saveItem(PURE_BLACK_MODE, enabled);
+};
+
+export const getPureBlackMode = async (): Promise<boolean> =>  getItem(PURE_BLACK_MODE, true);
 
 export const clearStorage = async () => {
   try {

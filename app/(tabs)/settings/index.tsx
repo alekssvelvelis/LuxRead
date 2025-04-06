@@ -4,7 +4,7 @@ import { useThemeContext } from '@/contexts/ThemeContext';
 import { Entypo, Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 
-export default function Settings() {
+const Settings = () => {
     const { appliedTheme } = useThemeContext();
     const router = useRouter();
     return (
@@ -63,6 +63,7 @@ export default function Settings() {
         </ScrollView>
     );
 }
+export default Settings;
 
 const styles = StyleSheet.create({
   container: {

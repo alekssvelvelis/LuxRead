@@ -69,7 +69,7 @@ const ReaderSetting: React.FC<ReaderOptionsProps> = ({ onOptionsChange }) => {
             minimumValue={12}
             maximumValue={24}
             step={1}
-            value={fontSize ?? 16} // Fallback for initial render
+            value={fontSize ?? 16}
             onValueChange={handleFontSizeChange}
             minimumTrackTintColor={appliedTheme.colors.primary}
             maximumTrackTintColor={appliedTheme.colors.text}
@@ -86,7 +86,7 @@ const ReaderSetting: React.FC<ReaderOptionsProps> = ({ onOptionsChange }) => {
             minimumValue={18}
             maximumValue={32}
             step={1}
-            value={lineHeight ?? 25} // Fallback for initial render
+            value={lineHeight ?? 25}
             onValueChange={handleLineHeightChange}
             minimumTrackTintColor={appliedTheme.colors.primary}
             maximumTrackTintColor={appliedTheme.colors.text}

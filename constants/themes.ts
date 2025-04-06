@@ -15,9 +15,16 @@ export type Theme = {
     onTertiary: string;
     text: string;
     test: string;
+    elevation: {
+      level0: string;
+      level1: string;
+      level2: string;
+      level3: string;
+      level4: string;
+      level5: string;
+    };
     // Add other custom colors as needed
   };
-  // Add other theme properties here
 };
 
 type SubTheme = {
@@ -59,6 +66,21 @@ export const darkTheme: Theme = {
   },
 };
 
+export const pureBlackTheme: Theme = {
+  ...darkTheme,
+  colors: {
+    ...darkTheme.colors,
+    background: '#000000',
+    elevation: {
+      level0: '#000000',
+      level1: '#000000',
+      level2: '#000000',
+      level3: '#151515',
+      level4: '#151515',
+      level5: '#151515',
+    }
+  },
+};
 
 export const subThemes = {
     default: {

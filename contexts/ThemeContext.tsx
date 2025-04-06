@@ -1,12 +1,14 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { lightTheme, darkTheme, subThemes } from '@/constants/themes';
-import { getUserTheme, saveUserTheme } from '@/utils/asyncStorage';
+import { lightTheme, darkTheme, pureBlackTheme, subThemes } from '@/constants/themes';
+import { getUserTheme, saveUserTheme, getPureBlackMode, savePureBlackMode } from '@/utils/asyncStorage';
 import { useColorScheme } from 'react-native';
 
 type ThemeContextType = {
   theme: string;
   setTheme: (theme: string) => void;
   appliedTheme: any;
+  isPureBlack: boolean;
+  setPureBlack: (enabled: boolean) => void;
 };
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -14,23 +16,32 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   const systemTheme = useColorScheme() ?? 'light';
   const [theme, setTheme] = useState<string>(`${systemTheme}-default`);
+  const [isPureBlack, setPureBlack] = useState<boolean>(false);
   
   useEffect(() => {
-    const loadTheme = async () => {
+    const loadSettings = async () => {
       const savedTheme = await getUserTheme();
-      if (savedTheme) {
-        setTheme(savedTheme);
-      }
+      const savedPureBlack = await getPureBlackMode();
+      if(savedTheme) setTheme(savedTheme);
+      if(savedPureBlack) setPureBlack(savedPureBlack);
     };
-    loadTheme();
+    loadSettings();
   }, []);
 
   useEffect(() => {
     saveUserTheme(theme);
   }, [theme]);
 
+  useEffect(() => {
+    savePureBlackMode(isPureBlack);
+  }, [isPureBlack]);
+
   const [primaryTheme, subThemeName] = theme.split('-') as ['light' | 'dark', 'ruby' | 'aquamarine' | 'citrine'];
-  const baseTheme = primaryTheme === 'light' ? lightTheme : darkTheme;
+  
+  let baseTheme = primaryTheme === 'light' ? lightTheme : darkTheme;
+  if (primaryTheme === 'dark' && isPureBlack) {
+    baseTheme = pureBlackTheme;
+  }
 
   const appliedTheme = {
     ...baseTheme,
@@ -42,7 +53,7 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <ThemeContext.Provider value={{ theme, setTheme, appliedTheme }}>
+    <ThemeContext.Provider value={{ theme, setTheme, appliedTheme, isPureBlack, setPureBlack }}>
       {children}
     </ThemeContext.Provider>
   );
