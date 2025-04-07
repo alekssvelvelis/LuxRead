@@ -9,7 +9,7 @@ import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import { Appbar } from 'react-native-paper';
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { Image } from 'expo-image'; //  takes priority over react-native image tag to read static images
-
+import ExpandableDescription from '@/components/novel/ExpandableDescription';
 import { PullUpModal } from '@/components/PullUpModal';
 import { getAllNovelChapters, insertDownloadedChapter, getDownloadedChapters } from '@/database/ExpoDB';
 import NovelSkeleton from '@/components/skeletons/NovelSkeleton';
@@ -189,82 +189,7 @@ const Synopsis = () => {
     }
   };
 
-
   const [downloading, setDownloading] = useState<string | null>(null);
-
-  const ExpandableDescription = (description: string) => {
-    const [expanded, setExpanded] = useState(false);
-    const [fullHeight, setFullHeight] = useState<number | null>(null);
-    const [collapsedHeight, setCollapsedHeight] = useState<number | null>(null);
-    const animatedHeight = useRef(new Animated.Value(0)).current;
-    const animationDuration = 300;
-    const rotateAnim = useRef(new Animated.Value(0)).current;
-  
-    const toggle = () => {
-      const finalValue = expanded ? collapsedHeight : fullHeight;
-      Animated.timing(animatedHeight, {
-        toValue: finalValue,
-        duration: animationDuration,
-        useNativeDriver: false,
-      }).start();
-      Animated.timing(rotateAnim, {
-        toValue: expanded ? 0 : 1,
-        duration: animationDuration,
-        useNativeDriver: true,
-      }).start();
-      setExpanded(!expanded);
-    };
-  
-    const arrowRotation = rotateAnim.interpolate({
-      inputRange: [0, 1],
-      outputRange: ['0deg', '180deg'],
-    });
-  
-    const onFullTextLayout = (event) => {
-      const { height } = event.nativeEvent.layout;
-      // Delay setting fullHeight to ensure the text is fully rendered
-      setFullHeight(height);
-      if (collapsedHeight !== null) {
-        animatedHeight.setValue(collapsedHeight);
-      }
-      console.log(height);
-    };
-  
-    const onCollapsedTextLayout = (event) => {
-      if (collapsedHeight === null) {
-        const { height } = event.nativeEvent.layout;
-        setCollapsedHeight(height);
-        animatedHeight.setValue(height);
-        console.log(height);
-      }
-    };
-  
-    return (
-      <View style={{width: '100%'}}>
-        <Animated.View style={[, { height: animatedHeight, }]}>
-          <Text style={[ { color: appliedTheme.colors.text }]}>
-            {description}
-          </Text>
-        </Animated.View>
-        {(fullHeight && collapsedHeight && fullHeight > collapsedHeight) && (
-          <TouchableOpacity onPress={toggle} activeOpacity={0.1} style={{}}>
-            <Animated.View style={{ transform: [{ rotate: arrowRotation }], alignSelf: 'center', marginTop: 8, marginBottom: 12}}>
-              <Ionicons size={32} name="chevron-down" color={appliedTheme.colors.primary} />
-            </Animated.View>
-          </TouchableOpacity>
-        )}
-        {/* Hidden views for measuring heights */}
-        <View style={{ position: 'absolute', opacity: 0, pointerEvents: 'none' }}>
-          <Text onLayout={onFullTextLayout}>
-            {description}
-          </Text>
-          <Text numberOfLines={3} onLayout={onCollapsedTextLayout}>
-            {description}
-          </Text>
-        </View>
-      </View>
-    );
-  };
 
   const handleDownloadChapter = async (chapterPageURL: string, novelId: number) => {
     setDownloading(chapterPageURL);
@@ -356,7 +281,7 @@ const Synopsis = () => {
         <View style={styles.imageContainer}>
           <Image source={{ uri: imageURL }} style={[styles.image, {}]} contentFit='contain'/>
         </View>
-        <View style={[styles.textContainer, { marginVertical: 24, }]}>
+        <View style={[styles.textContainer, { marginVertical: 12, }]}>
           <Text style={[styles.title, styles.moveRight, { color: appliedTheme.colors.primary }]}>{novelData.title}</Text>
           <View style={{ flexDirection: 'row' }}>
             <Ionicons size={20} name="person-outline" style={styles.moveRight} color={appliedTheme.colors.onSurfaceVariant} />
@@ -373,6 +298,7 @@ const Synopsis = () => {
         </View>
       </View>
       <FlatList
+        style={{ maxHeight: 52, marginBottom: 12}}
         data={genresArray}
         horizontal
         keyExtractor={(item) => item}
@@ -384,7 +310,7 @@ const Synopsis = () => {
           </View>
         )}
       />
-      {ExpandableDescription(novelData.description)}
+      <ExpandableDescription description={novelData.description} />
       {chapterList.length > 0 && (
         <TouchableOpacity 
         style={[styles.readingButton, { backgroundColor: appliedTheme.colors.primary, justifyContent: 'center', alignItems: 'center' }]} 
@@ -403,6 +329,7 @@ const Synopsis = () => {
 
   return (
     <View style={[styles.container, {backgroundColor: appliedTheme.colors.elevation.level2}]}>
+      <RenderListHeader />
       <FlatList
         data={isConnected ? chapterList : downloadedChapterList}
         renderItem={RenderChapterItem}
@@ -418,7 +345,6 @@ const Synopsis = () => {
             <Text style={{ textAlign: 'center', color: appliedTheme.colors.text, marginTop: 24 }}>No more chapters</Text>
           ) : null
         }
-        ListHeaderComponent={<RenderListHeader />}
       />
       
       <PullUpModal
