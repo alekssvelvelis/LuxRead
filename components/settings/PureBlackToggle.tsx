@@ -1,13 +1,11 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, Text, Switch, StyleSheet } from 'react-native';
 import { useThemeContext } from '@/contexts/ThemeContext';
 const PureBlackToggle = () => {
     const { theme, appliedTheme, isPureBlack, setPureBlack } = useThemeContext();
-    const [localPureBlack, setLocalPureBlack] = useState<boolean>(isPureBlack);
 
     const onToggle = async () => {
-        setLocalPureBlack(!localPureBlack);
-        setPureBlack(!localPureBlack);
+        setPureBlack(!isPureBlack);
     };
 
     return (
@@ -16,7 +14,7 @@ const PureBlackToggle = () => {
                 Pure Black Mode
             </Text>
             <Switch
-                value={localPureBlack}
+                value={isPureBlack}
                 onValueChange={onToggle}
                 disabled={!theme.startsWith('dark')}
             />

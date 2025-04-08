@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { lightTheme, darkTheme, pureBlackTheme, subThemes } from '@/constants/themes';
-import { getUserTheme, saveUserTheme, getPureBlackMode, savePureBlackMode } from '@/utils/asyncStorage';
+import { getUserTheme, saveUserTheme, savePureBlackMode, getIsDarkMode, saveIsDarkMode } from '@/utils/asyncStorage';
 import { useColorScheme } from 'react-native';
 
 type ThemeContextType = {
@@ -16,12 +16,12 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   const systemTheme = useColorScheme() ?? 'light';
   const [theme, setTheme] = useState<string>(`${systemTheme}-default`);
-  const [isPureBlack, setPureBlack] = useState<boolean>(false);
+  const [isPureBlack, setPureBlack] = useState<boolean | null>(null);
   
   useEffect(() => {
     const loadSettings = async () => {
       const savedTheme = await getUserTheme();
-      const savedPureBlack = await getPureBlackMode();
+      const savedPureBlack = await getIsDarkMode();
       if(savedTheme) setTheme(savedTheme);
       if(savedPureBlack) setPureBlack(savedPureBlack);
     };
@@ -33,7 +33,9 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   }, [theme]);
 
   useEffect(() => {
-    savePureBlackMode(isPureBlack);
+    if (isPureBlack !== null && isPureBlack !== undefined) {
+      saveIsDarkMode(isPureBlack);
+    }
   }, [isPureBlack]);
 
   const [primaryTheme, subThemeName] = theme.split('-') as ['light' | 'dark', 'ruby' | 'aquamarine' | 'citrine'];

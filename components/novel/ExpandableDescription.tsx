@@ -38,7 +38,6 @@ const ExpandableDescription = ({description}: {description: string}) => {
     if (collapsedHeight !== null) {
       animatedHeight.setValue(collapsedHeight);
     }
-    console.log(height, 'inside of full text layout');
   };
 
   const onCollapsedTextLayout = (event: LayoutChangeEvent) => {
@@ -46,7 +45,6 @@ const ExpandableDescription = ({description}: {description: string}) => {
       const { height } = event.nativeEvent.layout;
       setCollapsedHeight(height);
       animatedHeight.setValue(height);
-      console.log(height, 'inside of collapsed text layout');
     }
   };
 

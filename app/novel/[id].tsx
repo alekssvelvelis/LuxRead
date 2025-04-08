@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, memo, useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated, FlatList, ActivityIndicator, Share } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator, Share } from 'react-native';
 
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { useNetwork } from '@/contexts/NetworkContext';
@@ -284,15 +284,15 @@ const Synopsis = () => {
         <View style={[styles.textContainer, { marginVertical: 12, }]}>
           <Text style={[styles.title, styles.moveRight, { color: appliedTheme.colors.primary }]}>{novelData.title}</Text>
           <View style={{ flexDirection: 'row' }}>
-            <Ionicons size={20} name="person-outline" style={styles.moveRight} color={appliedTheme.colors.onSurfaceVariant} />
+            <Ionicons size={20} name="person-outline" style={styles.moveRight} color={appliedTheme.colors.text} />
             <Text style={[styles.chapters, { color: appliedTheme.colors.onSurfaceVariant }]}>{novelData.author}</Text>
           </View>
           <View style={{ flexDirection: 'row' }}>
-            <Ionicons size={24} name="book-outline" style={styles.moveRight} color={appliedTheme.colors.onSurfaceVariant} />
+            <Ionicons size={24} name="book-outline" style={styles.moveRight} color={appliedTheme.colors.text} />
             <Text style={[styles.chapters, { color: appliedTheme.colors.onSurfaceVariant, fontSize: 14 }]}>{novelData.chapterCount} Chapters {novelData.novelStatus ? '/ ' + novelData.novelStatus : '/ Unknown'}</Text>
           </View>
           <View style={{ flexDirection: 'row' }}>
-            <MaterialIcons size={24} name="source" style={styles.moveRight} color={appliedTheme.colors.onSurfaceVariant} />
+            <MaterialIcons size={24} name="source" style={styles.moveRight} color={appliedTheme.colors.text} />
             <Text style={[styles.chapters, { color: appliedTheme.colors.onSurfaceVariant, fontSize: 14 }]}>{novelData.sourceName}</Text>
           </View>
         </View>

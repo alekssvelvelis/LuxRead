@@ -7,8 +7,22 @@ const PURE_BLACK_MODE = 'pure-black';
 
 export const saveItem = async (key: string, value: any) => {
   try {
-    const stringValue = typeof value === 'string' ? value : JSON.stringify(value);
-    await AsyncStorage.setItem(key, stringValue);
+    // console.log('b4 json stringify in saveItem', value, typeof value);
+    let saveValue = typeof value === 'string' ? value : JSON.stringify(value);
+    // let saveValue = '';
+    // if(typeof value === 'string') {
+    //   console.log('saveItem value is string');
+    //   saveValue =  value;
+    // }else if (typeof value === 'boolean'){
+    //   console.log('saveItem value is boolean');
+    //   saveValue = JSON.stringify(value);
+    // }else{
+    //   console.log('saveItem is neither boolean nor string');
+    // }
+    await AsyncStorage.setItem(key, saveValue)
+    // const stringValue = typeof value === 'string' ? value : JSON.stringify(value);
+    // console.log('after stringify in saveItem', stringValue, typeof stringValue);
+    // await AsyncStorage.setItem(key, stringValue);
   } catch (error) {
     console.error(`Error saving ${key}`, error);
   }
@@ -44,6 +58,10 @@ export const savePureBlackMode = async (enabled: boolean) => {
 };
 
 export const getPureBlackMode = async (): Promise<boolean> =>  getItem(PURE_BLACK_MODE, true);
+
+export const getIsDarkMode = async (): Promise<boolean> => getItem('isDarkMode', true);
+
+export const saveIsDarkMode = async (enabled: boolean) =>  saveItem('isDarkMode', enabled);
 
 export const clearStorage = async () => {
   try {
