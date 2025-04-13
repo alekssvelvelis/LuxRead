@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Pressable, StatusBar } from 'react-native';
 
 import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
@@ -50,7 +50,7 @@ const ChapterPage = () => {
   const [readerModalVisible, setReaderModalVisible] = useState<boolean>(false);
 
   const { isConnected } = useNetwork();
-  const { theme, appliedTheme } = useThemeContext();
+  const { appliedTheme } = useThemeContext();
   const propData = useLocalSearchParams<typeSearchParams>();
   const chapterPageURL: string | string[] = propData.chapterPageURL;
   const sourceName: string | string[] = propData.sourceName;
@@ -67,6 +67,16 @@ const ChapterPage = () => {
     textAlign: 'left',
     fontFamily: 'Roboto'
   });
+
+  const resetStatusBarColor = useCallback(() => {
+    StatusBar.setBackgroundColor(appliedTheme.colors.elevation.level2, true);
+  }, [appliedTheme.colors.elevation.level2]);
+
+  useEffect(() => {
+    return () => {
+      resetStatusBarColor();
+    };
+  }, [resetStatusBarColor]);
 
   useEffect(() => {
     const loadReaderOptions = async () => {

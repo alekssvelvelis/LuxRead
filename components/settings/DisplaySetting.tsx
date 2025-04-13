@@ -61,7 +61,7 @@ const DisplaySetting = ({ onNovelRowsChange }: { onNovelRowsChange: (rows: strin
             </Pressable>
             {novelRowsModalVisible && (
                 <ModalComponent visible={novelRowsModalVisible} onClose={closeNovelRowsModal}>
-                    <View style={{width: '100%'}}>
+                    <View style={{width: '100%', backgroundColor: appliedTheme.colors.surfaceVariant, padding: 12, borderRadius: 8}}>
                         <Text style={{ color: appliedTheme.colors.primary, justifyContent: 'flex-start', fontSize: 24 }}>Grid layout</Text>
                         <Text style={{ color: appliedTheme.colors.text, justifyContent: 'flex-start' }}>Novels per row: {novelsRowValue}</Text>
                         <RadioButton.Group onValueChange={newValue => setNovelsRowValue(newValue)} value={novelsRowValue}>
@@ -104,7 +104,7 @@ const DisplaySetting = ({ onNovelRowsChange }: { onNovelRowsChange: (rows: strin
             </Pressable>
             {bookLayoutModalVisible && (
                 <ModalComponent visible={bookLayoutModalVisible} onClose={closeBookLayoutModal}>
-                    <View style={{width: '100%'}}>
+                    <View style={{width: '100%', backgroundColor: appliedTheme.colors.surfaceVariant, padding: 12, borderRadius: 8}}>
                         <Text style={{ color: appliedTheme.colors.primary, justifyContent: 'flex-start', fontSize: 24 }}>Library novel layout</Text>
                         <Text style={{ color: appliedTheme.colors.text, justifyContent: 'flex-start' }}>Current novel layout: {bookLayoutValue}</Text>
                         <RadioButton.Group onValueChange={newValue => setNovelsRowValue(newValue)} value={bookLayoutValue}>

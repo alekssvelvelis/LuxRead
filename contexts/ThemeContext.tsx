@@ -1,13 +1,13 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { lightTheme, darkTheme, pureBlackTheme, subThemes } from '@/constants/themes';
-import { getUserTheme, saveUserTheme, savePureBlackMode, getIsDarkMode, saveIsDarkMode } from '@/utils/asyncStorage';
+import { getUserTheme, saveUserTheme, getIsDarkMode, saveIsDarkMode } from '@/utils/asyncStorage';
 import { useColorScheme } from 'react-native';
 
 type ThemeContextType = {
   theme: string;
   setTheme: (theme: string) => void;
   appliedTheme: any;
-  isPureBlack: boolean;
+  isPureBlack: boolean | null;
   setPureBlack: (enabled: boolean) => void;
 };
 

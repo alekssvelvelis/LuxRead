@@ -19,24 +19,30 @@ const NovelSkeleton = () => {
                 }}
             />
             <View style={{ flexDirection: 'row' }}>
+            <View style={styles.imageContainer}>
+                  <ShimmerPlaceholder style={[styles.image]} shimmerColors={[appliedTheme.colors.elevation.level3, appliedTheme.colors.elevation.level1, appliedTheme.colors.elevation.level3]}></ShimmerPlaceholder>
+                </View>
                 <View style={[styles.textContainer, { marginVertical: 24, }]}>
                   <ShimmerPlaceholder style={[styles.title, styles.moveRight, { color: appliedTheme.colors.text, height: 40 }]} shimmerColors={[appliedTheme.colors.elevation.level3, appliedTheme.colors.elevation.level1, appliedTheme.colors.elevation.level3]}></ShimmerPlaceholder>
-                  <View style={{ flexDirection: 'row' }}>
+                  <View style={{ flexDirection: 'row', marginTop: 12 }}>
                       <ShimmerPlaceholder style={[styles.moveRight, { width: '10%', marginTop: 12 }]} shimmerColors={[appliedTheme.colors.elevation.level3, appliedTheme.colors.elevation.level1, appliedTheme.colors.elevation.level3]}></ShimmerPlaceholder>
                       <ShimmerPlaceholder style={[styles.moveRight, { width: '82.5%', marginTop: 12, marginLeft: 0 }]} shimmerColors={[appliedTheme.colors.elevation.level3, appliedTheme.colors.elevation.level1, appliedTheme.colors.elevation.level3]}></ShimmerPlaceholder>
                   </View>
-                  <View style={[styles.genreContainer, {}]}>
-                      <ShimmerPlaceholder style={[styles.genrePill, { backgroundColor: appliedTheme.colors.elevation.level2 }]} shimmerColors={[appliedTheme.colors.elevation.level3, appliedTheme.colors.elevation.level1, appliedTheme.colors.elevation.level3]}></ShimmerPlaceholder>
-                      <ShimmerPlaceholder style={[styles.genrePill, { backgroundColor: appliedTheme.colors.elevation.level2 }]} shimmerColors={[appliedTheme.colors.elevation.level3, appliedTheme.colors.elevation.level1, appliedTheme.colors.elevation.level3]}></ShimmerPlaceholder>
+                  <View style={{ flexDirection: 'row' }}>
+                    <ShimmerPlaceholder style={[styles.moveRight, { width: '10%', marginTop: 12 }]} shimmerColors={[appliedTheme.colors.elevation.level3, appliedTheme.colors.elevation.level1, appliedTheme.colors.elevation.level3]}></ShimmerPlaceholder>
+                    <ShimmerPlaceholder style={[styles.moveRight, { width: '82.5%', marginTop: 12, marginLeft: 0 }]} shimmerColors={[appliedTheme.colors.elevation.level3, appliedTheme.colors.elevation.level1, appliedTheme.colors.elevation.level3]}></ShimmerPlaceholder>
                   </View>
                   <View style={{ flexDirection: 'row' }}>
                     <ShimmerPlaceholder style={[styles.moveRight, { width: '10%', marginTop: 12 }]} shimmerColors={[appliedTheme.colors.elevation.level3, appliedTheme.colors.elevation.level1, appliedTheme.colors.elevation.level3]}></ShimmerPlaceholder>
-                    <ShimmerPlaceholder style={[styles.moveRight, { width: '40%', marginTop: 12, marginLeft: 0 }]} shimmerColors={[appliedTheme.colors.elevation.level3, appliedTheme.colors.elevation.level1, appliedTheme.colors.elevation.level3]}></ShimmerPlaceholder>
+                    <ShimmerPlaceholder style={[styles.moveRight, { width: '82.5%', marginTop: 12, marginLeft: 0 }]} shimmerColors={[appliedTheme.colors.elevation.level3, appliedTheme.colors.elevation.level1, appliedTheme.colors.elevation.level3]}></ShimmerPlaceholder>
                   </View>
                 </View>
-                <View style={styles.imageContainer}>
-                <ShimmerPlaceholder style={[styles.image]} shimmerColors={[appliedTheme.colors.elevation.level3, appliedTheme.colors.elevation.level1, appliedTheme.colors.elevation.level3]}></ShimmerPlaceholder>
-                </View>
+            </View>
+            <View style={[styles.genreContainer, {}]}>
+              <ShimmerPlaceholder style={[styles.genrePill, { backgroundColor: appliedTheme.colors.elevation.level2 }]} shimmerColors={[appliedTheme.colors.elevation.level3, appliedTheme.colors.elevation.level1, appliedTheme.colors.elevation.level3]}></ShimmerPlaceholder>
+              <ShimmerPlaceholder style={[styles.genrePill, { backgroundColor: appliedTheme.colors.elevation.level2 }]} shimmerColors={[appliedTheme.colors.elevation.level3, appliedTheme.colors.elevation.level1, appliedTheme.colors.elevation.level3]}></ShimmerPlaceholder>
+              <ShimmerPlaceholder style={[styles.genrePill, { backgroundColor: appliedTheme.colors.elevation.level2 }]} shimmerColors={[appliedTheme.colors.elevation.level3, appliedTheme.colors.elevation.level1, appliedTheme.colors.elevation.level3]}></ShimmerPlaceholder>
+              <ShimmerPlaceholder style={[styles.genrePill, { backgroundColor: appliedTheme.colors.elevation.level2 }]} shimmerColors={[appliedTheme.colors.elevation.level3, appliedTheme.colors.elevation.level1, appliedTheme.colors.elevation.level3]}></ShimmerPlaceholder>
             </View>
             <View style={styles.descriptionContainer}>
                 <ShimmerPlaceholder style={[styles.description, {} ]} shimmerColors={[appliedTheme.colors.elevation.level3, appliedTheme.colors.elevation.level1, appliedTheme.colors.elevation.level3]}></ShimmerPlaceholder>
@@ -146,11 +152,12 @@ const styles = StyleSheet.create({
     },
     description: {
         marginVertical: 4,
-        width: '95%'
+        width: '100%'
     },
     toggleButton: {
+      marginLeft: '40%',
       marginTop: 8,
-      width: 60
+      width: 60,
     },
     readingButton: {
       marginHorizontal: 16,

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef, memo, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator, Share } from 'react-native';
 
 import { useThemeContext } from '@/contexts/ThemeContext';
@@ -6,12 +6,12 @@ import { useNetwork } from '@/contexts/NetworkContext';
 import getSourceFunctions from '@/utils/getSourceFunctions';
 
 import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
-import { Appbar } from 'react-native-paper';
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
-import { Image } from 'expo-image'; //  takes priority over react-native image tag to read static images
-import ExpandableDescription from '@/components/novel/ExpandableDescription';
+
+import NovelHeader from '@/components/novel/NovelHeader';
+
 import { PullUpModal } from '@/components/PullUpModal';
-import { getAllNovelChapters, insertDownloadedChapter, getDownloadedChapters } from '@/database/ExpoDB';
+import { getAllNovelChapters, insertDownloadedChapter, getDownloadedChapters, isChapterDownloaded } from '@/database/ExpoDB';
 import NovelSkeleton from '@/components/skeletons/NovelSkeleton';
 
 interface Chapter {
@@ -59,24 +59,14 @@ const Synopsis = () => {
   const [hasMoreChapters, setHasMoreChapters] = useState<boolean>(true);
 
   const router = useRouter();
-
   const novelData = useLocalSearchParams<typeSearchParams>();
   const novelId = Number(novelData.id);
   const sourceName = novelData.sourceName;
   const genresArray = novelData.genres.split(',').map(genre => genre.trim());
-  const MemoizedImage = memo(({ uri }: { uri: string }) => (
-    <Image source={{ uri }} style={[styles.image, { borderColor: 'red', borderWidth: 2 }]} contentFit="contain" />
-  ));
   
   const imageURL = useMemo(() => {
     return Array.isArray(novelData.imageURL) ? novelData.imageURL[0] : novelData.imageURL;
   }, [novelData.imageURL]);
-  const [showFullDescription, setShowFullDescription] = useState(false);
-  const toggleDescription = () => {
-    setShowFullDescription(!showFullDescription);
-  };
-
-  console.log(novelData);
 
   const handleLoadMore = () => {
     if (!loading && hasMoreChapters) {
@@ -98,29 +88,21 @@ const Synopsis = () => {
 
   useEffect(() => {
     const loadChapters = async (pageNumber = 1) => {
-      if (!fetchFunctions) {
-        return;
-      }
       setLoading(true);
-      try {
-        const chapters = await fetchFunctions.fetchChapters(novelData.novelPageURL, pageNumber);
-        if (chapters && chapters.length > 0) {
-          setChapterList((prevChapters) => [...prevChapters, ...chapters]);
-          setHasMoreChapters(chapters.length > 0);
-        } else {
+      const newChapters = await fetchChaptersByPage(pageNumber);
+      if (newChapters && newChapters.length > 0) {
+          setChapterList((prevChapters) => [...prevChapters, ...newChapters]);
+          setHasMoreChapters(newChapters.length > 0);
+      } else {
           setHasMoreChapters(false);
-        }
-      } catch (error) {
-        console.log('Error thrown inside of novel/[id].tsx at fetchChapters', error);
-      } finally {
-        setLoading(false);
-        setIsInitialLoading(false);
       }
+      setLoading(false);
+      setIsInitialLoading(false);
     };
     if (fetchFunctions) {
       loadChapters(page);
     }
-  }, [fetchFunctions, page, novelData.novelPageURL]);
+}, [fetchFunctions, page, novelData.novelPageURL]);
 
   useEffect(() => {
     const loadDownloadedChapters = async () => {
@@ -205,6 +187,65 @@ const Synopsis = () => {
     }
   };
 
+  const fetchChaptersByPage = async (pageNumber: number) => {
+    if (!fetchFunctions) return [];
+    try {
+        return await fetchFunctions.fetchChapters(novelData.novelPageURL, pageNumber);
+    } catch (error) {
+        console.error('Error fetching chapters for page', pageNumber, error);
+        return [];
+    }
+  };
+
+  const fetchAllRequiredChapters = async (startIndex: number, endIndex: number) => {
+    const chaptersPerPage = sourceName === 'LightNovelPub' ? 100 : 50;
+    const startPage = Math.ceil(startIndex / chaptersPerPage);
+    const endPage = Math.ceil(endIndex / chaptersPerPage);
+    let fullChapterList = [...chapterList];
+  
+    for (let pageNumber = startPage; pageNumber <= endPage; pageNumber++) {
+      const expectedFirstChapter = (pageNumber - 1) * chaptersPerPage;
+      if (!fullChapterList[expectedFirstChapter]) {
+        const newChapters = await fetchChaptersByPage(pageNumber);
+        fullChapterList = [...fullChapterList, ...newChapters];
+      }
+    }
+    return fullChapterList;
+  };
+
+  const handleMultipleChapterDownload = async (startIndex: number, endIndex: number) => {
+    try {
+      setDownloading('multiple');
+      const fullChapterList = await fetchAllRequiredChapters(startIndex, endIndex);
+      console.log(fullChapterList.length);
+      const chaptersToDownload = fullChapterList.slice(startIndex - 1, endIndex);
+      
+      for (let chapter of chaptersToDownload) {
+        const alreadyDownloaded = await isChapterDownloaded(chapter.chapterPageURL, novelId);
+        if (!alreadyDownloaded) {
+          try {
+            console.log('Downloading chapter:', chapter.chapterPageURL, 'with id', chapter.id);
+            const chapterContent = await fetchFunctions.fetchChapterContent(chapter.chapterPageURL);
+            await insertDownloadedChapter(chapterContent.title, chapterContent.content, chapter.chapterPageURL, novelId);
+          } catch (error) {
+            console.error(`Error downloading chapter ${chapter.chapterPageURL}`, error);
+          } finally {
+            console.log ('Downloaded all chapters');
+          }
+        } else {
+          console.log('Skipping already downloaded chapter:', chapter.chapterPageURL);
+        }
+      }
+      
+      const updatedDownloadedChapters = await getDownloadedChapters(novelId);
+      setDownloadedChapterList(updatedDownloadedChapters);
+    } catch (error) {
+      console.error("Error downloading multiple chapters:", error);
+    } finally {
+      setDownloading(null);
+    }
+  };
+
   const shareNovel = async () => {
     try {
       await Share.share({
@@ -262,74 +303,20 @@ const Synopsis = () => {
   );
   };
 
-  const RenderListHeader = memo(() => (
-    <View style={{minWidth: '100%'}}>
-      {/* <Stack.Screen
-        options={{
-          headerTitle: `${novelData.title}`,
-          headerStyle: { backgroundColor: appliedTheme.colors.elevation.level2 },
-          headerTintColor: appliedTheme.colors.text,
-          headerShown: true,
-        }}
-      /> */}
-      <Appbar.Header mode='small' style={{ backgroundColor: appliedTheme.colors.elevation.level2 }}>
-        <Appbar.BackAction onPress={() => { router.back() }} color={appliedTheme.colors.text} style={{marginLeft: -8}}/>
-        <Appbar.Content title={novelData.title} titleStyle={{ color: appliedTheme.colors.text }} />
-        <Appbar.Action icon={() => (<MaterialIcons name="share" size={24} color={appliedTheme.colors.text} />)} onPress={() => shareNovel()}/>
-      </Appbar.Header>
-      <View style={{ flexDirection: 'row' }}>
-        <View style={styles.imageContainer}>
-          <Image source={{ uri: imageURL }} style={[styles.image, {}]} contentFit='contain'/>
-        </View>
-        <View style={[styles.textContainer, { marginVertical: 12, }]}>
-          <Text style={[styles.title, styles.moveRight, { color: appliedTheme.colors.primary }]}>{novelData.title}</Text>
-          <View style={{ flexDirection: 'row' }}>
-            <Ionicons size={20} name="person-outline" style={styles.moveRight} color={appliedTheme.colors.text} />
-            <Text style={[styles.chapters, { color: appliedTheme.colors.onSurfaceVariant }]}>{novelData.author}</Text>
-          </View>
-          <View style={{ flexDirection: 'row' }}>
-            <Ionicons size={24} name="book-outline" style={styles.moveRight} color={appliedTheme.colors.text} />
-            <Text style={[styles.chapters, { color: appliedTheme.colors.onSurfaceVariant, fontSize: 14 }]}>{novelData.chapterCount} Chapters {novelData.novelStatus ? '/ ' + novelData.novelStatus : '/ Unknown'}</Text>
-          </View>
-          <View style={{ flexDirection: 'row' }}>
-            <MaterialIcons size={24} name="source" style={styles.moveRight} color={appliedTheme.colors.text} />
-            <Text style={[styles.chapters, { color: appliedTheme.colors.onSurfaceVariant, fontSize: 14 }]}>{novelData.sourceName}</Text>
-          </View>
-        </View>
-      </View>
-      <FlatList
-        style={{ maxHeight: 52, marginBottom: 12}}
-        data={genresArray}
-        horizontal
-        keyExtractor={(item) => item}
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={[styles.genreContainer, {} ]}
-        renderItem={({ item }) => (
-          <View style={[styles.genrePill, { backgroundColor: appliedTheme.colors.primary }]}>
-            <Text style={[styles.genreText, { color: appliedTheme.colors.text }]}>{item}</Text>
-          </View>
-        )}
-      />
-      <ExpandableDescription description={novelData.description} />
-      {chapterList.length > 0 && (
-        <TouchableOpacity 
-        style={[styles.readingButton, { backgroundColor: appliedTheme.colors.primary, justifyContent: 'center', alignItems: 'center' }]} 
-        onPress={() => readingProgress.chapterIndex > 0 ? handleNavigateToChapter(chapterList[readingProgress.chapterIndex - 1].chapterPageURL, chapterList[readingProgress.chapterIndex-1].id) : handleNavigateToChapter(chapterList[0].chapterPageURL, chapterList[0].id)}>
-          <Text style={[styles.readingButtonText, { color: appliedTheme.colors.text }]} numberOfLines={1} ellipsizeMode='tail'>
-            {readingProgress.chapterIndex > 0 ? `Continue reading ${chapterList[readingProgress.chapterIndex-1].title}` : `Start reading ${chapterList[0].title}`}
-          </Text>
-        </TouchableOpacity>
-      )}
-       <View style={{ flexDirection: 'row'}}>
-      </View>
-    </View>
-  ));
+  const routerBack = () => router.back();
+  const onReadPress = () => {
+    if (chapterList.length === 0) return;
+    if (readingProgress.chapterIndex > 0) {
+      handleNavigateToChapter(chapterList[readingProgress.chapterIndex - 1].chapterPageURL, chapterList[readingProgress.chapterIndex - 1].id)
+    } else {
+      handleNavigateToChapter(chapterList[0].chapterPageURL, chapterList[0].id);
+    }
+  };
 
   if (isInitialLoading) return <View style={{backgroundColor: appliedTheme.colors.elevation.level2}}><NovelSkeleton/></View>;
 
   return (
     <View style={[styles.container, {backgroundColor: appliedTheme.colors.elevation.level2}]}>
-      <RenderListHeader />
       <FlatList
         data={isConnected ? chapterList : downloadedChapterList}
         renderItem={RenderChapterItem}
@@ -344,6 +331,20 @@ const Synopsis = () => {
           ) : !hasMoreChapters && isConnected ? (
             <Text style={{ textAlign: 'center', color: appliedTheme.colors.text, marginTop: 24 }}>No more chapters</Text>
           ) : null
+        }
+        ListHeaderComponent={
+          <NovelHeader
+            appliedTheme={appliedTheme}
+            novelData={{...novelData, routerBack}}
+            imageURL={imageURL}
+            genresArray={genresArray}
+            shareNovel={shareNovel}
+            chapterList={chapterList}
+            readingProgress={readingProgress}
+            onReadPress={onReadPress}
+            routerBack={routerBack}
+            downloadMultipleChapters={handleMultipleChapterDownload}
+          />
         }
       />
       

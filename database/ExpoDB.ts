@@ -58,10 +58,10 @@ async function getSources() {
             `SELECT * FROM sources ORDER BY sourceName ASC`,
         );
 
-        const downloadedChapters = [];
+        const existingSources = [];
 
         for (const row of allRows) {
-            downloadedChapters.push({
+            existingSources.push({
                 id: row.id,
                 sourceName: row.sourceName,
                 baseImage: row.baseImage,
@@ -72,7 +72,7 @@ async function getSources() {
             console.log('No sources found');
         }
 
-        return downloadedChapters;
+        return existingSources;
     } catch (error) {
         console.error('Error fetching sources');
         return [];
@@ -261,6 +261,29 @@ async function getDownloadedChapters(novelId: number) {
         return [];
     }
 }
+
+interface DownloadedChapterExists{
+    count: number;
+}
+
+export async function isChapterDownloaded(chapterPageURL: string, novelId: number): Promise<boolean> {
+    const db = await openDatabase();
+    const result: DownloadedChapterExists[] = await db.getAllAsync(
+        `SELECT COUNT(*) as count FROM downloadedChapters WHERE chapterPageURL = ? AND novel_id = ?`, 
+        [chapterPageURL, novelId]
+    );
+    const count = result[0].count;
+    return count > 0;
+}
+
+// export const isChapterDownloaded = async (chapterPageURL: string, novelId: number): Promise<boolean> => {
+//     const db = await openDatabase();
+//     const query = `SELECT COUNT(*) as count FROM downloadedChapters WHERE chapterPageURL = ? AND novel_id = ?`;
+//     const result: DownloadedChapterExists[] = await db.getAllAsync(query, [chapterPageURL, novelId]);
+//     const count = result[0].rows.item(0).count;
+//     return count > 0;
+// };
+
 interface DownloadedChapterContent {
     title: string;
     content: string[] | string;

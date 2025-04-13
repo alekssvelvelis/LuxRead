@@ -3,28 +3,19 @@ import { View, StyleSheet, Text, Dimensions, Modal, Animated, Pressable } from '
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { Button } from 'react-native-paper';
 import { clearTable } from '@/database/ExpoDB';
+import ModalComponent from '../ModalComponent';
 const DatabaseSetting = () => {
     const screenWidth = Dimensions.get('screen').width;
     const { appliedTheme } = useThemeContext();
     const [visible, setVisible] = useState<boolean>(false);
-    const [fadeAnimation] = useState(new Animated.Value(0));
     const [tableName, setTableName] = useState<string>('');
     const openModal = (tableNameString: string) => {
         setVisible(true);
         setTableName(tableNameString)
-        Animated.timing(fadeAnimation, {
-            toValue: 1,
-            duration: 300,
-            useNativeDriver: true,
-        }).start();
     };
 
     const closeModal = () => {
-        Animated.timing(fadeAnimation, {
-            toValue: 0,
-            duration: 300,
-            useNativeDriver: true,
-        }).start(() => setVisible(false));
+        setVisible(false);
     };
 
     const handleClearTable = async (tableName: string) => {
@@ -42,7 +33,7 @@ const DatabaseSetting = () => {
     }
 
     return (
-        <View style={[styles.container, { width: screenWidth - 20 }]}>
+        <View style={[styles.container, { width: screenWidth - 20, }]}>
             <Pressable
                 onPress={() => openModal('libraryNovels')}
                 android_ripple={{ color: appliedTheme.colors.secondary }}
@@ -60,26 +51,16 @@ const DatabaseSetting = () => {
                 <Text style={[styles.currentValue, { color: appliedTheme.colors.text }]}>Clear downloaded chapters table</Text>
             </Pressable>
             {visible && 
-                <Modal
-                    transparent={true}
-                    animationType="none"
-                    visible={visible}
-                    onRequestClose={closeModal}
-                >
-                    <Pressable style={styles.overlay} onPress={closeModal}>
-                        <Animated.View style={[styles.overlay, { opacity: fadeAnimation }]} />
-                    </Pressable>
-                    <View style={[styles.modalContent, { backgroundColor: appliedTheme.colors.surfaceVariant }]}>
-                        <View style={{ width: '100%' }}>
+            <ModalComponent visible={visible} onClose={closeModal}>
+                    <View style={{width: '100%', backgroundColor: appliedTheme.colors.surfaceVariant, padding: 20, borderRadius: 8, minHeight: 240}}>
                             <Text style={{ color: appliedTheme.colors.primary, justifyContent: 'flex-start', fontSize: 24 }}>Clear {tableName}</Text>
                             <Text style={{ color: appliedTheme.colors.text, justifyContent: 'flex-start', marginVertical: 8 }}>Are you sure you want to clear <Text style={{color: appliedTheme.colors.primary}}>{tableName}</Text>?</Text>
                             <Text style={{ color: appliedTheme.colors.text, justifyContent: 'flex-start' }}>This action is irreversible</Text>
-                            <View style={{flex: 1, display: 'flex', alignItems: 'center'}}>
+                            <View style={{flex: 1, display: 'flex', alignItems: 'center',}}>
                                 <Button onPress={() => handleClearTable(tableName)} textColor={appliedTheme.colors.text} style={{backgroundColor: appliedTheme.colors.primary, width: '50%', marginTop: 8}}>Clear</Button>
                             </View>
-                        </View>
                     </View>
-                </Modal>
+                </ModalComponent>
             }
         </View>
     );

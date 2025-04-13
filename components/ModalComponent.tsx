@@ -1,6 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, Dimensions, Modal as RNModal, Pressable } from 'react-native';
-import { useThemeContext } from '@/contexts/ThemeContext';
+import { View, StyleSheet, Modal as RNModal, Pressable } from 'react-native';
 
 interface ModalProps {
     visible: boolean;
@@ -9,7 +8,6 @@ interface ModalProps {
 }
 
 const ModalComponent = ({ visible, onClose, children }: ModalProps) => {
-    const { appliedTheme } = useThemeContext();
     return (
     <RNModal
         transparent={true}
@@ -21,7 +19,7 @@ const ModalComponent = ({ visible, onClose, children }: ModalProps) => {
             <Pressable style={styles.overlay} onPress={onClose}>
                 <View style={[styles.overlay]} />
             </Pressable>
-            <View style={[styles.modalContent, { backgroundColor: appliedTheme.colors.surfaceVariant }]}>
+            <View style={[styles.modalContent]}>
                 {children}
             </View>
         </RNModal>
@@ -44,13 +42,12 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     modalContent: {
-        position: 'absolute',
-        top: '80%',
-        left: '10%',
+        flex: 1,
         width: '80%',
-        transform: [{ translateY: -Dimensions.get('screen').height / 2 }],
         padding: 20,
         borderRadius: 10,
         alignItems: 'center',
+        justifyContent: 'center',
+        alignSelf: 'center',
     },
 });
