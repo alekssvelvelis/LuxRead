@@ -11,7 +11,7 @@ import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import NovelHeader from '@/components/novel/NovelHeader';
 
 import { PullUpModal } from '@/components/PullUpModal';
-import { getAllNovelChapters, insertDownloadedChapter, getDownloadedChapters, isChapterDownloaded } from '@/database/ExpoDB';
+import { getAllNovelChapters, insertDownloadedChapter, getDownloadedChapters, isChapterDownloaded, getLibraryNovelForUpdateById, updateNovelData } from '@/database/ExpoDB';
 import NovelSkeleton from '@/components/skeletons/NovelSkeleton';
 
 interface Chapter {
@@ -28,12 +28,26 @@ interface DownloadedChapter {
   novel_id: number,
 };
 
-interface novelProgress{
+interface novelProgress {
   id: number;
   novelId: number;
   readerProgress: number;
   chapterIndex: number;
-};
+}
+
+interface FetchedNovel {
+  id: number;
+  title: string;
+  author: string;
+  description: string;
+  genres: string | string[];
+  chapterCount: number;
+  imageURL: string;
+  novelPageURL: string;
+  novelSource: string;
+  novelStatus: string;
+}
+
 
 type typeSearchParams = {
   id: string,
@@ -46,11 +60,13 @@ type typeSearchParams = {
   title: string,
   chapterCount: string,
   novelStatus: string,
-  navigatedFrom: string,
 };
 const Synopsis = () => {
   const { appliedTheme } = useThemeContext();
   const { isConnected } = useNetwork();
+  const initialParameters = useLocalSearchParams<typeSearchParams>();
+  const [novelData, setNovelData] = useState<typeSearchParams>(initialParameters);
+  console.log(novelData);
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
   const [chapterList, setChapterList] = useState<Chapter[]>([]);
   const [downloadedChapterList, setDownloadedChapterList] = useState<DownloadedChapter[]>([]);
@@ -61,7 +77,6 @@ const Synopsis = () => {
   const [hasMoreChapters, setHasMoreChapters] = useState<boolean>(true);
 
   const router = useRouter();
-  const novelData = useLocalSearchParams<typeSearchParams>();
   const novelId = Number(novelData.id);
   const sourceName = novelData.sourceName;
   const genresArray = novelData.genres.split(',').map(genre => genre.trim());
@@ -268,6 +283,50 @@ const Synopsis = () => {
     }
   }
 
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      const localNovelData: FetchedNovel[] = await getLibraryNovelForUpdateById(novelId);
+      const scrapedNovelData = await fetchFunctions.fetchSingleNovel(novelData.novelPageURL);
+      
+      let updatedData: any = { ...novelData };
+  
+      for (const key in localNovelData[0]) {
+        if (Object.prototype.hasOwnProperty.call(localNovelData[0], key)) {
+          const typedKey = key as keyof FetchedNovel;
+          let scrapedValue = scrapedNovelData[typedKey];
+          
+          if (typedKey === 'genres' && Array.isArray(scrapedValue)) {
+            scrapedValue = scrapedValue.join(",");
+          }
+  
+          if (localNovelData[0][typedKey] !== scrapedValue) {
+            updatedData[typedKey] = scrapedValue;
+          }
+        }
+      }
+      
+      const differences = Object.keys(updatedData).reduce((diff, key) => {
+        const typedKey = key as keyof FetchedNovel; 
+        
+        if (updatedData[typedKey] !== localNovelData[0][typedKey]) {  
+          diff[typedKey] = updatedData[typedKey];
+        }
+        return diff;
+      }, {} as Record<keyof FetchedNovel, any>);
+      
+      if (Object.keys(differences).length > 0) {
+        await updateNovelData(novelId, differences);
+        setNovelData(updatedData);
+      }
+    } catch (error) {
+      console.error('Error during refresh:', error);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [fetchFunctions, novelData.novelPageURL]);
+
   const RenderChapterItem = ({ item, index }: { item: Chapter, index: number }) => {
     const trueChapterIndex = item.title.match(/Chapter\s+(\d+)/) || '1';
     const chapterIndexOfItem = isConnected ? index+1 : Number(trueChapterIndex[1]);
@@ -329,6 +388,7 @@ const Synopsis = () => {
 
   return (
     <View style={[styles.container, {backgroundColor: appliedTheme.colors.elevation.level2}]}>
+      {/* <RefreshNovelData /> */}
       <FlatList
         data={isConnected ? chapterList : downloadedChapterList}
         renderItem={RenderChapterItem}
@@ -358,6 +418,8 @@ const Synopsis = () => {
             downloadMultipleChapters={handleMultipleChapterDownload}
           />
         }
+        refreshing={refreshing}
+        onRefresh={onRefresh}
       />
       
       <PullUpModal

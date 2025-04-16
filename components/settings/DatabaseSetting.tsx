@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Text, Dimensions, Modal, Animated, Pressable } from 'react-native';
+import { View, StyleSheet, Text, Dimensions, Pressable } from 'react-native';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { Button } from 'react-native-paper';
 import { clearTable } from '@/database/ExpoDB';

@@ -354,7 +354,7 @@ interface ChapterRow{
     chapterIndex: number;
 }
 
-async function getAllNovelChapters(novelTitle: string) {
+async function getAllNovelChapters(novelTitle: string): Promise<ChapterRow[]> {
     const db = await openDatabase();
 
     try {
@@ -365,7 +365,7 @@ async function getAllNovelChapters(novelTitle: string) {
 
         if (!novelRow || novelRow.length === 0) {
             console.log(`No novel found with the title: ${novelTitle}`);
-            return;
+            return []; // Return an empty array if no novel is found
         }
 
         const novelId = novelRow[0].id;
@@ -375,12 +375,12 @@ async function getAllNovelChapters(novelTitle: string) {
             [novelId]
         );
 
-        const librarySavedNovels = [];
+        const librarySavedNovels: ChapterRow[] = []; // Ensure this is typed as novelProgress[]
 
         for (const row of allRows) {
             librarySavedNovels.push({
                 id: row.id,
-                novelId: row.novel_id,
+                novel_id: row.novel_id,
                 readerProgress: row.readerProgress,
                 chapterIndex: row.chapterIndex,
             });
@@ -390,12 +390,13 @@ async function getAllNovelChapters(novelTitle: string) {
             console.log('No chapters found for this novel');
         }
 
-        return librarySavedNovels;
+        return librarySavedNovels; // Return the array of novelProgress
     } catch (error) {
         console.error('Error fetching library novel chapters:', error);
-        return [];
+        return []; // Return an empty array if there's an error
     }
 }
+
 
 interface NovelRow {
     id: number;
@@ -440,6 +441,58 @@ async function getAllLibraryNovels(tableName: string) {
         return [];
     }
 }
+
+async function getLibraryNovelForUpdateById(novelId: number): Promise<NovelRow[]> {
+    const db = await openDatabase();
+    try {
+        const allRows: NovelRow[] = await db.getAllAsync(`
+            SELECT * FROM libraryNovels WHERE id = ?`,
+            [novelId]
+        );
+        const librarySavedNovels = []
+        for (const row of allRows) {
+            librarySavedNovels.push({
+                id: row.id,
+                title: row.title,
+                author: row.author,
+                description: row.description,
+                genres: row.genres,
+                chapterCount: row.chapterCount,
+                imageURL: row.imageURL,
+                novelPageURL: row.novelPageURL,
+                novelSource: row.novelSource,
+                novelStatus: row.novelStatus
+
+            });
+        }
+
+        if (allRows.length === 0) {
+            console.log('no data to output getLibraryNovelById');
+            return [];
+        }
+
+        return librarySavedNovels;
+    } catch (error) {
+        console.error('Error fetching library novel y id:', error);
+        return [];
+    }
+}
+
+async function updateNovelData(novelId: number, data: Record<string, any>) {
+    const db = await openDatabase();
+
+    const columns = Object.keys(data);
+    const values = Object.values(data);
+  
+    const sql = `UPDATE libraryNovels SET ${columns.join(' = ?, ')} = ? WHERE id = ?`;
+  
+    try {
+      await db.runAsync(sql, [...values, novelId]);
+      console.log('Update successful');
+    } catch (error) {
+      console.error('Error updating novel data', error);
+    }
+  }
 
 async function getNovelsBySource(novelSource: string) {
     const db = await openDatabase();
@@ -504,4 +557,4 @@ async function dropTable(tableName: string) {
         console.error(`Failed to drop table "${tableName}":`, error);
     }
 }
-export { clearTable, getAllNovelChapters, setupSourcesTable, getSources, setupLibraryNovelsTable, insertLibraryNovel, getAllLibraryNovels, dropTable, deleteLibraryNovel, deleteNovelChapters, getTableStructure, getNovelsBySource, setupNovelChaptersTable, upsertNovelChapter, setupDownloadedChaptersTable, getDownloadedChapters, insertDownloadedChapter, getDownloadedChapterContent };
+export { clearTable, getAllNovelChapters, getLibraryNovelForUpdateById, updateNovelData, setupSourcesTable, getSources, setupLibraryNovelsTable, insertLibraryNovel, getAllLibraryNovels, dropTable, deleteLibraryNovel, deleteNovelChapters, getTableStructure, getNovelsBySource, setupNovelChaptersTable, upsertNovelChapter, setupDownloadedChaptersTable, getDownloadedChapters, insertDownloadedChapter, getDownloadedChapterContent };
