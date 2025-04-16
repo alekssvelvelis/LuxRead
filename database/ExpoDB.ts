@@ -205,7 +205,7 @@ async function setupDownloadedChaptersTable(){
     }
 }
 
-async function insertDownloadedChapter(chapterTitle: string, chapterText: string, chapterPageURL: string, novel_id: number) {
+async function insertDownloadedChapter(chapterTitle: string, chapterText: string, chapterPageURL: string, novel_id: number): Promise<number | null> {
     const db = await openDatabase();
     try {
         const serializedChapterText = JSON.stringify(chapterText);
@@ -214,10 +214,12 @@ async function insertDownloadedChapter(chapterTitle: string, chapterText: string
           [chapterTitle, serializedChapterText, chapterPageURL, novel_id]
         );
         if(result){
-            // console.log(serializedChapterText);
+            return result.lastInsertRowId;
         }
+        return null;
     } catch (error) {
         console.error('Insert for TABLE libraryNovels failed due to:', error);
+        return null;
     }
 }
 
@@ -405,6 +407,7 @@ interface NovelRow {
     imageURL: string;
     novelPageURL: string;
     novelSource: string;
+    novelStatus: string;
 }
 
 async function getAllLibraryNovels(tableName: string) {
@@ -423,6 +426,7 @@ async function getAllLibraryNovels(tableName: string) {
                 imageURL: row.imageURL,
                 novelPageURL: row.novelPageURL,
                 novelSource: row.novelSource,
+                novelStatus: row.novelStatus
             });
         }
 

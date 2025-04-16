@@ -123,7 +123,8 @@ const SourceList = () => {
       const genres = String(allNovelInfo.genres);
       console.log(allNovelInfo);
       const result = await insertLibraryNovel(allNovelInfo.title, allNovelInfo.author, allNovelInfo.description, genres, chapterCount, allNovelInfo.imageURL, allNovelInfo.novelPageURL, sourceNameString, allNovelInfo.novelStatus);
-      setQueriedNovels(prevQueriedNovels => [prevQueriedNovels, { id: result, title: allNovelInfo.title }]); // Add the saved novel to queriedNovels
+      console.log(result);
+      typeof result === 'number' ? setQueriedNovels((prevQueriedNovels) => [...prevQueriedNovels, { id: result, title: allNovelInfo.title }]) : false; // Add the saved novel to queriedNovels
     } catch (error) {
       console.error('Error saving novel:', error);
     }
@@ -158,6 +159,12 @@ const SourceList = () => {
   const handleNavigateToNovel = async (novelPageURL: string) => {
     try {
       const novelData = await fetchFunctions.fetchSingleNovel(novelPageURL);
+      let novelId: number | undefined;
+      const matchedNovel = queriedNovels.find(novel => novel.title === novelData.title);
+      novelId = matchedNovel ? Number(matchedNovel.id) : undefined;
+      if(novelId !== undefined) {
+        novelData.id = novelId;
+      }
       router.navigate({ 
         // @ts-ignore since pathname only works this way. Can remove and try to fix error.
         pathname: `novel/[id]`, 
@@ -177,7 +184,7 @@ const SourceList = () => {
       <TouchableOpacity
         style={[styles.novelItem, { width: novelWidth }]} 
         onPress={() => handleNavigateToNovel(item.novelPageURL)} 
-        onLongPress={() => handleSaveNovel(item)}
+        onLongPress={() => isQueriedNovel ? false : handleSaveNovel(item)}
       >
         <Image 
           source={{ uri: item.imageURL }} 

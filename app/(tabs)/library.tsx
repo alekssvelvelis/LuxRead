@@ -35,7 +35,7 @@ export default function Library() {
   const router = useRouter();
 
   const [novelsData, setNovelsData] = useState<Data[]>([]);
-  
+
   useFocusEffect(
     useCallback(() => {
       const fetchNovels = async () => {
@@ -51,7 +51,6 @@ export default function Library() {
     }, [])
   );
   
-
   const [query, setQuery] = useState("");
   const [filteredNovels, setFilteredNovels] = useState(novelsData);
   const handleSearchQuery = (query: string) => {

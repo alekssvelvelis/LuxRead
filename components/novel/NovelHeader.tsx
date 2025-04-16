@@ -1,4 +1,4 @@
-import React, { useState, memo, useRef, useMemo } from 'react';
+import React, { useState, memo, useRef } from 'react';
 import { View, Text, FlatList, TextInput, TouchableOpacity } from 'react-native';
 import { Appbar } from 'react-native-paper';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
@@ -27,7 +27,6 @@ const NovelHeader = ({ appliedTheme, novelData, imageURL, genresArray, shareNove
     const [error, setError] = useState<string | null>(null);
 
     const chaptersInputRef = useRef<TextInput>(null);
-
     const handleChangeText = (value: string) => {
         setError(null);
         if (value === '') {
@@ -58,7 +57,7 @@ const NovelHeader = ({ appliedTheme, novelData, imageURL, genresArray, shareNove
         downloadMultipleChapters(startingIndex, parseInt(chaptersCountToDownload));
     }
 
-    // React-native-paper uses MaterialCommunityIcons, 
+    // React-native-paper uses MaterialCommunityIcons.
     // if you want to use other icons while not having them re-render you can use this
     // const renderShareIcon = useMemo(() => {
     //     return () => <MaterialIcons name="share" size={24} color={appliedTheme.colors.text} />;
@@ -68,6 +67,7 @@ const NovelHeader = ({ appliedTheme, novelData, imageURL, genresArray, shareNove
     //     return () => <MaterialIcons name="file-download" size={24} color={appliedTheme.colors.text} />;
     // }, [appliedTheme.colors.text]);
 
+    let isNovelSaved = novelData.id !== '[id]' ? typeof JSON.parse(novelData.id) === 'number' : false;
     return (
         <View style={{ minWidth: '100%' }}>
             <Appbar.Header mode="small" style={{ backgroundColor: appliedTheme.colors.elevation.level2 }}>
@@ -78,11 +78,13 @@ const NovelHeader = ({ appliedTheme, novelData, imageURL, genresArray, shareNove
                     color={appliedTheme.colors.text}
                     onPress={shareNovel}
                 />
-                <Appbar.Action
-                    icon="download"
-                    color={appliedTheme.colors.text}
-                    onPress={handleDownloadPress}
-                />
+                { isNovelSaved && (
+                    <Appbar.Action
+                        icon="download"
+                        color={appliedTheme.colors.text}
+                        onPress={handleDownloadPress}
+                    />
+                )}
             </Appbar.Header>
             <View style={{ flexDirection: 'row' }}>
                 <View style={{ flex: 0.5, alignItems: 'center' }}>
@@ -93,7 +95,7 @@ const NovelHeader = ({ appliedTheme, novelData, imageURL, genresArray, shareNove
                     />
                 </View>
                 <View style={{ flex: 1, marginVertical: 12 }}>
-                    <Text style={[{ fontSize: 22, marginTop: 24, fontWeight: 'bold' }, { color: appliedTheme.colors.primary }]}>
+                    <Text style={[{ fontSize: 22, marginTop: 12, marginHorizontal: 8, fontWeight: 'bold' }, { color: appliedTheme.colors.primary }]}>
                         {novelData.title}
                     </Text>
                     <View style={{ flexDirection: 'row' }}>

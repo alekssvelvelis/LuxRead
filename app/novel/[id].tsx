@@ -46,6 +46,7 @@ type typeSearchParams = {
   title: string,
   chapterCount: string,
   novelStatus: string,
+  navigatedFrom: string,
 };
 const Synopsis = () => {
   const { appliedTheme } = useThemeContext();
@@ -55,6 +56,7 @@ const Synopsis = () => {
   const [downloadedChapterList, setDownloadedChapterList] = useState<DownloadedChapter[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [isInitialLoading, setIsInitialLoading] = useState<boolean>(true);
+  const [loadingTasks, setLoadingTasks] = useState(2);
   const [page, setPage] = useState<number>(1);
   const [hasMoreChapters, setHasMoreChapters] = useState<boolean>(true);
 
@@ -74,7 +76,23 @@ const Synopsis = () => {
     }
   };
 
+  useEffect(() => {
+    setPage(1);
+  }, [])
+
   const [fetchFunctions, setFetchFunctions] = useState<any>(null);
+
+  const finishLoadingTask = () => {
+    setLoadingTasks((prev) => {
+      const newCount = prev - 1;
+      if (newCount <= 0) {
+        setLoading(false);
+        setIsInitialLoading(false);
+      }
+      return newCount;
+    });
+  };
+
   useEffect(() => {
     if (sourceName) {
       try {
@@ -96,8 +114,7 @@ const Synopsis = () => {
       } else {
           setHasMoreChapters(false);
       }
-      setLoading(false);
-      setIsInitialLoading(false);
+      finishLoadingTask();
     };
     if (fetchFunctions) {
       loadChapters(page);
@@ -121,8 +138,7 @@ const Synopsis = () => {
       } catch (error) {
         console.log('Error thrown inside of novel/[id].tsx at fetchChapters', error);
       } finally {
-        setLoading(false);
-        setIsInitialLoading(false);
+        finishLoadingTask();
       }
     };
     loadDownloadedChapters();
@@ -177,9 +193,8 @@ const Synopsis = () => {
     setDownloading(chapterPageURL);
     try {
       const chapters = await fetchFunctions.fetchChapterContent(chapterPageURL);
-      await insertDownloadedChapter(chapters.title, chapters.content, chapterPageURL, novelId);
-      const updatedDownloadedChapters = await getDownloadedChapters(novelId);
-      setDownloadedChapterList(updatedDownloadedChapters);
+      const latestDownloadedRowId = await insertDownloadedChapter(chapters.title, chapters.content, chapterPageURL, novelId);
+      typeof latestDownloadedRowId === 'number' ? setDownloadedChapterList((prevList) => [...prevList, {id: latestDownloadedRowId, title: chapters.title, content: chapters.content, chapterPageURL: chapterPageURL, novel_id: novelId}]) : false;
     } catch (error) {
       console.error("Error deleting novel:", error);
     } finally {
@@ -215,18 +230,18 @@ const Synopsis = () => {
 
   const handleMultipleChapterDownload = async (startIndex: number, endIndex: number) => {
     try {
-      setDownloading('multiple');
       const fullChapterList = await fetchAllRequiredChapters(startIndex, endIndex);
-      console.log(fullChapterList.length);
       const chaptersToDownload = fullChapterList.slice(startIndex - 1, endIndex);
       
       for (let chapter of chaptersToDownload) {
         const alreadyDownloaded = await isChapterDownloaded(chapter.chapterPageURL, novelId);
+        setDownloading(chapter.chapterPageURL);
         if (!alreadyDownloaded) {
           try {
             console.log('Downloading chapter:', chapter.chapterPageURL, 'with id', chapter.id);
             const chapterContent = await fetchFunctions.fetchChapterContent(chapter.chapterPageURL);
-            await insertDownloadedChapter(chapterContent.title, chapterContent.content, chapter.chapterPageURL, novelId);
+            const latestDownloadedRowId = await insertDownloadedChapter(chapterContent.title, chapterContent.content, chapter.chapterPageURL, novelId);
+            latestDownloadedRowId ? setDownloadedChapterList((prevList) => [...prevList, {id: latestDownloadedRowId, title: chapterContent.title, content: chapterContent.content, chapterPageURL: chapter.chapterPageURL, novel_id: novelId}]) : false;
           } catch (error) {
             console.error(`Error downloading chapter ${chapter.chapterPageURL}`, error);
           } finally {
@@ -236,9 +251,6 @@ const Synopsis = () => {
           console.log('Skipping already downloaded chapter:', chapter.chapterPageURL);
         }
       }
-      
-      const updatedDownloadedChapters = await getDownloadedChapters(novelId);
-      setDownloadedChapterList(updatedDownloadedChapters);
     } catch (error) {
       console.error("Error downloading multiple chapters:", error);
     } finally {
