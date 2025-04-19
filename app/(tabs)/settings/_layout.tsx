@@ -20,6 +20,7 @@ export default function SettingsLayout() {
                 <Stack.Screen name="display" options={{ title: "Display" }} />
                 <Stack.Screen name="reader" options={{ title: "Reading options" }} />
                 <Stack.Screen name="database" options={{ title: "Database" }} />
+                <Stack.Screen name="notifications" options={{ title: "Notifications" }} />
                 <Stack.Screen name="about" options={{ title: "About" }} />
             </Stack>
         </View>

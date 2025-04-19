@@ -4,6 +4,7 @@ const THEME_KEY = 'userTheme';
 const READER_OPTIONS_KEY = 'readerOptions';
 const NOVEL_ROWS = 'novelRows';
 const PURE_BLACK_MODE = 'isDarkMode';
+const USER_REMINDER = 'userReminder';
 
 export const saveItem = async (key: string, value: any) => {
   try {
@@ -30,6 +31,14 @@ export const getItem: {
   }
 };
 
+export const removeItem = async (key: string) => {
+  try {
+    await AsyncStorage.removeItem(key);
+  } catch (error) {
+    console.error(`Error removing ${key}`, error);
+  }
+};
+
 export const saveUserTheme = async (theme: string) => saveItem(THEME_KEY, theme);
 export const getUserTheme = async (): Promise<string | null> => getItem(THEME_KEY);
 
@@ -41,6 +50,9 @@ export const getNovelRows = async(): Promise<string | null> => getItem(NOVEL_ROW
 
 export const saveIsDarkMode = async (enabled: boolean) =>  saveItem(PURE_BLACK_MODE, enabled);
 export const getIsDarkMode = async (): Promise<boolean> => getItem(PURE_BLACK_MODE, true);
+
+export const saveUserReminder = async (reminder: object) => saveItem(USER_REMINDER, JSON.stringify(reminder));
+export const getUserReminder = async (): Promise<string | null> => getItem(USER_REMINDER);
 
 export const clearStorage = async () => {
   try {

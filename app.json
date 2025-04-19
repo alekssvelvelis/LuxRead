@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Library",
+    "name": "LuxRead",
     "slug": "Library",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -14,14 +14,15 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.alekssvelvelis.LuxRead"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.alekssvelvelis.Library"
+      "package": "com.alekssvelvelis.LuxRead"
     },
     "web": {
       "bundler": "metro",
@@ -30,7 +31,8 @@
     },
     "plugins": [
       "expo-router",
-      "expo-font"
+      "expo-font",
+      "expo-notifications"
     ],
     "experiments": {
       "typedRoutes": true
@@ -42,6 +44,7 @@
       "eas": {
         "projectId": "82ce6d9e-450f-46a0-856c-a875a3040b24"
       }
-    }
+    },
+    "owner": "alekssvelvelis"
   }
 }

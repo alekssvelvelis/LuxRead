@@ -51,6 +51,16 @@ const Settings = () => {
             </View>
           </Pressable>
           <Pressable
+              onPress={() => {router.push('/settings/notifications')}}
+              android_ripple={{ color: appliedTheme.colors.secondary }}
+              style={styles.pressable}
+          > 
+            <View style={{ padding: 4, width: '100%', display: 'flex', flexDirection: 'row', alignItems: 'center'}}>
+              <Entypo name="bell" color={appliedTheme.colors.primary} size={30} />    
+              <Text style={[styles.label, { color: appliedTheme.colors.text }]}>Notifications</Text>       
+            </View>
+          </Pressable>
+          <Pressable
               onPress={() => {router.push('/settings/about')}}
               android_ripple={{ color: appliedTheme.colors.secondary }}
               style={styles.pressable}
