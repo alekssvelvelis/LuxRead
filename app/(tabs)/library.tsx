@@ -4,6 +4,7 @@ import SearchBar from '@/components/SearchBar';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { useNovelRowsContext } from '@/contexts/NovelRowsContext';
 import { useRouter, useFocusEffect } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
 import { Image } from 'expo-image'
 import { getAllLibraryNovels, deleteLibraryNovel, deleteNovelChapters } from '@/database/ExpoDB';
 import { dropTable, setupDownloadedChaptersTable, setupLibraryNovelsTable, setupNovelChaptersTable, setupSourcesTable } from '@/database/ExpoDB';
@@ -18,6 +19,14 @@ interface Data{
 }
 
 export default function Library() {
+  useEffect(() => {
+    const hideSplash = async () => {
+      await SplashScreen.hideAsync();
+    };
+
+    hideSplash();
+  }, []);
+
   useEffect(() =>{
     // dropTable('libraryNovels');
     // dropTable('novelChapters');

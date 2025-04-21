@@ -3,6 +3,9 @@ import { View } from 'react-native';
 import { Stack } from "expo-router";
 import AppContextProvider from "@/contexts/AppContextProvider";
 import { useThemeContext } from '@/contexts/ThemeContext';
+import * as SplashScreen from 'expo-splash-screen';
+
+SplashScreen.preventAutoHideAsync();
 
 const StackLayout = () => {
     return(

@@ -9,7 +9,7 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/images/splash.png",
+      "image": "./assets/images/icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -22,6 +22,10 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
+      "notification": {
+        "icon": "./assets/images/notification-icon.png",
+        "color": "#000000"
+      },
       "package": "com.alekssvelvelis.LuxRead"
     },
     "web": {
@@ -32,7 +36,18 @@
     "plugins": [
       "expo-router",
       "expo-font",
-      "expo-notifications"
+      "expo-notifications",
+      [
+        "expo-splash-screen",
+        {
+          "android": {
+            "preventAutoHide": true
+          },
+          "ios": {
+            "preventAutoHide": true
+          }
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
