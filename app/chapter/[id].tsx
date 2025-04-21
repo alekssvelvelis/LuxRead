@@ -17,6 +17,7 @@ import ChapterSkeleton from '@/components/skeletons/ChapterSkeleton';
 import { useSpeech } from '@/hooks/useSpeech';
 
 import { getDownloadedChapterContent } from '@/database/ExpoDB';
+import { BackHandler } from 'react-native';
 
 interface Content {
   title: string;
@@ -28,18 +29,18 @@ interface Content {
 }
 
 interface ReaderOptions {
-  fontSize: number,
-  lineHeight: number,
-  textAlign: string,
-  fontFamily: string
+  fontSize: number;
+  lineHeight: number;
+  textAlign: string;
+  fontFamily: string;
 }
 
 type typeSearchParams = {
-  id?: string | number,
-  chapterPageURL: string,
-  sourceName: string,
-  title: string,
-  readerProgress?: number,
+  id?: string | number;
+  chapterPageURL: string;
+  sourceName: string;
+  title: string;
+  readerProgress?: number;
 };
 
 const ChapterPage = () => {
@@ -62,11 +63,11 @@ const ChapterPage = () => {
   const { isSpeaking, handleSpeaking } = useSpeech(chapterText);
 
   const [readerOptions, setReaderOptions] = useState<ReaderOptions>({
-    fontSize: 16,
-    lineHeight: 25,
-    textAlign: 'left',
-    fontFamily: 'Roboto'
-  });
+      fontSize: 16,
+      lineHeight: 25,
+      textAlign: 'left',
+      fontFamily: 'Roboto',
+    });
 
   const resetStatusBarColor = useCallback(() => {
     StatusBar.setBackgroundColor(appliedTheme.colors.elevation.level2, true);
@@ -79,25 +80,25 @@ const ChapterPage = () => {
   }, [resetStatusBarColor]);
 
   useEffect(() => {
-    const loadReaderOptions = async () => {
-      try {
-        const options = await getReaderOptions();
-        if (options) {
-          const { fontSize, lineHeight, textAlign, fontFamily } = JSON.parse(options);
-          setReaderOptions({
-            fontSize: fontSize || 16,
-            lineHeight: lineHeight || 25,
-            textAlign: textAlign || 'left',
-            fontFamily: fontFamily || 'Roboto',
-          });
+      const loadReaderOptions = async () => {
+        try {
+          const options = await getReaderOptions();
+          if (options) {
+            const parsed = JSON.parse(options);
+            setReaderOptions({
+              fontSize: parsed.fontSize || 16,
+              lineHeight: parsed.lineHeight || 25,
+              textAlign: parsed.textAlign || 'left',
+              fontFamily: parsed.fontFamily || 'Roboto',
+            });
+          }
+        } catch (error) {
+          console.error('Error loading reader options', error);
         }
-      } catch (error) {
-        console.error('Error loading reader options', error);
-      }
-    };
-
-    loadReaderOptions();
-  }, []);
+      };
+  
+      loadReaderOptions();
+    }, []);
 
   const [fetchFunctions, setFetchFunctions] = useState<any>(null);
   useEffect(() => {
@@ -110,10 +111,6 @@ const ChapterPage = () => {
       }
     }
   }, [sourceName]);
-
-  const handleOptionsChange = (options: { fontSize: number; lineHeight: number; textAlign: string; fontFamily: string }) => {
-    setReaderOptions(options);
-  };
 
   useEffect(() => {
     const loadChapterContent = async () => {
@@ -187,10 +184,11 @@ const ChapterPage = () => {
 
   const handleNavigateCloseChapter = async (chapterPageURL: string | undefined) => {
     try {
-      router.push({ 
+      router.replace({ 
         // @ts-ignore since pathname only works this way. Can remove and try to fix error.
         pathname: `chapter/[id]`,
         params: {
+          id: propData.id,
           chapterPageURL: chapterPageURL,
           title: propData.title,
           sourceName: sourceName,
@@ -206,6 +204,7 @@ const ChapterPage = () => {
   const [scrollPercentage, setScrollPercentage] = useState(0);
   const [contentHeight, setContentHeight] = useState(0);
   const [scrollViewHeight, setScrollViewHeight] = useState(0);
+  
 
   const handleScroll = (event: any) => {
     const newContentHeight = event.nativeEvent.contentSize.height;
@@ -214,6 +213,11 @@ const ChapterPage = () => {
     const newScrollPercentage = parseFloat(((scrollPosition / (newContentHeight - newScrollViewHeight)) * 100).toFixed(1));
     setScrollPercentage(Math.min(Math.max(newScrollPercentage, 0), 100));
   };
+
+  const scrollPercentageRef = useRef(scrollPercentage);
+  useEffect(() => {
+    scrollPercentageRef.current = scrollPercentage;
+  }, [scrollPercentage]);
 
   const handleContentSizeChange = (_: number, height: number) => {
     setContentHeight(height);
@@ -252,6 +256,27 @@ const ChapterPage = () => {
       console.error('Error saving chapter:', error);
     }
   }
+
+  useEffect(() => {
+    const backAction = () => {
+      handleSaveChapterData(title, scrollPercentageRef.current, chapterIndex)
+        .then(() => {
+          return true;
+        })
+        .catch((error) => {
+          console.error('Error saving chapter:', error);
+          return false;
+        });
+  
+      return true;
+    };
+  
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress', backAction
+    );
+  
+    return () => backHandler.remove();
+  }, [title, chapterIndex]);
 
   if (loading) {
     return (
@@ -299,7 +324,7 @@ const ChapterPage = () => {
                       color: appliedTheme.colors.text,
                       fontSize: readerOptions.fontSize,
                       lineHeight: readerOptions.lineHeight,
-                      textAlign: readerOptions.textAlign,
+                      textAlign: readerOptions.textAlign as any,
                       fontFamily: readerOptions.fontFamily,
                     },
                   ]}
@@ -348,7 +373,7 @@ const ChapterPage = () => {
       {readerModalVisible && (
         <PullUpModal visible={readerModalVisible} onClose={handleReaderOptionsOpen}>
           <Text style={{ color: appliedTheme.colors.primary, fontSize: 24 }}>Reader options</Text>
-          <ReaderSetting onOptionsChange={handleOptionsChange}/>
+          <ReaderSetting onOptionsChange={setReaderOptions}/>
         </PullUpModal>
       )}
     </View>

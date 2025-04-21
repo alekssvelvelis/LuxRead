@@ -28,7 +28,6 @@ export default function Library() {
     // setupLibraryNovelsTable();
     // setupSourcesTable();
     // setupDownloadedChaptersTable();
-    // getDownloadedChapters(1);
   }, [])
   const { appliedTheme } = useThemeContext();
   const { value: novelRows } = useNovelRowsContext();

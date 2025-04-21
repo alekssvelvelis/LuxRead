@@ -27,16 +27,17 @@ async function setupSourcesTable(){
             (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 sourceName TEXT NOT NULL,
+                sourceBaseUrl TEXT NOT NULL,
                 baseImage TEXT NOT NULL,
                 UNIQUE(sourceName)
             );
         `);
         console.log('Created Sources table');
         await db.execAsync(`
-            INSERT INTO sources (sourceName, baseImage) VALUES 
-            ('AllNovelFull', 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTyjJn_YwCifVmvArmnCMIVroxl61obyCE5WQ&s'),
-            ('LightNovelPub', 'https://i.redd.it/ui97q7ehwqsa1.jpg'),
-            ('NovelBin', 'https://novelbin.com/img/logo.png')
+            INSERT INTO sources (sourceName, sourceBaseUrl,  baseImage) VALUES 
+            ('AllNovelFull', 'https://allnovelfull.net/', 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTyjJn_YwCifVmvArmnCMIVroxl61obyCE5WQ&s'),
+            ('LightNovelPub', 'https://www.lightnovelpub.com/', 'https://i.redd.it/ui97q7ehwqsa1.jpg'),
+            ('NovelBin', 'https://novelbin.com/', 'https://novelbin.com/img/logo.png')
         `);
         console.log('Successfully inserted default sources');
     } catch (error) {
@@ -47,6 +48,7 @@ async function setupSourcesTable(){
 interface SourcesRows{
     id: number;
     sourceName: string;
+    sourceBaseUrl: string;
     baseImage: string;
 }
 
@@ -64,6 +66,7 @@ async function getSources() {
             existingSources.push({
                 id: row.id,
                 sourceName: row.sourceName,
+                sourceBaseUrl: row.sourceBaseUrl,
                 baseImage: row.baseImage,
             });
         }

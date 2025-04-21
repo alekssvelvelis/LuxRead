@@ -5,7 +5,7 @@ import { useThemeContext } from '@/contexts/ThemeContext';
 import { useNetwork } from '@/contexts/NetworkContext';
 import getSourceFunctions from '@/utils/getSourceFunctions';
 
-import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
+import { useLocalSearchParams, useRouter, useFocusEffect, usePathname } from 'expo-router';
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 
 import NovelHeader from '@/components/novel/NovelHeader';
@@ -66,7 +66,6 @@ const Synopsis = () => {
   const { isConnected } = useNetwork();
   const initialParameters = useLocalSearchParams<typeSearchParams>();
   const [novelData, setNovelData] = useState<typeSearchParams>(initialParameters);
-  console.log(novelData);
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
   const [chapterList, setChapterList] = useState<Chapter[]>([]);
   const [downloadedChapterList, setDownloadedChapterList] = useState<DownloadedChapter[]>([]);
@@ -76,10 +75,15 @@ const Synopsis = () => {
   const [page, setPage] = useState<number>(1);
   const [hasMoreChapters, setHasMoreChapters] = useState<boolean>(true);
 
+  const pathname = usePathname();
   const router = useRouter();
   const novelId = Number(novelData.id);
   const sourceName = novelData.sourceName;
   const genresArray = novelData.genres.split(',').map(genre => genre.trim());
+
+  useEffect(() => {
+    console.log('Current path:', pathname);
+  }, [pathname]);
   
   const imageURL = useMemo(() => {
     return Array.isArray(novelData.imageURL) ? novelData.imageURL[0] : novelData.imageURL;

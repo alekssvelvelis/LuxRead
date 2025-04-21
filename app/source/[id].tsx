@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions, FlatList } from 'react-native';
 
 import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
-import { Image } from 'expo-image'; //  takes priority over react-native image tag to read static images
+import { Image } from 'expo-image'; //  takes priority over react-native image element to read static images
 
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { useNetwork } from '@/contexts/NetworkContext';
@@ -12,6 +12,7 @@ import { insertLibraryNovel, getNovelsBySource } from '@/database/ExpoDB';
 import SearchBar from '@/components/SearchBar';
 import SourcesSkeleton from '@/components/skeletons/SourcesSkeleton';
 import NetInfoHelper from '@/components/NetInfoHelper';
+import AxiosErrorHandler from '@/components/sources/AxiosErrorHandler';
 
 interface Novels {
   title: string,
@@ -29,10 +30,10 @@ interface queriedNovels {
 
 const SourceList = () => {
   const { isConnected } = useNetwork();
-  const { sourceName } = useLocalSearchParams();
+  const { sourceName, sourceBaseUrl } = useLocalSearchParams();
   const sourceNameString = String(sourceName);
   const { appliedTheme } = useThemeContext();
-
+  
   if(!isConnected){
     return(
       <View style={[styles.container, {backgroundColor: appliedTheme.colors.elevation.level2}]}>
@@ -53,6 +54,7 @@ const SourceList = () => {
   const [hasMore, setHasMore] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [searchPage, setSearchPage] = useState<number>(1);
+  const [axiosError, setAxiosError] = useState<boolean>(false);
 
   const router = useRouter();
   const [fetchFunctions, setFetchFunctions] = useState<any>(null);
@@ -68,7 +70,7 @@ const SourceList = () => {
   }, [sourceName]);
 
   useEffect(() => {
-    const fetchNovels = async () => {
+    const fetchLocalNovels = async () => {
       try {
         const data = await getNovelsBySource(sourceNameString);
         setQueriedNovels(data);
@@ -76,7 +78,7 @@ const SourceList = () => {
         console.error("Failed to fetch queried novels:", error);
       }
     };
-    fetchNovels();
+    fetchLocalNovels();
   }, []);
 
   const handleSearchQuery = (query: string) => {
@@ -91,9 +93,14 @@ const SourceList = () => {
       return;
     }
     setLoading(true);
+    setAxiosError(false);
     const fetchFunction = searchQuery ? fetchFunctions.searchNovels : fetchFunctions.popularNovels;
     try {
       const novelsData = await fetchFunction(searchQuery || pageNumber, pageNumber);
+      if (!novelsData) {
+        setAxiosError(true);
+        throw new Error('No data received from source');
+      }
       if (searchQuery) { 
         if (pageNumber === 1) {
           setNovels(novelsData);
@@ -108,8 +115,11 @@ const SourceList = () => {
         }
       }
       setHasMore(novelsData.length >= 15); 
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching novels:", error);
+      setAxiosError(true);
+      setNovels([]);
+      setHasMore(false);
     } finally {
       setLoading(false);
     }
@@ -211,25 +221,31 @@ const SourceList = () => {
       <View style={styles.header}>
         <SearchBar onSearchChange={handleSearchQuery}/>
       </View>
-      {loading && novels.length === 0 ? ( 
-  // Show skeleton loader if loading is true and no novels have been loaded yet
-  <SourcesSkeleton />
-) : (
-  novels.length === 0 ? (
-    <Text style={{ color: appliedTheme.colors.text, fontSize: 24, position: 'absolute', top: 400, left: 40 }}>No novels found with this query.</Text>
-  ) : (
-    <FlatList
-      data={novels}
-      renderItem={renderItem}
-      keyExtractor={(_, index) => index.toString()}
-      numColumns={2}
-      contentContainerStyle={styles.scrollViewContent}
-      onEndReached={handleLoadMore}
-      onEndReachedThreshold={0.5}
-      ListFooterComponent={loading ? <SourcesSkeleton /> : null}
-    />
-  )
-)}
+      {axiosError ? (
+        <AxiosErrorHandler 
+          sourceName={sourceNameString}
+          sourceURL={String(sourceBaseUrl)}
+        />
+      ) : (
+        loading && novels.length === 0 ? ( 
+          <SourcesSkeleton />
+        ) : (
+          novels.length === 0 ? (
+            <Text style={{ color: appliedTheme.colors.text, fontSize: 24, padding: 12, alignSelf: 'center', textAlign: 'center' }}>No novels found with this query.</Text>
+          ) : (
+            <FlatList
+              data={novels}
+              renderItem={renderItem}
+              keyExtractor={(_, index) => index.toString()}
+              numColumns={2}
+              contentContainerStyle={styles.scrollViewContent}
+              onEndReached={handleLoadMore}
+              onEndReachedThreshold={0.5}
+              ListFooterComponent={loading ? <SourcesSkeleton /> : null}
+            />
+          )
+        )
+      )}
     </View>
   );
 };

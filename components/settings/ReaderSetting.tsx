@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, StyleSheet, Text, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import Slider from '@react-native-community/slider';
@@ -9,25 +9,56 @@ interface ReaderOptionsProps {
   onOptionsChange: (options: { fontSize: number; lineHeight: number; textAlign: string; fontFamily: string }) => void;
 }
 
+const FONT_PRESETS = ['serif', 'Roboto', 'monospace'];
+const TEXT_ALIGN_OPTIONS = ['left', 'center', 'right', 'justify'];
+
 const ReaderSetting: React.FC<ReaderOptionsProps> = ({ onOptionsChange }) => {
+
+  const SettingSlider = ({ title, value, min, max, onChange, color }: { title: string; value: number; min: number; max: number; onChange: (val: number) => void; color: any}) => (
+    <View style={styles.pullupModalItemContainer}>
+      <Text style={[styles.pullupModalSettingTitle, { color: color.text }]}>{title}</Text>
+      <View style={styles.pullupModalItemContainerInner}>
+        <Slider
+          style={{ width: 200, height: 40 }}
+          minimumValue={min}
+          maximumValue={max}
+          step={1}
+          value={value}
+          onSlidingComplete={onChange}
+          minimumTrackTintColor={color.primary}
+          maximumTrackTintColor={color.text}
+          thumbTintColor={color.primary}
+        />
+        <Text style={{ color: color.text }}>{value}</Text>
+      </View>
+    </View>
+  );
+
   const { appliedTheme } = useThemeContext();
 
-  const [fontSize, setFontSize] = useState<number | null>(null);
-  const [lineHeight, setLineHeight] = useState<number | null>(null);
-  const [textAlign, setTextAlign] = useState<string | null>(null);
-  const [fontFamily, setFontFamily] = useState<string | null>(null);
+  const [options, setOptions] = useState({
+    fontSize: 16,
+    lineHeight: 25,
+    textAlign: 'left',
+    fontFamily: 'Roboto',
+  });
   const [loading, setLoading] = useState(true);
+
+  const updateOptions = useCallback((newOptions: Partial<typeof options>) => {
+    setOptions((prev) => {
+      const updated = { ...prev, ...newOptions };
+      onOptionsChange(updated);
+      saveReaderOptions(updated);
+      return updated;
+    });
+  }, [onOptionsChange]);
 
   useEffect(() => {
     const loadReaderOptions = async () => {
       try {
-        const options = await getReaderOptions();
-        if (options) {
-          const { fontSize, lineHeight, textAlign, fontFamily } = JSON.parse(options);
-          setFontSize(fontSize || 16);
-          setLineHeight(lineHeight || 25);
-          setTextAlign(textAlign || 'left');
-          setFontFamily(fontFamily || 'Roboto');
+        const saved = await getReaderOptions();
+        if (saved) {
+          updateOptions(JSON.parse(saved));
         }
       } catch (error) {
         console.error('Error loading reader options', error);
@@ -35,21 +66,8 @@ const ReaderSetting: React.FC<ReaderOptionsProps> = ({ onOptionsChange }) => {
         setLoading(false);
       }
     };
-
     loadReaderOptions();
-  }, []);
-
-  useEffect(() => {
-    if (fontSize !== null && lineHeight !== null && textAlign !== null && fontFamily !== null) {
-      onOptionsChange({ fontSize, lineHeight, textAlign, fontFamily });
-      saveReaderOptions({ fontSize, lineHeight, textAlign, fontFamily });
-    }
-  }, [fontSize, lineHeight, textAlign, fontFamily]);
-
-  const handleFontSizeChange = (value: number) => setFontSize(value);
-  const handleLineHeightChange = (value: number) => setLineHeight(value);
-  const handleTextAlignChange = (alignment: string) => setTextAlign(alignment);
-  const handleFontFamilyChange = (font: string) => setFontFamily(font);
+  }, [updateOptions]);
 
   if (loading) {
     return (
@@ -61,52 +79,36 @@ const ReaderSetting: React.FC<ReaderOptionsProps> = ({ onOptionsChange }) => {
 
   return (
     <View>
-      <View style={styles.pullupModalItemContainer}>
-        <Text style={[styles.pullupModalSettingTitle, { color: appliedTheme.colors.text }]}>Text size</Text>
-        <View style={styles.pullupModalItemContainerInner}>
-          <Slider
-            style={{ width: 200, height: 40 }}
-            minimumValue={12}
-            maximumValue={24}
-            step={1}
-            value={fontSize ?? 16}
-            onValueChange={handleFontSizeChange}
-            minimumTrackTintColor={appliedTheme.colors.primary}
-            maximumTrackTintColor={appliedTheme.colors.text}
-            thumbTintColor={appliedTheme.colors.primary} 
-          />
-          <Text style={{ color: appliedTheme.colors.text }}>{fontSize}</Text>
-        </View>
-      </View>
-      <View style={styles.pullupModalItemContainer}>
-        <Text style={[styles.pullupModalSettingTitle, { color: appliedTheme.colors.text }]}>Line height</Text>
-        <View style={styles.pullupModalItemContainerInner}>
-          <Slider
-            style={{ width: 200, height: 40 }}
-            minimumValue={18}
-            maximumValue={32}
-            step={1}
-            value={lineHeight ?? 25}
-            onValueChange={handleLineHeightChange}
-            minimumTrackTintColor={appliedTheme.colors.primary}
-            maximumTrackTintColor={appliedTheme.colors.text}
-            thumbTintColor={appliedTheme.colors.primary} 
-          />
-          <Text style={{ color: appliedTheme.colors.text }}>{lineHeight}</Text>
-        </View>
-      </View>
+      <SettingSlider
+        title="Text size"
+        value={options.fontSize}
+        min={12}
+        max={24}
+        onChange={(value) => updateOptions({ fontSize: value })}
+        color={appliedTheme.colors}
+      />
+
+      <SettingSlider
+        title="Line height"
+        value={options.lineHeight}
+        min={18}
+        max={32}
+        onChange={(value) => updateOptions({ lineHeight: value })}
+        color={appliedTheme.colors}
+      />
+
       <View style={styles.pullupModalItemContainer}>
         <Text style={[styles.pullupModalSettingTitle, { color: appliedTheme.colors.text }]}>Text align</Text>
         <View style={styles.pullupModalItemContainerInner}>
-          {['left', 'center', 'right', 'justify'].map((alignment) => (
-            <TouchableOpacity key={alignment} onPress={() => handleTextAlignChange(alignment)}>
+          {TEXT_ALIGN_OPTIONS.map((alignment) => (
+            <TouchableOpacity key={alignment} onPress={() => updateOptions({ textAlign: alignment })}>
               <MaterialIcons
-                size={28}
                 name={`format-align-${alignment}`}
+                size={28}
                 color={appliedTheme.colors.text}
                 style={{
                   marginHorizontal: 12,
-                  backgroundColor: textAlign === alignment ? appliedTheme.colors.primary : 'transparent',
+                  backgroundColor: options.textAlign === alignment ? appliedTheme.colors.primary : 'transparent',
                   borderRadius: 4,
                 }}
               />
@@ -114,29 +116,34 @@ const ReaderSetting: React.FC<ReaderOptionsProps> = ({ onOptionsChange }) => {
           ))}
         </View>
       </View>
+
       <View style={styles.pullupModalItemContainer}>
         <Text style={[styles.pullupModalSettingTitle, { color: appliedTheme.colors.text }]}>Font preset</Text>
-        <View style={styles.pullupModalItemContainerInner}>
-          <FlatList
-            data={['serif', 'Roboto', 'monospace']}
-            horizontal
-            style={{ marginLeft: 8 }}
-            keyExtractor={(item) => item}
-            renderItem={({ item: font }) => (
-              <TouchableOpacity onPress={() => handleFontFamilyChange(font)}>
-                <View style={[styles.fontPill, { backgroundColor: fontFamily === font ? appliedTheme.colors.primary : appliedTheme.colors.elevation.level3 }]}>
-                  <Text style={{ color: appliedTheme.colors.text }}>{font}</Text>
-                </View>
-              </TouchableOpacity>
-            )}
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ flexDirection: 'row', alignItems: 'center' }}
-          />
-        </View>
+        <FlatList
+          data={FONT_PRESETS}
+          horizontal
+          keyExtractor={(item) => item}
+          renderItem={({ item: font }) => (
+            <TouchableOpacity onPress={() => updateOptions({ fontFamily: font })}>
+              <View style={[
+                styles.fontPill,
+                {
+                  backgroundColor: options.fontFamily === font
+                    ? appliedTheme.colors.primary
+                    : appliedTheme.colors.elevation.level3,
+                }
+              ]}>
+                <Text style={{ color: appliedTheme.colors.text }}>{font}</Text>
+              </View>
+            </TouchableOpacity>
+          )}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ paddingHorizontal: 8, alignItems: 'center' }}
+        />
       </View>
     </View>
   );
-}
+};
 
 export default ReaderSetting;
 
