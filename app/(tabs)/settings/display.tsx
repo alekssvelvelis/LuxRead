@@ -1,14 +1,20 @@
 import React from 'react';
 import { View, StyleSheet} from 'react-native';
 import DisplaySetting from '@/components/settings/DisplaySetting';
+
 import { useNovelRowsContext } from '@/contexts/NovelRowsContext';
+import { useNovelLayoutContext } from '@/contexts/NovelLayoutContext';
 import { useThemeContext } from '@/contexts/ThemeContext';
 const Display = () => {
     const { appliedTheme } = useThemeContext();
     const { setValue } = useNovelRowsContext();
+    const { setNovelLayoutValue } = useNovelLayoutContext();
     return (
         <View style={[styles.container, { backgroundColor: appliedTheme.colors.elevation.level2}]}>
-            <DisplaySetting onNovelRowsChange ={setValue}/>
+            <DisplaySetting 
+                onNovelRowsChange={setValue} 
+                onNovelLayoutChange={setNovelLayoutValue} 
+            />
         </View>
     )
 }

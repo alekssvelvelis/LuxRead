@@ -36,8 +36,8 @@ async function setupSourcesTable(){
         await db.execAsync(`
             INSERT INTO sources (sourceName, sourceBaseUrl,  baseImage) VALUES 
             ('AllNovelFull', 'https://allnovelfull.net/', 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTyjJn_YwCifVmvArmnCMIVroxl61obyCE5WQ&s'),
-            ('LightNovelPub', 'https://www.lightnovelpub.com/', 'https://i.redd.it/ui97q7ehwqsa1.jpg'),
-            ('NovelBin', 'https://novelbin.com/', 'https://novelbin.com/img/logo.png')
+            ('NovelBin', 'https://novelbin.com/', 'https://novelbin.com/img/logo.png'),
+            ('ReadNovelFull', 'https://readnovelfull.com/', 'https://readnovelfull.com/img/logo.png')
         `);
         console.log('Successfully inserted default sources');
     } catch (error) {
@@ -326,19 +326,31 @@ async function getDownloadedChapterContent(chapterPageURL: string): Promise<Down
 
         const extractChapterNumber = (title: string): number => {
             const match = title.match(/Chapter\s+(\d+)/);
-            return match ? parseInt(match[1], 10) : -1;
+            return match ? parseInt(match[1], 10) : NaN;
         };
-        const currentChapterNumber = extractChapterNumber(currentChapter.chapterTitle);
+        const sorted = allChaptersResult
+        .map(row => ({
+            number: extractChapterNumber(row.chapterTitle),
+            url: row.chapterPageURL
+        }))
+        .filter(chapter => !isNaN(chapter.number))
+        .sort((a, b) => a.number - b.number);
 
-        const nextChapter = allChaptersResult.find(chapters => extractChapterNumber(chapters.chapterTitle) === currentChapterNumber+1);
-        const prevChapter = allChaptersResult.find(chapters => extractChapterNumber(chapters.chapterTitle) === currentChapterNumber-1);
+        const currentNum = extractChapterNumber(currentChapter.chapterTitle);
+        const index = sorted.findIndex(chapter => chapter.number === currentNum);
+
+        console.log(sorted);
+
+        const prevChapter = index > 0 ? sorted[index - 1].url : undefined;
+        const nextChapter = index < sorted.length - 1 ? sorted[index + 1].url : undefined;
+
 
         const downloadedChapterContent: DownloadedChapterContent = {
             title: currentChapter.chapterTitle,
             content: currentChapter.chapterText,
             closeChapters: {
-                prevChapter: prevChapter?.chapterPageURL,
-                nextChapter: nextChapter?.chapterPageURL,
+                prevChapter: prevChapter,
+                nextChapter: nextChapter
             }
         };
 

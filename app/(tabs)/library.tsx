@@ -1,8 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { StyleSheet, View, Text, ScrollView, Dimensions, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, Text, ScrollView, Dimensions, TouchableOpacity, TextStyle } from 'react-native';
 import SearchBar from '@/components/SearchBar';
 import { useThemeContext } from '@/contexts/ThemeContext';
+
 import { useNovelRowsContext } from '@/contexts/NovelRowsContext';
+import { useNovelLayoutContext } from '@/contexts/NovelLayoutContext';
+
 import { useRouter, useFocusEffect } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { Image } from 'expo-image'
@@ -38,8 +41,10 @@ export default function Library() {
     // setupSourcesTable();
     // setupDownloadedChaptersTable();
   }, [])
+
   const { appliedTheme } = useThemeContext();
   const { value: novelRows } = useNovelRowsContext();
+  const { value: novelLayout } = useNovelLayoutContext();
   const router = useRouter();
 
   const [novelsData, setNovelsData] = useState<Data[]>([]);
@@ -86,7 +91,8 @@ export default function Library() {
   const getNovelContainerStyle = () => {
     const novelsInSingleRow = parseInt(novelRows, 10);
     const screenWidth = Dimensions.get('window').width;
-    const novelWidth = screenWidth / novelsInSingleRow - 24;
+    const padding = 24;
+    const novelWidth = (screenWidth-padding) / novelsInSingleRow*0.85;
     let novelHeight;
     switch (novelsInSingleRow) {
       case 1:
@@ -96,18 +102,30 @@ export default function Library() {
         novelHeight = 250;
         break;
       case 3:
-      case 4:
-        novelHeight = 150;
-        break;
       default:
         novelHeight = 200;
         break;
     }
+
     return {
       width: novelWidth,
       height: novelHeight,
     };
   };
+
+  const getNovelTitleStyle = (novelLayout: string, appliedTheme: any): TextStyle => {
+    switch (novelLayout) {
+        case 'Title under novel':
+            return { color: appliedTheme.colors.text, textAlign: 'center', marginTop: 8 };
+        case 'Title on novel cover':
+            return { color: appliedTheme.colors.text, position: 'absolute', bottom: 8, left: 8, };
+        case 'No title':
+            return { display: 'none' };
+        default:
+            return {};
+    }
+  };
+
 
   const handleNavigateToNovel = async (novelSource: string, novelId: number) => {
     try {
@@ -132,9 +150,9 @@ export default function Library() {
         <SearchBar onSearchChange={handleSearchQuery}/>
       </View>
       <ScrollView contentContainerStyle={styles.scrollViewContent} style={styles.scrollView}>
-        <View style={[styles.novelScrollView]}>
+        <View style={[styles.novelScrollView, parseInt(novelRows, 10) === 1 && { justifyContent: 'center' }]}>
           {filteredNovels.length === 0 ? (
-            <View style={{ position: 'relative',  justifyContent: 'center',  alignItems: 'center', paddingHorizontal: 20, paddingVertical: 40, marginTop: '50%'}}>
+            <View style={{ position: 'relative',  justifyContent: 'center',  alignItems: 'center', paddingHorizontal: 50, paddingVertical: 40, marginTop: '50%'}}>
               <Text style={{ color: appliedTheme.colors.text, fontSize: 24, textAlign: 'center'}}>
                 {query ? 'No novels found by with this search query.' : 'You have no saved novels. Navigate to Sources and find what to read.'}
               </Text>
@@ -154,7 +172,10 @@ export default function Library() {
                     source={{ uri: novel.imageURL }}
                     contentFit='fill'
                   />
-                  <Text numberOfLines={2} style={{ color: appliedTheme.colors.text, fontSize: 12 }}>
+                  <Text
+                    numberOfLines={2}
+                    style={[ getNovelTitleStyle(novelLayout, appliedTheme) ]}
+                  >
                     {novel.title}
                   </Text>
                   <View style={[styles.chaptersRemain, { backgroundColor: appliedTheme.colors.primary }]}>
@@ -190,7 +211,9 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 24,
+    justifyContent: 'space-between',
+    gap: 18,
+    padding: 12,
   },
   novelContainer: {
     display: 'flex',

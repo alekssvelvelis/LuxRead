@@ -128,11 +128,17 @@ const fetchChapters = async (novelPageURL: string, page: number) => {
         const body = result.data;
         const loadedCheerio = cheerio.load(body);
 
-        return loadedCheerio('.list-chapter li a').map((index: number, el: cheerio.Element) => ({
+        const chapters =  loadedCheerio('.list-chapter li a').map((index: number, el: cheerio.Element) => ({
             id: index+1,
             title: loadedCheerio(el).text().trim(),
             chapterPageURL: `${sourceURL}${loadedCheerio(el).attr('href')}`,
         })).get();
+
+        if (chapters.length === 0) {
+            return [];
+        }
+
+        return chapters;
     } catch (error) {
         console.error('Error fetching chapters:', error);
         return [];

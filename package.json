@@ -29,6 +29,7 @@
     "@testing-library/react-native": "^12.7.2",
     "@types/axios": "^0.14.0",
     "axios": "^1.7.7",
+    "cheerio": "^1.0.0",
     "expo": "^52.0.37",
     "expo-constants": "~17.0.8",
     "expo-dev-client": "~5.0.20",

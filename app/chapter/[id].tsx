@@ -132,6 +132,8 @@ const ChapterPage = () => {
             setChapterTitle(offlineContent.title);
             setChapterText(JSON.parse(contentString));
           }
+
+          console.log(offlineContent);
         } catch (error) {
           console.error('Error getting downloaded chapters inside of [id].tsx', error);
         } finally {
@@ -291,7 +293,7 @@ const ChapterPage = () => {
         <View style={[styles.header, { backgroundColor: overlayBackgroundColor, flexDirection: 'row' }]}>
           <View style={{flex: 1, flexDirection: 'row', marginBottom: 6}}>
             <Ionicons name={'arrow-back'} size={32} color={appliedTheme.colors.text} style={{ marginLeft: '2%' }} onPress={() => handleSaveChapterData(title, scrollPercentage, chapterIndex)} />
-            <Text style={{ color: appliedTheme.colors.text, fontSize: 20, marginBottom: 4, marginLeft: 12, maxWidth: '75%' }} numberOfLines={1}>{content.title}</Text>
+            <Text style={{ color: appliedTheme.colors.text, fontSize: 20, marginBottom: 4, marginLeft: 12, maxWidth: '75%' }} numberOfLines={1}>{content.title.trim()}</Text>
             {isSpeaking ? <Ionicons name={'pause-circle-outline'} size={32} color={appliedTheme.colors.text} style={{ marginLeft: '3%', position: 'absolute', right: 8 }} onPress={() => handleSpeaking()}/> : <Ionicons name={'play-circle-outline'} size={32} color={appliedTheme.colors.text} style={{ marginLeft: '3%', position: 'absolute', right: 8 }} onPress={() => handleSpeaking()}/>}
           </View>
         </View>

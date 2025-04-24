@@ -5,6 +5,15 @@ const READER_OPTIONS_KEY = 'readerOptions';
 const NOVEL_ROWS = 'novelRows';
 const PURE_BLACK_MODE = 'isDarkMode';
 const USER_REMINDER = 'userReminder';
+const NOVEL_LAYOUT = 'novelLayout';
+
+export const clearStorage = async () => {
+  try {
+    await AsyncStorage.clear();
+  } catch (error) {
+    console.error('Error clearing storage', error);
+  }
+};
 
 export const saveItem = async (key: string, value: any) => {
   try {
@@ -48,16 +57,12 @@ export const getReaderOptions = async (): Promise<string | null> => getItem(READ
 export const saveNovelRows = async(number: string) => saveItem(NOVEL_ROWS, number);
 export const getNovelRows = async(): Promise<string | null> => getItem(NOVEL_ROWS);
 
+export const saveNovelLayout = async (layout: string) => saveItem(NOVEL_LAYOUT, layout);
+export const getNovelLayout = async (): Promise<string | null> => getItem(NOVEL_LAYOUT);
+
 export const saveIsDarkMode = async (enabled: boolean) =>  saveItem(PURE_BLACK_MODE, enabled);
 export const getIsDarkMode = async (): Promise<boolean> => getItem(PURE_BLACK_MODE, true);
 
 export const saveUserReminder = async (reminder: object) => saveItem(USER_REMINDER, JSON.stringify(reminder));
 export const getUserReminder = async (): Promise<string | null> => getItem(USER_REMINDER);
 
-export const clearStorage = async () => {
-  try {
-    await AsyncStorage.clear();
-  } catch (error) {
-    console.error('Error clearing storage', error);
-  }
-};

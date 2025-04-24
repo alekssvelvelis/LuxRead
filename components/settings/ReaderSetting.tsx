@@ -58,7 +58,9 @@ const ReaderSetting: React.FC<ReaderOptionsProps> = ({ onOptionsChange }) => {
       try {
         const saved = await getReaderOptions();
         if (saved) {
-          updateOptions(JSON.parse(saved));
+          const parsed = JSON.parse(saved);
+          setOptions(parsed);
+          onOptionsChange(parsed);
         }
       } catch (error) {
         console.error('Error loading reader options', error);
@@ -67,7 +69,7 @@ const ReaderSetting: React.FC<ReaderOptionsProps> = ({ onOptionsChange }) => {
       }
     };
     loadReaderOptions();
-  }, [updateOptions]);
+  }, []);
 
   if (loading) {
     return (

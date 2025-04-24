@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "LuxRead",
-    "slug": "Library",
+    "slug": "luxread",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -10,8 +10,8 @@
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/images/icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#ffffff",
+      "resizeMode": "contain"
     },
     "ios": {
       "supportsTablet": true,
@@ -41,10 +41,16 @@
         "expo-splash-screen",
         {
           "android": {
-            "preventAutoHide": true
+            "preventAutoHide": true,
+            "image": "./assets/images/icon.png",
+            "backgroundColor": "#ffffff",
+            "resizeMode": "contain"
           },
           "ios": {
-            "preventAutoHide": true
+            "preventAutoHide": true,
+            "image": "./assets/images/icon.png",
+            "backgroundColor": "#ffffff",
+            "resizeMode": "cover"
           }
         }
       ]
@@ -57,7 +63,7 @@
         "origin": false
       },
       "eas": {
-        "projectId": "82ce6d9e-450f-46a0-856c-a875a3040b24"
+        "projectId": "a9471553-7c4d-4062-a1bd-89cb515bc12c"
       }
     },
     "owner": "alekssvelvelis"
