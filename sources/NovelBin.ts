@@ -4,26 +4,6 @@ import axios from 'axios';
 const sourceName = 'NovelBin';
 const sourceURL = `https://novelbin.com/`;
 
-// const fetchNovelImage = async (novelPageURL: string): Promise<string> => {
-//     try {
-//         const result = await axios.get(novelPageURL);
-//         const body = result.data;
-//         const loadedCheerio = cheerio.load(body);
-//         // console.log(loadedCheerio);
-//         const imageElement = loadedCheerio('.book .lazy');
-
-//         // Try to get the image URL from `data-src` or `data-original`, falling back to `src`
-//         const imageSrc = imageElement.attr('data-src') || imageElement.attr('src');
-//         if (!imageSrc) {
-//             console.error('No valid image source found');
-//             return '';
-//         }
-//         return `${imageSrc}`;
-//     } catch (error) {
-//         console.error('Error fetching novel image:', error);
-//         return ''; // Return an empty string or a placeholder image URL in case of error
-//     }
-// };
 
 const popularNovels = async (pageNumber: number) => {
     try {
@@ -43,7 +23,6 @@ const popularNovels = async (pageNumber: number) => {
             if(!testImageURL){
                 return undefined;
             }
-            console.log(title, author, chapterCount, novelPageURL, testImageURL);
             const imageURL = testImageURL.replace('novel_200_89', 'novel');
             if (title && author && novelPageURL) {
                 // const imageURL = await fetchNovelImage(novelPageURL); 
@@ -57,7 +36,7 @@ const popularNovels = async (pageNumber: number) => {
                 };
             }
             return;
-        }).get(); // Convert Cheerio to array
+        }).get();
 
         return Promise.all(promises).then(results => results.filter(Boolean)); // Filter out undefined values
     } catch (error) {
@@ -69,7 +48,6 @@ const popularNovels = async (pageNumber: number) => {
 const searchNovels = async (novelName: string, pageNumber: number) => {
     try {
         const url = `${sourceURL}search?keyword=${novelName}&page=${pageNumber}`;
-        console.log(url);
         const result = await axios.get(url);
         const body = result.data;
         const loadedCheerio = cheerio.load(body);
@@ -87,7 +65,6 @@ const searchNovels = async (novelName: string, pageNumber: number) => {
             }
             const imageURL = baseImageURL.replace('novel_200_89', 'novel');
             if (title && author && novelPageURL) {
-                // const imageURL = await fetchNovelImage(novelPageURL);
                 return {
                     title,
                     author,
@@ -140,7 +117,7 @@ const fetchSingleNovel = async (novelPageURL: string) => {
 
 const fetchChapters = async (novelPageURL: string, chapterCount: number) => {
     try {
-        const actualChapterCount = chapterCount-1; // lazy fix :)
+        const actualChapterCount = chapterCount-1;
         const url = `${novelPageURL}#tab-chapters-title`;
         const parts = url.split('/');
         const novelTitle = parts[parts.length - 1];
@@ -184,7 +161,7 @@ const fetchChapterContent = async (chapterPageURL: string) => {
             closeChapters: {},
         };
 
-        const chapterTitle = loadedCheerio('.chr-title').text();
+        const chapterTitle = loadedCheerio('.chr-title').text().trim();
         chapterContent.title = chapterTitle;
 
         loadedCheerio('#chr-content p').each((_: number, el: cheerio.Element) => {

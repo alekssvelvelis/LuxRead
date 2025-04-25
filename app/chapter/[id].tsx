@@ -67,7 +67,8 @@ const ChapterPage = () => {
       lineHeight: 25,
       textAlign: 'left',
       fontFamily: 'Roboto',
-    });
+  });
+
 
   const resetStatusBarColor = useCallback(() => {
     StatusBar.setBackgroundColor(appliedTheme.colors.elevation.level2, true);
@@ -133,7 +134,7 @@ const ChapterPage = () => {
             setChapterText(JSON.parse(contentString));
           }
 
-          console.log(offlineContent);
+          // console.log(offlineContent);
         } catch (error) {
           console.error('Error getting downloaded chapters inside of [id].tsx', error);
         } finally {
@@ -171,9 +172,13 @@ const ChapterPage = () => {
     }
   }, [fetchFunctions, chapterPageURL, sourceName]);
 
+  console.log(content);
+
   const handleBackPress = () => {
     router.back();
   };
+
+  
 
   const toggleOverlay = () => {
     setIsOverlayVisible(!isOverlayVisible);

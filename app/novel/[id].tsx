@@ -120,20 +120,36 @@ const Synopsis = () => {
 
   useEffect(() => {
     const loadChapters = async (pageNumber = 1) => {
-      setLoading(true);
-      const newChapters = await fetchChaptersByPage(pageNumber);
-      if (newChapters && newChapters.length > 0) {
-          setChapterList((prevChapters) => [...prevChapters, ...newChapters]);
-          setHasMoreChapters(newChapters.length > 0);
-      } else {
-          setHasMoreChapters(false);
-      }
-      finishLoadingTask();
+        setLoading(true);
+
+        let chaptersPerPage = 15;
+        switch (sourceName) {
+            case 'AllNovelFull':
+                chaptersPerPage = 50;
+                break;
+            case 'ReadNovelFull':
+            case 'NovelBin':
+                chaptersPerPage = 15;
+                break;
+            default:
+                chaptersPerPage = 15;
+        }
+
+        const newChapters = await fetchChaptersByPage(pageNumber);
+        if (newChapters && newChapters.length > 0) {
+            setChapterList((prevChapters) => [...prevChapters, ...newChapters]);
+            setHasMoreChapters(newChapters.length === chaptersPerPage);
+        } else {
+            setHasMoreChapters(false);
+        }
+
+        finishLoadingTask();
     };
+
     if (fetchFunctions) {
-      loadChapters(page);
+        loadChapters(page);
     }
-}, [fetchFunctions, page, novelData.novelPageURL]);
+}, [fetchFunctions, page, novelData.novelPageURL, sourceName]);
 
   useEffect(() => {
     const loadDownloadedChapters = async () => {
@@ -207,6 +223,7 @@ const Synopsis = () => {
     setDownloading(chapterPageURL);
     try {
       const chapters = await fetchFunctions.fetchChapterContent(chapterPageURL);
+      console.log(chapters, chapterPageURL, novelId);
       const latestDownloadedRowId = await insertDownloadedChapter(chapters.title, chapters.content, chapterPageURL, novelId);
       typeof latestDownloadedRowId === 'number' ? setDownloadedChapterList((prevList) => [...prevList, {id: latestDownloadedRowId, title: chapters.title, content: chapters.content, chapterPageURL: chapterPageURL, novel_id: novelId}]) : false;
     } catch (error) {
@@ -218,6 +235,7 @@ const Synopsis = () => {
 
   const fetchChaptersByPage = async (pageNumber: number) => {
     if (!fetchFunctions) return [];
+    if (!isConnected) return [];
     try {
         return await fetchFunctions.fetchChapters(novelData.novelPageURL, pageNumber);
     } catch (error) {
@@ -282,49 +300,49 @@ const Synopsis = () => {
     }
   }
 
-  const [refreshing, setRefreshing] = useState(false);
-  const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    try {
-      const localNovelData: FetchedNovel[] = await getLibraryNovelForUpdateById(novelId);
-      const scrapedNovelData = await fetchFunctions.fetchSingleNovel(novelData.novelPageURL);
+  // const [refreshing, setRefreshing] = useState(false);
+  // const onRefresh = useCallback(async () => {
+  //   setRefreshing(true);
+  //   try {
+  //     const localNovelData: FetchedNovel[] = await getLibraryNovelForUpdateById(novelId);
+  //     const scrapedNovelData = await fetchFunctions.fetchSingleNovel(novelData.novelPageURL);
       
-      let updatedData: any = { ...novelData };
+  //     let updatedData: any = { ...novelData };
   
-      for (const key in localNovelData[0]) {
-        if (Object.prototype.hasOwnProperty.call(localNovelData[0], key)) {
-          const typedKey = key as keyof FetchedNovel;
-          let scrapedValue = scrapedNovelData[typedKey];
+  //     for (const key in localNovelData[0]) {
+  //       if (Object.prototype.hasOwnProperty.call(localNovelData[0], key)) {
+  //         const typedKey = key as keyof FetchedNovel;
+  //         let scrapedValue = scrapedNovelData[typedKey];
           
-          if (typedKey === 'genres' && Array.isArray(scrapedValue)) {
-            scrapedValue = scrapedValue.join(",");
-          }
+  //         if (typedKey === 'genres' && Array.isArray(scrapedValue)) {
+  //           scrapedValue = scrapedValue.join(",");
+  //         }
   
-          if (localNovelData[0][typedKey] !== scrapedValue) {
-            updatedData[typedKey] = scrapedValue;
-          }
-        }
-      }
+  //         if (localNovelData[0][typedKey] !== scrapedValue) {
+  //           updatedData[typedKey] = scrapedValue;
+  //         }
+  //       }
+  //     }
       
-      const differences = Object.keys(updatedData).reduce((diff, key) => {
-        const typedKey = key as keyof FetchedNovel; 
+  //     const differences = Object.keys(updatedData).reduce((diff, key) => {
+  //       const typedKey = key as keyof FetchedNovel; 
         
-        if (updatedData[typedKey] !== localNovelData[0][typedKey]) {  
-          diff[typedKey] = updatedData[typedKey];
-        }
-        return diff;
-      }, {} as Record<keyof FetchedNovel, any>);
+  //       if (updatedData[typedKey] !== localNovelData[0][typedKey]) {  
+  //         diff[typedKey] = updatedData[typedKey];
+  //       }
+  //       return diff;
+  //     }, {} as Record<keyof FetchedNovel, any>);
       
-      if (Object.keys(differences).length > 0) {
-        await updateNovelData(novelId, differences);
-        setNovelData(updatedData);
-      }
-    } catch (error) {
-      console.error('Error during refresh:', error);
-    } finally {
-      setRefreshing(false);
-    }
-  }, [fetchFunctions, novelData.novelPageURL]);
+  //     if (Object.keys(differences).length > 0) {
+  //       await updateNovelData(novelId, differences);
+  //       setNovelData(updatedData);
+  //     }
+  //   } catch (error) {
+  //     console.error('Error during refresh:', error);
+  //   } finally {
+  //     setRefreshing(false);
+  //   }
+  // }, [fetchFunctions, novelData.novelPageURL]);
 
   const RenderChapterItem = ({ item, index }: { item: Chapter, index: number }) => {
     const trueChapterIndex = item.title.match(/Chapter\s+(\d+)/) || '1';
@@ -375,12 +393,39 @@ const Synopsis = () => {
 
   const routerBack = () => router.back();
   const onReadPress = () => {
-    if (chapterList.length === 0) return;
-    if (readingProgress.chapterIndex > 0) {
-      handleNavigateToChapter(chapterList[readingProgress.chapterIndex - 1].chapterPageURL, chapterList[readingProgress.chapterIndex - 1].id)
+    if(isConnected){
+      if(chapterList.length === 0) return;
+
+      if (readingProgress.chapterIndex > 0) {
+        handleNavigateToChapter(chapterList[readingProgress.chapterIndex - 1].chapterPageURL, chapterList[readingProgress.chapterIndex - 1].id)
+      } else {
+        handleNavigateToChapter(chapterList[0].chapterPageURL, chapterList[0].id);
+      }
     } else {
-      handleNavigateToChapter(chapterList[0].chapterPageURL, chapterList[0].id);
+      return;
+      // if(downloadedChapterList.length === 0) return;
+
+      // function extractChapterIndex(chapterTitle: string) {
+      //   const match = chapterTitle.match(/Chapter\s+0*(\d+)/i);
+      //   if (match && match[1]) {
+      //     return parseInt(match[1], 10);
+      //   }
+      //   return null;
+      // }
+
+      // const matchedChapter = downloadedChapterList.find((chapter) => {
+      // const chapterIndex = extractChapterIndex(chapter.title);
+      // return chapterIndex === readingProgress.chapterIndex;
+      // });
+      // if(matchedChapter){
+      //   console.log(matchedChapter);
+      //   handleNavigateToChapter(matchedChapter.chapterPageURL, matchedChapter.id);
+      // }else{
+      //   handleNavigateToChapter(downloadedChapterList[0].chapterPageURL, downloadedChapterList[0].id);
+      // }
+
     }
+  
   };
 
   if (isInitialLoading) return <View style={{backgroundColor: appliedTheme.colors.elevation.level2}}><NovelSkeleton/></View>;
@@ -410,6 +455,7 @@ const Synopsis = () => {
             imageURL={imageURL}
             genresArray={genresArray}
             shareNovel={shareNovel}
+            // chapterList={isConnected ? chapterList : downloadedChapterList}
             chapterList={chapterList}
             readingProgress={readingProgress}
             onReadPress={onReadPress}
@@ -417,8 +463,8 @@ const Synopsis = () => {
             downloadMultipleChapters={handleMultipleChapterDownload}
           />
         }
-        refreshing={refreshing}
-        onRefresh={onRefresh}
+        // refreshing={refreshing}
+        // onRefresh={onRefresh}
       />
       
       <PullUpModal

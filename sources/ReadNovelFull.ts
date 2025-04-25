@@ -35,7 +35,7 @@ const popularNovels = async (pageNumber: number) => {
                     sourceName,
                 };
             }
-            // return;
+            return;
         }).get(); // Convert Cheerio to array
 
         return Promise.all(promises).then(results => results.filter(Boolean)); // Filter out undefined values
@@ -85,8 +85,6 @@ const searchNovels = async (novelName: string, pageNumber: number) => {
     }
 };
 
-let novelId: number | null = null;
-
 const fetchSingleNovel = async (novelPageURL: string) => {
     try {
         const result = await axios.get(novelPageURL);
@@ -101,7 +99,6 @@ const fetchSingleNovel = async (novelPageURL: string) => {
         const novelStatus = loadedCheerio('.info h3:contains("Status:")').next('a').text().trim();
         const chapterCountText = loadedCheerio('div.item-value a').attr('title');
         const chapterCount = parseInt(chapterCountText.match(/\d+/)?.[0] || '0', 10);
-        novelId = loadedCheerio('#rating').attr('data-novel-id');
         console.log(title, description, author, genres, novelStatus, chapterCount);
         return {
             title,
@@ -120,12 +117,17 @@ const fetchSingleNovel = async (novelPageURL: string) => {
     }
 };
 
+const fetchNovelIdForAjax = async (novelPageURL: string) => {
+    const result = await axios.get(novelPageURL);
+    const body = result.data;
+    const loadedCheerio = cheerio.load(body);
+    return loadedCheerio('#rating').attr('data-novel-id');
+}
+
 const fetchChapters = async (novelPageURL: string, chapterCount: number) => {
     try {
+        const novelId = await fetchNovelIdForAjax(novelPageURL);
         const actualChapterCount = chapterCount-1; // lazy fix :)
-        const url = `${novelPageURL}#tab-chapters-title`;
-        console.log(actualChapterCount, url, novelId);
-        // console.log(novelId);
         const APIurl = `${sourceURL}/ajax/chapter-archive?novelId=${novelId}`;
         const result = await axios.get(APIurl);
         const body = result.data;

@@ -56,7 +56,7 @@ const NovelHeader = ({ appliedTheme, novelData, imageURL, genresArray, shareNove
         const startingIndex = downloadStartChoice === 'first' ? 1 : readingProgress.chapterIndex;
         downloadMultipleChapters(startingIndex, parseInt(chaptersCountToDownload));
     }
-
+    
     // React-native-paper uses MaterialCommunityIcons.
     // if you want to use other icons while not having them re-render you can use this
     // const renderShareIcon = useMemo(() => {
