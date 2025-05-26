@@ -3,6 +3,7 @@ import { View, Text, FlatList, TextInput, TouchableOpacity } from 'react-native'
 import { Appbar } from 'react-native-paper';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
+import { useNetwork } from '@/contexts/NetworkContext';
 
 import ExpandableDescription from '@/components/novel/ExpandableDescription';
 import ModalComponent from '../ModalComponent';
@@ -25,7 +26,7 @@ const NovelHeader = ({ appliedTheme, novelData, imageURL, genresArray, shareNove
     const [chaptersCountToDownload, setChaptersCountToDownload] = useState<string>('1');
     const [downloadStartChoice, setDownloadStartChoice] = useState<'first' | 'latest'>('first');
     const [error, setError] = useState<string | null>(null);
-
+    const { isConnected } = useNetwork();
     const chaptersInputRef = useRef<TextInput>(null);
     const handleChangeText = (value: string) => {
         setError(null);
@@ -53,10 +54,9 @@ const NovelHeader = ({ appliedTheme, novelData, imageURL, genresArray, shareNove
 
     const handleConfirmDownload = () => {
         const startingIndex = downloadStartChoice === 'first' ? 1 : readingProgress.chapterIndex;
-        console.log(startingIndex, 'inside of novelHeader.tsx goes till', parseInt(chaptersCountToDownload));
         downloadMultipleChapters(startingIndex, parseInt(chaptersCountToDownload));
     }
-
+    
     // React-native-paper uses MaterialCommunityIcons.
     // if you want to use other icons while not having them re-render you can use this
     // const renderShareIcon = useMemo(() => {
@@ -78,7 +78,7 @@ const NovelHeader = ({ appliedTheme, novelData, imageURL, genresArray, shareNove
                     color={appliedTheme.colors.text}
                     onPress={shareNovel}
                 />
-                { isNovelSaved && (
+                { isNovelSaved && isConnected && (
                     <Appbar.Action
                         icon="download"
                         color={appliedTheme.colors.text}

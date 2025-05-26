@@ -231,7 +231,11 @@ const SourceList = () => {
           <SourcesSkeleton />
         ) : (
           novels.length === 0 ? (
-            <Text style={{ color: appliedTheme.colors.text, fontSize: 24, padding: 12, alignSelf: 'center', textAlign: 'center' }}>No novels found with this query.</Text>
+            <View style={{ position: 'relative',  justifyContent: 'center',  alignItems: 'center', paddingHorizontal: 20, paddingVertical: 40, marginTop: '50%'}}>
+                <Text style={{ color: appliedTheme.colors.text, fontSize: 24, textAlign: 'center'}}>
+                    No novels found with this search query
+                </Text>
+            </View>
           ) : (
             <FlatList
               data={novels}

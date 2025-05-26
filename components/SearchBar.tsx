@@ -67,9 +67,9 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearchChange }) => {
               <Ionicons name="close-outline" size={32} color={appliedTheme.colors.onSurfaceVariant} />
             </Pressable>
           )}
-          <Animated.View style={[{ transform: [{ rotate: rotateInterpolate }] }, styles.icon]}>
+          {/* <Animated.View style={[{ transform: [{ rotate: rotateInterpolate }] }, styles.icon]}>
             <Ionicons name="triangle-outline" size={26} color={appliedTheme.colors.onSurfaceVariant} onPress={toggleRotation} />
-          </Animated.View>
+          </Animated.View> */}
         </Pressable>
       </View>
       

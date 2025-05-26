@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { View, StyleSheet, Text, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import Slider from '@react-native-community/slider';
 import { MaterialIcons } from '@expo/vector-icons';
 import { saveReaderOptions, getReaderOptions } from '@/utils/asyncStorage';
+import debounce from 'lodash/debounce';
 
 interface ReaderOptionsProps {
   onOptionsChange: (options: { fontSize: number; lineHeight: number; textAlign: string; fontFamily: string }) => void;
@@ -12,9 +13,30 @@ interface ReaderOptionsProps {
 const FONT_PRESETS = ['serif', 'Roboto', 'monospace'];
 const TEXT_ALIGN_OPTIONS = ['left', 'center', 'right', 'justify'];
 
-const ReaderSetting: React.FC<ReaderOptionsProps> = ({ onOptionsChange }) => {
+// Memoized slider component that manages its own drag state
+const SettingSlider = React.memo(({
+  title,
+  value,
+  min,
+  max,
+  onCommit,
+  color,
+}: {
+  title: string;
+  value: number;
+  min: number;
+  max: number;
+  onCommit: (val: number) => void;
+  color: any;
+}) => {
+  const [internalValue, setInternalValue] = useState(value);
 
-  const SettingSlider = ({ title, value, min, max, onChange, color }: { title: string; value: number; min: number; max: number; onChange: (val: number) => void; color: any}) => (
+  // Sync external prop changes
+  useEffect(() => {
+    setInternalValue(value);
+  }, [value]);
+
+  return (
     <View style={styles.pullupModalItemContainer}>
       <Text style={[styles.pullupModalSettingTitle, { color: color.text }]}>{title}</Text>
       <View style={styles.pullupModalItemContainerInner}>
@@ -23,17 +45,20 @@ const ReaderSetting: React.FC<ReaderOptionsProps> = ({ onOptionsChange }) => {
           minimumValue={min}
           maximumValue={max}
           step={1}
-          value={value}
-          onSlidingComplete={onChange}
+          value={internalValue}
+          onValueChange={setInternalValue}
+          onSlidingComplete={onCommit}
           minimumTrackTintColor={color.primary}
           maximumTrackTintColor={color.text}
           thumbTintColor={color.primary}
         />
-        <Text style={{ color: color.text }}>{value}</Text>
+        <Text style={{ color: color.text }}>{internalValue}</Text>
       </View>
     </View>
   );
+});
 
+const ReaderSetting: React.FC<ReaderOptionsProps> = ({ onOptionsChange }) => {
   const { appliedTheme } = useThemeContext();
 
   const [options, setOptions] = useState({
@@ -44,21 +69,32 @@ const ReaderSetting: React.FC<ReaderOptionsProps> = ({ onOptionsChange }) => {
   });
   const [loading, setLoading] = useState(true);
 
-  const updateOptions = useCallback((newOptions: Partial<typeof options>) => {
-    setOptions((prev) => {
-      const updated = { ...prev, ...newOptions };
-      onOptionsChange(updated);
-      saveReaderOptions(updated);
-      return updated;
-    });
-  }, [onOptionsChange]);
+  // Debounce storage writes to avoid frequent IO
+  const debouncedSave = useMemo(
+    () => debounce((opts) => saveReaderOptions(opts), 500),
+    []
+  );
+
+  const updateOptions = useCallback(
+    (newOpts: Partial<typeof options>) => {
+      setOptions((prev) => {
+        const updated = { ...prev, ...newOpts };
+        onOptionsChange(updated);
+        debouncedSave(updated);
+        return updated;
+      });
+    },
+    [onOptionsChange, debouncedSave]
+  );
 
   useEffect(() => {
     const loadReaderOptions = async () => {
       try {
         const saved = await getReaderOptions();
         if (saved) {
-          updateOptions(JSON.parse(saved));
+          const parsed = JSON.parse(saved);
+          setOptions(parsed);
+          onOptionsChange(parsed);
         }
       } catch (error) {
         console.error('Error loading reader options', error);
@@ -67,7 +103,7 @@ const ReaderSetting: React.FC<ReaderOptionsProps> = ({ onOptionsChange }) => {
       }
     };
     loadReaderOptions();
-  }, [updateOptions]);
+  }, [onOptionsChange]);
 
   if (loading) {
     return (
@@ -84,7 +120,7 @@ const ReaderSetting: React.FC<ReaderOptionsProps> = ({ onOptionsChange }) => {
         value={options.fontSize}
         min={12}
         max={24}
-        onChange={(value) => updateOptions({ fontSize: value })}
+        onCommit={(val) => updateOptions({ fontSize: val })}
         color={appliedTheme.colors}
       />
 
@@ -93,7 +129,7 @@ const ReaderSetting: React.FC<ReaderOptionsProps> = ({ onOptionsChange }) => {
         value={options.lineHeight}
         min={18}
         max={32}
-        onChange={(value) => updateOptions({ lineHeight: value })}
+        onCommit={(val) => updateOptions({ lineHeight: val })}
         color={appliedTheme.colors}
       />
 
@@ -108,7 +144,10 @@ const ReaderSetting: React.FC<ReaderOptionsProps> = ({ onOptionsChange }) => {
                 color={appliedTheme.colors.text}
                 style={{
                   marginHorizontal: 12,
-                  backgroundColor: options.textAlign === alignment ? appliedTheme.colors.primary : 'transparent',
+                  backgroundColor:
+                    options.textAlign === alignment
+                      ? appliedTheme.colors.primary
+                      : 'transparent',
                   borderRadius: 4,
                 }}
               />
@@ -125,14 +164,17 @@ const ReaderSetting: React.FC<ReaderOptionsProps> = ({ onOptionsChange }) => {
           keyExtractor={(item) => item}
           renderItem={({ item: font }) => (
             <TouchableOpacity onPress={() => updateOptions({ fontFamily: font })}>
-              <View style={[
-                styles.fontPill,
-                {
-                  backgroundColor: options.fontFamily === font
-                    ? appliedTheme.colors.primary
-                    : appliedTheme.colors.elevation.level3,
-                }
-              ]}>
+              <View
+                style={[
+                  styles.fontPill,
+                  {
+                    backgroundColor:
+                      options.fontFamily === font
+                        ? appliedTheme.colors.primary
+                        : appliedTheme.colors.elevation.level3,
+                  },
+                ]}
+              >
                 <Text style={{ color: appliedTheme.colors.text }}>{font}</Text>
               </View>
             </TouchableOpacity>

@@ -103,54 +103,91 @@ const ScheduleNotification = () => {
   }, [])
 
   const handleSchedule = async () => {
+    if (!message.trim()) {
+        const validationError = 'The notification message cannot be empty.';
+        setModalVisible(true);
+        setModalContent(
+            <View style={{ width: 320, backgroundColor: appliedTheme.colors.surfaceVariant, padding: 12, borderRadius: 12 }}>
+                <Text style={{ color: appliedTheme.colors.text, fontSize: 22, marginBottom: 12 }}>Validation Error</Text>
+                <Text style={{ color: appliedTheme.colors.text }}>{validationError}</Text>
+                <View style={{ width: '100%', display: 'flex', alignItems: 'flex-end' }}>
+                    <TouchableOpacity
+                        style={[styles.button, { backgroundColor: appliedTheme.colors.primary, width: '20%', padding: 8 }]}
+                        onPress={handleModalClose}
+                    >
+                        <Text style={{ color: appliedTheme.colors.text }}>OK</Text>
+                    </TouchableOpacity>
+                </View>
+            </View>
+        );
+        return;
+    }
+
     try {
-      await Notifications.cancelAllScheduledNotificationsAsync();
+        await Notifications.cancelAllScheduledNotificationsAsync();
 
-      const trigger: Notifications.NotificationTriggerInput = {
-        type: Notifications.SchedulableTriggerInputTypes.DAILY, 
-        hour: time.getHours(),
-        minute: time.getMinutes(),
-      }
+        const trigger: Notifications.NotificationTriggerInput = {
+            type: Notifications.SchedulableTriggerInputTypes.DAILY,
+            hour: time.getHours(),
+            minute: time.getMinutes(),
+        };
 
-      const recurringReminderId = await Notifications.scheduleNotificationAsync({
-        content: {
-          title: 'LuxRead',
-          body: message,
-        },
-        trigger,
-      });
+        const recurringReminderId = await Notifications.scheduleNotificationAsync({
+            content: {
+                title: 'LuxRead',
+                body: message,
+            },
+            trigger,
+        });
 
-      const settingsToSave = {
-        message: message,
-        hour: time.getHours(),
-        minute: time.getMinutes(),
-        id: recurringReminderId
-      }
+        const settingsToSave = {
+            message: message,
+            hour: time.getHours(),
+            minute: time.getMinutes(),
+            id: recurringReminderId,
+        };
 
-      await saveUserReminder(settingsToSave);
-      setLocalUserReminder(settingsToSave);
-      
-      const scheduled = await Notifications.getAllScheduledNotificationsAsync();
-      console.log('Scheduled notifications inside of handleSchedule:', scheduled);
-      
-      setModalVisible(true);
-      setModalContent(
-        <View style={{ width: 320, backgroundColor: appliedTheme.colors.surfaceVariant, padding: 12, borderRadius: 8 }}>
-          <Text style={{color: appliedTheme.colors.text, fontSize: 22, marginBottom: 12}}>Success</Text>
-          <Text style={{color: appliedTheme.colors.text}}>Reminder scheduled for {time.getHours()}:{time.getMinutes().toString().padStart(2, '0')} daily</Text>
-          <View style={{width: '100%', display: 'flex', alignItems: 'flex-end'}}>
-            <TouchableOpacity
-              style={[styles.button, { backgroundColor: appliedTheme.colors.primary, width: '20%', padding: 8 }]}
-              onPress={handleModalClose}
-            >
-              <Text style={{color: appliedTheme.colors.text}}>OK</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      );
+        await saveUserReminder(settingsToSave);
+        setLocalUserReminder(settingsToSave);
+
+        const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+        console.log('Scheduled notifications inside of handleSchedule:', scheduled);
+
+        setModalVisible(true);
+        setModalContent(
+            <View style={{ width: 320, backgroundColor: appliedTheme.colors.surfaceVariant, padding: 12, borderRadius: 8 }}>
+                <Text style={{ color: appliedTheme.colors.text, fontSize: 22, marginBottom: 12 }}>Success</Text>
+                <Text style={{ color: appliedTheme.colors.text }}>
+                    Reminder scheduled for {time.getHours()}:{time.getMinutes().toString().padStart(2, '0')} daily
+                </Text>
+                <View style={{ width: '100%', display: 'flex', alignItems: 'flex-end' }}>
+                    <TouchableOpacity
+                        style={[styles.button, { backgroundColor: appliedTheme.colors.primary, width: '20%', padding: 8 }]}
+                        onPress={handleModalClose}
+                    >
+                        <Text style={{ color: appliedTheme.colors.text }}>OK</Text>
+                    </TouchableOpacity>
+                </View>
+            </View>
+        );
     } catch (err: any) {
-      console.error(err);
-      Alert.alert('Error', err.message || 'Could not schedule reminder');
+        console.error(err);
+        const error = err.message || 'Could not schedule reminder';
+        setModalVisible(true);
+        setModalContent(
+            <View style={{ width: 320, backgroundColor: appliedTheme.colors.surfaceVariant, padding: 12, borderRadius: 12 }}>
+                <Text style={{ color: appliedTheme.colors.text, fontSize: 22, marginBottom: 12 }}>Error</Text>
+                <Text style={{ color: appliedTheme.colors.text }}>{error}</Text>
+                <View style={{ width: '100%', display: 'flex', alignItems: 'flex-end' }}>
+                    <TouchableOpacity
+                        style={[styles.button, { backgroundColor: appliedTheme.colors.primary, width: '20%', padding: 8 }]}
+                        onPress={handleModalClose}
+                    >
+                        <Text style={{ color: appliedTheme.colors.text }}>OK</Text>
+                    </TouchableOpacity>
+                </View>
+            </View>
+        );
     }
   };
 

@@ -17,7 +17,8 @@ const Settings = () => {
           > 
             <View style={{ padding: 4, width: '100%', display: 'flex', flexDirection: 'row', alignItems: 'center'}}>
               <Entypo name="round-brush" color={appliedTheme.colors.primary} size={30} />    
-              <Text style={[styles.label, { color: appliedTheme.colors.text }]}>Appearance</Text>       
+              <Text style={[styles.label, { color: appliedTheme.colors.text }]}>Appearance</Text>      
+              <Text style={[styles.descriptiveLabel, {color: appliedTheme.colors.text, fontSize: 14}]}>Color theme, pure black mode</Text> 
             </View>
           </Pressable>
           <Pressable
@@ -27,7 +28,8 @@ const Settings = () => {
           > 
             <View style={{ padding: 4, width: '100%', display: 'flex', flexDirection: 'row', alignItems: 'center'}}>
               <Ionicons name="phone-portrait-outline" color={appliedTheme.colors.primary} size={30} />    
-              <Text style={[styles.label, { color: appliedTheme.colors.text }]}>Display</Text>       
+              <Text style={[styles.label, { color: appliedTheme.colors.text }]}>Display</Text>    
+              <Text style={[styles.descriptiveLabel, {color: appliedTheme.colors.text, fontSize: 14}]}>Novel row layout, novel title layout</Text>    
             </View>
           </Pressable>
           <Pressable
@@ -37,7 +39,8 @@ const Settings = () => {
           > 
             <View style={{ padding: 4, width: '100%', display: 'flex', flexDirection: 'row', alignItems: 'center'}}>
               <Ionicons name="book-outline" color={appliedTheme.colors.primary} size={30} />    
-              <Text style={[styles.label, { color: appliedTheme.colors.text }]}>Reading</Text>       
+              <Text style={[styles.label, { color: appliedTheme.colors.text }]}>Reading</Text>
+              <Text style={[styles.descriptiveLabel, {color: appliedTheme.colors.text, fontSize: 14}]}>Chapter text layout and styling</Text>    
             </View>
           </Pressable>
           <Pressable
@@ -47,7 +50,8 @@ const Settings = () => {
           > 
             <View style={{ padding: 4, width: '100%', display: 'flex', flexDirection: 'row', alignItems: 'center'}}>
               <Entypo name="database" color={appliedTheme.colors.primary} size={30} />    
-              <Text style={[styles.label, { color: appliedTheme.colors.text }]}>Database</Text>       
+              <Text style={[styles.label, { color: appliedTheme.colors.text }]}>Database</Text>     
+              <Text style={[styles.descriptiveLabel, {color: appliedTheme.colors.text, fontSize: 14}]}>Clear database tables</Text>    
             </View>
           </Pressable>
           <Pressable
@@ -57,7 +61,8 @@ const Settings = () => {
           > 
             <View style={{ padding: 4, width: '100%', display: 'flex', flexDirection: 'row', alignItems: 'center'}}>
               <Entypo name="bell" color={appliedTheme.colors.primary} size={30} />    
-              <Text style={[styles.label, { color: appliedTheme.colors.text }]}>Notifications</Text>       
+              <Text style={[styles.label, { color: appliedTheme.colors.text }]}>Notifications</Text>    
+              <Text style={[styles.descriptiveLabel, {color: appliedTheme.colors.text, fontSize: 14}]}>Set daily reminder notifications</Text>     
             </View>
           </Pressable>
           <Pressable
@@ -67,7 +72,8 @@ const Settings = () => {
           > 
             <View style={{ padding: 4, width: '100%', display: 'flex', flexDirection: 'row', alignItems: 'center'}}>
               <Entypo name="info" color={appliedTheme.colors.primary} size={30} />    
-              <Text style={[styles.label, { color: appliedTheme.colors.text }]}>About</Text>       
+              <Text style={[styles.label, { color: appliedTheme.colors.text }]}>About</Text>    
+              <Text style={[styles.descriptiveLabel, {color: appliedTheme.colors.text, fontSize: 14}]}>Contacts, GitHub repository, app version</Text>     
             </View>
           </Pressable>
         </ScrollView>
@@ -94,6 +100,12 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 24,
     marginLeft: 14,
+    marginBottom: 14
+  },
+  descriptiveLabel: {
+    position: "absolute",
+    top: 34,
+    left: 48,
   },
   header: {
     fontSize: 32,
