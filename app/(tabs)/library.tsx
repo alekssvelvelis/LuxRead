@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { StyleSheet, View, Text, ScrollView, Dimensions, TouchableOpacity, TextStyle } from 'react-native';
 import SearchBar from '@/components/SearchBar';
 import { useThemeContext } from '@/contexts/ThemeContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { useNovelRowsContext } from '@/contexts/NovelRowsContext';
 import { useNovelLayoutContext } from '@/contexts/NovelLayoutContext';
@@ -22,7 +23,15 @@ interface Data{
 }
 
 export default function Library() {
+  const getallKeys = async() => {
+    // await AsyncStorage.removeItem('isFirstLaunch');
+    let keys = await AsyncStorage.getAllKeys();
+    let results = await AsyncStorage.multiGet(keys);
+    console.log(results);
+
+  }
   useEffect(() => {
+    getallKeys();
     const hideSplash = async () => {
       await SplashScreen.hideAsync();
     };
@@ -35,7 +44,6 @@ export default function Library() {
     // dropTable('novelChapters');
     // dropTable('sources');
     // dropTable('downloadedChapters');
-    // console.log(JSON.stringify(getTableStructure('sources'), null, 2));
     // setupNovelChaptersTable();
     // setupLibraryNovelsTable();
     // setupSourcesTable();
