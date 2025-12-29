@@ -7,7 +7,7 @@ const PureBlackToggle = () => {
     const onToggle = async () => {
         setPureBlack(!isPureBlack);
     };
-
+    
     return (
         <View style={styles.container}>
             <Text style={[styles.label, { color: appliedTheme.colors.text }]}>

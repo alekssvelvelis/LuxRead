@@ -20,7 +20,7 @@ export default () => {
             tabBarActiveTintColor: appliedTheme.colors.primary,
             tabBarInactiveTintColor: appliedTheme.colors.text.primary,
             tabBarStyle: {
-                height: 100,
+                height: 70,
                 backgroundColor: appliedTheme.colors.elevation.level4,
                 borderTopWidth: 0,
             },

@@ -1,5 +1,8 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Pressable, StatusBar } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { SystemBars } from 'react-native-edge-to-edge';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Pressable, StatusBar, BackHandler } from 'react-native';
 
 import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
 import { upsertNovelChapter } from '@/database/ExpoDB';
@@ -17,7 +20,6 @@ import ChapterSkeleton from '@/components/skeletons/ChapterSkeleton';
 import { useSpeech } from '@/hooks/useSpeech';
 
 import { getDownloadedChapterContent } from '@/database/ExpoDB';
-import { BackHandler } from 'react-native';
 
 interface Content {
   title: string;
@@ -51,7 +53,8 @@ const ChapterPage = () => {
   const [readerModalVisible, setReaderModalVisible] = useState<boolean>(false);
 
   const { isConnected } = useNetwork();
-  const { appliedTheme } = useThemeContext();
+  const { appliedTheme, theme } = useThemeContext();
+  const insets = useSafeAreaInsets();
   const propData = useLocalSearchParams<typeSearchParams>();
   const chapterPageURL: string | string[] = propData.chapterPageURL;
   const sourceName: string | string[] = propData.sourceName;
@@ -69,16 +72,6 @@ const ChapterPage = () => {
       fontFamily: 'Roboto',
   });
 
-
-  const resetStatusBarColor = useCallback(() => {
-    StatusBar.setBackgroundColor(appliedTheme.colors.elevation.level2, true);
-  }, [appliedTheme.colors.elevation.level2]);
-
-  useEffect(() => {
-    return () => {
-      resetStatusBarColor();
-    };
-  }, [resetStatusBarColor]);
 
   useEffect(() => {
       const loadReaderOptions = async () => {
@@ -172,18 +165,20 @@ const ChapterPage = () => {
     }
   }, [fetchFunctions, chapterPageURL, sourceName]);
 
-  console.log(content);
 
   const handleBackPress = () => {
     router.back();
   };
 
-  
-
   const toggleOverlay = () => {
     setIsOverlayVisible(!isOverlayVisible);
-    StatusBar.setBackgroundColor(isOverlayVisible ? appliedTheme.colors.elevation.level2 : appliedTheme.colors.elevation.level3, true);
   };
+
+  const pickStatusBarStyle = () => {
+    StatusBar.setBackgroundColor(rgbToRgba(appliedTheme.colors.elevation.level3, 0.2), true);
+    if(theme.startsWith('light')) return 'dark';
+    if(theme.startsWith('dark')) return 'light';
+  }
 
   const handleReaderOptionsOpen = () => {
     setReaderModalVisible(!readerModalVisible);
@@ -294,8 +289,15 @@ const ChapterPage = () => {
   }
   return (
     <View style={{ flex: 1 }}>
+      <SystemBars 
+         hidden={{
+          statusBar: !isOverlayVisible,
+          navigationBar: true,
+        }}
+        style={pickStatusBarStyle()}
+      />
       {isOverlayVisible && (
-        <View style={[styles.header, { backgroundColor: overlayBackgroundColor, flexDirection: 'row' }]}>
+        <View style={[styles.header, { backgroundColor: overlayBackgroundColor, flexDirection: 'row', height: 50+insets.top, paddingTop: insets.top }]}>
           <View style={{flex: 1, flexDirection: 'row', marginBottom: 6}}>
             <Ionicons name={'arrow-back'} size={32} color={appliedTheme.colors.text} style={{ marginLeft: '2%' }} onPress={() => handleSaveChapterData(title, scrollPercentage, chapterIndex)} />
             <Text style={{ color: appliedTheme.colors.text, fontSize: 20, marginBottom: 4, marginLeft: 12, maxWidth: '75%' }} numberOfLines={1}>{content.title.trim()}</Text>
@@ -303,6 +305,7 @@ const ChapterPage = () => {
           </View>
         </View>
       )}
+
       <ScrollView
         ref={scrollViewRef}
         contentContainerStyle={[styles.container, { backgroundColor: appliedTheme.colors.elevation.level2 }]}
@@ -358,6 +361,7 @@ const ChapterPage = () => {
           </TouchableOpacity>
         </Pressable>
       </ScrollView>
+
 
       {isOverlayVisible && (
         <View style={[styles.footer, { backgroundColor: overlayBackgroundColor }]}>

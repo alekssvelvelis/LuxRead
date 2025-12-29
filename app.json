@@ -37,6 +37,7 @@
       "expo-router",
       "expo-font",
       "expo-notifications",
+      "react-native-edge-to-edge",
       [
         "expo-splash-screen",
         {
