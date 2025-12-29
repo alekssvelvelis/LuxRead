@@ -4,6 +4,7 @@ import { Stack } from "expo-router";
 import AppContextProvider from "@/contexts/AppContextProvider";
 import { useThemeContext } from '@/contexts/ThemeContext';
 import * as SplashScreen from 'expo-splash-screen';
+import { SystemBars } from "react-native-edge-to-edge";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -19,6 +20,7 @@ function StackNavigator() {
     const { appliedTheme } = useThemeContext();
     return (
         <View style={{ flexGrow: 1, backgroundColor: appliedTheme.colors.elevation.level2 }}>
+            <SystemBars hidden={true} />
             <Stack screenOptions={{
                 contentStyle: { backgroundColor: appliedTheme.colors.elevation.level4}
             }}>
