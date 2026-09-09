@@ -45,8 +45,8 @@
     "jest-expo": "~55.0.22",
     "lodash": "^4.17.21",
     "p-limit": "^6.1.0",
-    "react": "19.2.3",
-    "react-dom": "19.2.3",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
     "react-native": "0.86.3",
     "react-native-cheerio": "^1.0.0-rc.4",
     "react-native-edge-to-edge": "^1.7.0",
@@ -59,7 +59,7 @@
     "react-native-shimmer-placeholder": "^2.0.9",
     "react-native-webview": "13.16.1",
     "react-native-worklets": "0.10.1",
-    "user-agents": "^1.1.476"
+    "user-agents": "^2.1.178"
   },
   "devDependencies": {
     "@babel/core": "^7.29.0",
