@@ -7,7 +7,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { TextInput, TouchableRipple } from 'react-native-paper';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import ModalComponent from '../ModalComponent';
-import { getUserReminder, saveUserReminder, removeItem } from '@/utils/asyncStorage';
+import { getUserReminder, saveUserReminder, mmkv } from '@/utils/mmkv';
 
 interface UserReminder {
   message: string,
@@ -200,7 +200,7 @@ const ScheduleNotification = () => {
     if (localUserReminder.id) {
       // await Notifications.cancelAllScheduledNotificationsAsync();
       await Notifications.cancelScheduledNotificationAsync(localUserReminder.id);
-      await removeItem('userReminder');
+      mmkv.remove('userReminder');
       setModalContent(
         <View style={{ width: 320, backgroundColor: appliedTheme.colors.surfaceVariant, padding: 12, borderRadius: 12 }}>
           <Text style={{color: appliedTheme.colors.text, fontSize: 22, marginBottom: 12}}>Cancelled</Text>

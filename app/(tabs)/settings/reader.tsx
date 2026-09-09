@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import ReaderSetting from '@/components/settings/ReaderSetting';
 import { useThemeContext } from '@/contexts/ThemeContext';
-import { getReaderOptions } from '@/utils/asyncStorage';
+import { getReaderOptions } from '@/utils/mmkv';
 
 interface ReaderOptions {
   fontSize: number;

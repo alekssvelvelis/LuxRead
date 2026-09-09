@@ -11,7 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { useNetwork } from '@/contexts/NetworkContext';
 import getSourceFunctions from '@/utils/getSourceFunctions';
-import { getReaderOptions } from '@/utils/asyncStorage';
+import { getReaderOptions } from '@/utils/mmkv';
 import { rgbToRgba } from '@/utils/rgbToRgba';
 
 import { PullUpModal } from '@/components/PullUpModal';

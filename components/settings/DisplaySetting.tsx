@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, Text, Dimensions, Pressable } from 'react-native';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { Button, RadioButton, Text as PaperText } from 'react-native-paper';
-import { saveNovelRows, getNovelRows, saveNovelLayout, getNovelLayout } from '@/utils/asyncStorage';
+import { saveNovelRows, getNovelRows, saveNovelLayout, getNovelLayout } from '@/utils/mmkv';
 import ModalComponent from '../ModalComponent';
 
 const DisplaySetting = ({ onNovelRowsChange, onNovelLayoutChange }: { onNovelRowsChange: (rows: string) => void, onNovelLayoutChange: (layout: string) => void }) => {

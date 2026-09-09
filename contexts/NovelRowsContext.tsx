@@ -1,20 +1,20 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
-import { saveItem, getItem } from '@/utils/asyncStorage';
+import { saveNovelRows, getNovelRows } from '@/utils/mmkv';
 
 type NovelRowsContextType = {
-    value: string;
-    setValue: (value: string) => void;
+    value: number;
+    setValue: (value: number) => void;
 };
 
 const NovelRowsContext = createContext<NovelRowsContextType | undefined>(undefined);
 
 export const NovelRowsProvider = ({ children }: { children: ReactNode }) => {
-    const [value, setValue] = useState<string>('1'); // Initial value for TS
+    const [value, setValue] = useState<number>(1); // Initial value for TS
 
     useEffect(() => {
         const loadNovelRows = async () => {
             try {
-                const savedValue = await getItem('NovelRows');
+                const savedValue = await getNovelRows();
                 if (savedValue) {
                     setValue(savedValue);
                 }
@@ -26,9 +26,9 @@ export const NovelRowsProvider = ({ children }: { children: ReactNode }) => {
         loadNovelRows();
     }, []);
 
-    const updateValue = async (newValue: string) => {
+    const updateValue = async (newValue: number) => {
         setValue(newValue);
-        await saveItem('NovelRows', newValue);
+        await saveNovelRows(newValue);
     };
 
     return (

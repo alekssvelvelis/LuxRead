@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { getNovelLayout } from '@/utils/asyncStorage';
+import { getNovelLayout } from '@/utils/mmkv';
 
 const NovelLayoutContext = createContext<{ value: string; setNovelLayoutValue: (layout: string) => void }>({
     value: 'Title under novel',

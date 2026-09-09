@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { lightTheme, darkTheme, pureBlackTheme, subThemes } from '@/constants/themes';
-import { getUserTheme, saveUserTheme, getIsDarkMode, saveIsDarkMode } from '@/utils/asyncStorage';
+import { getUserTheme, saveUserTheme, getIsDarkMode, saveIsDarkMode } from '@/utils/mmkv';
 import { useColorScheme } from 'react-native';
 
 type ThemeContextType = {

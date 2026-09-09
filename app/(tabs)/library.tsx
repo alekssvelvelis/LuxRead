@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { StyleSheet, View, Text, ScrollView, Dimensions, TouchableOpacity, TextStyle } from 'react-native';
 import SearchBar from '@/components/SearchBar';
 import { useThemeContext } from '@/contexts/ThemeContext';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { useNovelRowsContext } from '@/contexts/NovelRowsContext';
 import { useNovelLayoutContext } from '@/contexts/NovelLayoutContext';
@@ -10,8 +9,10 @@ import { useNovelLayoutContext } from '@/contexts/NovelLayoutContext';
 import { useRouter, useFocusEffect } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { Image } from 'expo-image'
+
 import { getAllLibraryNovels, deleteLibraryNovel, deleteNovelChapters } from '@/database/ExpoDB';
 import { dropTable, setupDownloadedChaptersTable, setupLibraryNovelsTable, setupNovelChaptersTable, setupSourcesTable } from '@/database/ExpoDB';
+import { mmkv } from '@/utils/mmkv';
 interface Data{
     id: number;
     title: string;
@@ -24,10 +25,10 @@ interface Data{
 
 export default function Library() {
   const getallKeys = async() => {
-    // await AsyncStorage.removeItem('isFirstLaunch');
-    let keys = await AsyncStorage.getAllKeys();
-    let results = await AsyncStorage.multiGet(keys);
-    console.log(results);
+    // mmkv.remove('isFirstLaunch');
+    // let keys = mmkv.getAllKeys();
+    // // let results = mmkv.multiGet(keys);
+    // console.log(results);
 
   }
   useEffect(() => {

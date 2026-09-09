@@ -3,7 +3,7 @@ import { View, StyleSheet, Text, FlatList, TouchableOpacity, ActivityIndicator }
 import { useThemeContext } from '@/contexts/ThemeContext';
 import Slider from '@react-native-community/slider';
 import { MaterialIcons } from '@expo/vector-icons';
-import { saveReaderOptions, getReaderOptions } from '@/utils/asyncStorage';
+import { saveReaderOptions, getReaderOptions } from '@/utils/mmkv';
 import debounce from 'lodash/debounce';
 
 interface ReaderOptionsProps {
