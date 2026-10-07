@@ -1,11 +1,13 @@
 import React, { createContext, useState, useEffect, useContext, ReactNode } from 'react';
 import NetInfo, { NetInfoState } from '@react-native-community/netinfo';
 
-const NetworkContext = createContext({
-    isConnected: true,
-});
+type NetworkContextType = {
+    isConnected: boolean | null,
+}
+const NetworkContext = createContext<NetworkContextType | undefined>(undefined);
 
-export const NetworkProvider = ({children}:  { children: ReactNode } ) => {
+
+export const NetworkProvider = ({children}:  { children: ReactNode }) => {
     const [isConnected, setIsConnected] = useState<boolean>(true);
 
     useEffect(() => {

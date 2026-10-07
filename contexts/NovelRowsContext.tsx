@@ -9,7 +9,7 @@ type NovelRowsContextType = {
 const NovelRowsContext = createContext<NovelRowsContextType | undefined>(undefined);
 
 export const NovelRowsProvider = ({ children }: { children: ReactNode }) => {
-    const [value, setValue] = useState<number>(1); // Initial value for TS
+    const [value, setValue] = useState<number>(1);
 
     useEffect(() => {
         const loadNovelRows = async () => {

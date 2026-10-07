@@ -1,15 +1,16 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { getNovelLayout } from '@/utils/mmkv';
 
-const NovelLayoutContext = createContext<{ value: string; setNovelLayoutValue: (layout: string) => void }>({
-    value: 'Title under novel',
-    setNovelLayoutValue: () => {},
-});
+type NovelLayoutContextType = {
+    value: string;
+    setNovelLayoutValue: (value: string) => void;
+};
 
+const NovelLayoutContext = createContext<NovelLayoutContextType | undefined>(undefined);
 
-
-export const NovelLayoutProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const NovelLayoutProvider = ({children}:  { children: ReactNode }) =>  {
     const [value, setNovelLayoutValue] = useState<string>('Title under novel');
+    
     useEffect(() => {
         const loadNovelLayout = async () => {
             try {
