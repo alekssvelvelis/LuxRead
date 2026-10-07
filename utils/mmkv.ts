@@ -1,4 +1,4 @@
-import { createMMKV } from 'react-native-mmkv'
+import { createMMKV } from 'react-native-mmkv';
 
 export const mmkv = createMMKV();
 
@@ -9,98 +9,84 @@ const KEYS = {
   NOVEL_ROWS: 'novelRows',
   PURE_BLACK_MODE: 'isPureBlackActive',
   USER_REMINDER: 'userReminder',
-  NOVEL_LAYOUT: 'novelLayout'
+  NOVEL_LAYOUT: 'novelLayout',
 } as const;
 
-export const clearMMKVStorage = () => {
-  try {
-    mmkv.clearAll();
-  } catch (error) {
-    console.error('Error clearing storage', error);
-  }
-};
+// ---------- Generic helpers ----------
 
-const saveMMKVItem = (key: string, value: string | number | boolean | object) => {
+const safe = <T>(label: string, fn: () => T): T | undefined => {
   try {
-    let saveValue = typeof value === 'string' ? value : JSON.stringify(value);
-    mmkv.set(key, saveValue);
+    return fn();
   } catch (error) {
-    console.error(`Error saving MMKV item ${key}`, error);
-  }
-};
-
-const saveMMKVObject = (key: string, value: object) => {
-  try {
-    saveMMKVItem(key, JSON.stringify(value));
-  } catch (error) {
-    console.error(`Error saving MMKV item ${key}`, error);
-  }
-}
-
-const getMMKVString = (key: string): string | undefined => {
-  try {
-    return mmkv.getString(key);
-  } catch (error) {
-    console.error(`Error getting MMKV string ${key}`, error);
+    console.error(label, error);
     return undefined;
   }
 };
 
-const getMMKVNumber = (key: string): number | undefined => {
-  try {
-    return mmkv.getNumber(key);
-  } catch (error) {
-    console.error(`Error getting MMKV number ${key}`, error);
-    return undefined;
-  }
+const setPrimitive = (key: string, value: string | number | boolean) =>
+  safe(`Error saving MMKV item ${key}`, () => mmkv.set(key, value));
+
+const setObject = (key: string, value: object) =>
+  safe(`Error saving MMKV object ${key}`, () =>
+    mmkv.set(key, JSON.stringify(value))
+  );
+
+const getString = (key: string) =>
+  safe(`Error getting MMKV string ${key}`, () => mmkv.getString(key));
+
+const getNumber = (key: string) =>
+  safe(`Error getting MMKV number ${key}`, () => mmkv.getNumber(key));
+
+const getBoolean = (key: string) =>
+  safe(`Error getting MMKV boolean ${key}`, () => mmkv.getBoolean(key));
+
+const getObject = <T extends object = object>(key: string): T | undefined => {
+  const raw = getString(key);
+  if (raw === undefined) return undefined;
+  return safe(`Error parsing MMKV object ${key}`, () => JSON.parse(raw) as T);
 };
 
-const getMMKVBoolean = (key: string): boolean | undefined => {
-  try {
-    return mmkv.getBoolean(key);
-  } catch (error) {
-    console.error(`Error getting MMKV boolean ${key}`, error);
-    return undefined;
-  }
-};
+// ---------- Public API ----------
 
-const getMMKVObject = (key: string): object | undefined => {
-  const object = getMMKVString(key);
-  if(object === undefined) return undefined;
-  try {
-    return JSON.parse(object);
-  } catch (error) {
-    console.error(`Error parsing MMKV object ${key}`, error);
-    return undefined;
-  }
-}
+export const clearMMKVStorage = () =>
+  safe('Error clearing storage', () => mmkv.clearAll());
 
-export const removeItem = async (key: string) => {
-  try {
-    mmkv.remove(key);
-  } catch (error) {
-    console.error(`Error removing ${key}`, error);
-  }
-};
+export const removeItem = (key: string) =>
+  safe(`Error removing ${key}`, () => mmkv.remove(key));
 
-export const saveOnboardingDone = async (onboarding: number) => saveMMKVItem(KEYS.ONBOARDING_DONE, onboarding);
-export const getOnboardingDone = async (): Promise<number | undefined> => getMMKVNumber(KEYS.ONBOARDING_DONE);
+export const saveOnboardingDone = (onboarding: number) =>
+  setPrimitive(KEYS.ONBOARDING_DONE, onboarding);
+export const getOnboardingDone = (): number | undefined =>
+  getNumber(KEYS.ONBOARDING_DONE);
 
-export const saveUserTheme = async (theme: string) => saveMMKVItem(KEYS.THEME_KEY, theme);
-export const getUserTheme = async (): Promise<string | undefined> => getMMKVString(KEYS.THEME_KEY);
+export const saveUserTheme = (theme: string) =>
+  setPrimitive(KEYS.THEME_KEY, theme);
+export const getUserTheme = (): string | undefined =>
+  getString(KEYS.THEME_KEY);
 
-export const saveReaderOptions = async (options: object) => saveMMKVItem(KEYS.READER_OPTIONS_KEY, JSON.stringify(options));
-export const getReaderOptions = async (): Promise<string | undefined> => getMMKVString(KEYS.READER_OPTIONS_KEY);
+export const saveReaderOptions = (options: object) =>
+  setObject(KEYS.READER_OPTIONS_KEY, options);
+export const getReaderOptions = <T extends object = object>(): T | undefined =>
+  getObject<T>(KEYS.READER_OPTIONS_KEY);
 
-export const saveNovelRows = async(number: number) => saveMMKVItem(KEYS.NOVEL_ROWS, number);
-export const getNovelRows = async(): Promise<number | undefined> => getMMKVNumber(KEYS.NOVEL_ROWS);
+export const saveNovelRows = (rows: number) =>
+  setPrimitive(KEYS.NOVEL_ROWS, rows);
+export const getNovelRows = (): number | undefined =>
+  getNumber(KEYS.NOVEL_ROWS);
 
-export const saveNovelLayout = async (layout: string) => saveMMKVItem(KEYS.NOVEL_LAYOUT, layout);
-export const getNovelLayout = async (): Promise<string | undefined> => getMMKVString(KEYS.NOVEL_LAYOUT);
+export const saveNovelLayout = (layout: string) =>
+  setPrimitive(KEYS.NOVEL_LAYOUT, layout);
+export const getNovelLayout = (): string | undefined =>
+  getString(KEYS.NOVEL_LAYOUT);
 
-export const saveIsDarkMode = async (enabled: boolean) =>  saveMMKVItem(KEYS.PURE_BLACK_MODE, enabled);
-export const getIsDarkMode = async (): Promise<boolean | undefined> => getMMKVBoolean(KEYS.PURE_BLACK_MODE);
+// NOTE: despite the name, this stores PURE_BLACK_MODE. Consider renaming
+// to savePureBlackMode / getPureBlackMode.
+export const savePureBlackMode = (enabled: boolean) =>
+  setPrimitive(KEYS.PURE_BLACK_MODE, enabled);
+export const getPureBlackMode = (): boolean | undefined =>
+  getBoolean(KEYS.PURE_BLACK_MODE);
 
-export const saveUserReminder = async (reminder: object) => saveMMKVItem(KEYS.USER_REMINDER, JSON.stringify(reminder));
-export const getUserReminder = async (): Promise<object | undefined> => getMMKVObject(KEYS.USER_REMINDER);
-
+export const saveUserReminder = (reminder: object) =>
+  setObject(KEYS.USER_REMINDER, reminder);
+export const getUserReminder = <T extends object = object>(): T | undefined =>
+  getObject<T>(KEYS.USER_REMINDER);

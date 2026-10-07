@@ -32,7 +32,7 @@ export const NovelLayoutProvider = ({children}:  { children: ReactNode }) =>  {
     );
 };
 
-export const useNovelLayout = () => {
+export const useNovelLayoutContext = () => {
     const context = useContext(NovelLayoutContext);
     if (!context) {
         throw new Error('useNovelLayout must be used within NovelLayoutContext');
