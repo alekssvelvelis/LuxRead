@@ -41,7 +41,7 @@ export const NovelRowsProvider = ({ children }: { children: ReactNode }) => {
 export const useNovelRowsContext = () => {
     const context = useContext(NovelRowsContext);
     if (!context) {
-        throw new Error('useNovelRowsContext must be used within a NovelRowsProvider');
+        throw new Error('useNovelRowsContext must be used within NovelRowsProvider');
     }
     return context;
 };

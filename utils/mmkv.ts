@@ -3,6 +3,7 @@ import { createMMKV } from 'react-native-mmkv'
 export const mmkv = createMMKV();
 
 const KEYS = {
+  ONBOARDING_DONE: 'onboardingDone',
   THEME_KEY: 'userTheme',
   READER_OPTIONS_KEY: 'readerOptions',
   NOVEL_ROWS: 'novelRows',
@@ -81,6 +82,9 @@ export const removeItem = async (key: string) => {
     console.error(`Error removing ${key}`, error);
   }
 };
+
+export const saveOnboardingDone = async (onboarding: number) => saveMMKVItem(KEYS.ONBOARDING_DONE, onboarding);
+export const getOnboardingDone = async (): Promise<number | undefined> => getMMKVNumber(KEYS.ONBOARDING_DONE);
 
 export const saveUserTheme = async (theme: string) => saveMMKVItem(KEYS.THEME_KEY, theme);
 export const getUserTheme = async (): Promise<string | undefined> => getMMKVString(KEYS.THEME_KEY);

@@ -6,11 +6,11 @@ const NetworkContext = createContext({
 });
 
 export const NetworkProvider = ({children}:  { children: ReactNode } ) => {
-    const [isConnected, setIsConnected] = useState<boolean | null>(null);
+    const [isConnected, setIsConnected] = useState<boolean>(true);
 
     useEffect(() => {
         const unsubscribe = NetInfo.addEventListener((state: NetInfoState) => {
-            setIsConnected(state.isConnected);
+            setIsConnected(state.isConnected !== false);
         });
 
         return () => {
@@ -28,5 +28,10 @@ export const NetworkProvider = ({children}:  { children: ReactNode } ) => {
     );
 };
 
-// Custom hook to utilize the network context in other components
-export const useNetwork = () => useContext(NetworkContext);
+export const useNetwork = () => {
+    const context = useContext(NetworkContext);
+    if (!context) {
+        throw new Error('useNetwork must be used within NetworkContext');
+    }
+    return context;
+};

@@ -31,4 +31,10 @@ export const NovelLayoutProvider: React.FC<{ children: React.ReactNode }> = ({ c
     );
 };
 
-export const useNovelLayoutContext = () => useContext(NovelLayoutContext);
+export const useNovelLayout = () => {
+    const context = useContext(NovelLayoutContext);
+    if (!context) {
+        throw new Error('useNovelLayout must be used within NovelLayoutContext');
+    }
+    return context;
+}

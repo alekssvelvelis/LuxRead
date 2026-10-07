@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { mmkv } from '@/utils/mmkv';
+import { removeItem, getOnboardingDone, saveOnboardingDone } from '@/utils/mmkv';
 import { setupNovelChaptersTable, setupLibraryNovelsTable, setupSourcesTable, setupDownloadedChaptersTable } from '@/database/ExpoDB';
 
-const FIRST_LAUNCH_KEY = 'isFirstLaunch';
+const ONBOARDING_KEY = 'onboardingDone';
  
 const resetFirstLaunch = () => {
   try {
-    mmkv.remove(FIRST_LAUNCH_KEY);
-    console.log('First launch flag reset successfully');
+    removeItem(ONBOARDING_KEY);
+    console.log('First launch flag "onboardingDone" reset successfully');
   } catch (error) {
     console.error('Error resetting first launch flag', error);
   }
@@ -21,24 +21,27 @@ const FirstLaunchSetup: React.FC<{ children: React.ReactNode }> = ({ children })
 
   useEffect(() => {
     const initializeApp = async () => {
-      let isFirstLaunch: boolean | undefined = undefined;
+      let isOnboardingDone: number | undefined = undefined;
       try {
-        isFirstLaunch =  mmkv.getBoolean(FIRST_LAUNCH_KEY);
-        console.log('first launch');
-        if(!isFirstLaunch) return;
+        isOnboardingDone = await getOnboardingDone();
+        console.log('checking onboardingDone flag');
+        if(isOnboardingDone){
+          console.log('onboarding already complete');
+          return;
+        }
 
-        console.log('first launch is null');
+        console.log('first launch = true, running onboarding');
         await setupNovelChaptersTable();
         await setupLibraryNovelsTable();
         await setupSourcesTable();
         await setupDownloadedChaptersTable();
-        mmkv.set(FIRST_LAUNCH_KEY, false);
+        saveOnboardingDone(1);
 
       } catch (error) {
-        console.error('Error during first launch setup', error);
+        console.error('Error during first launch onboarding', error);
       } finally {
         setIsLoading(false);
-        // console.log('first launch finally');
+        console.log('first launch onboarding done');
       }
     };
 
