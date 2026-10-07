@@ -1,7 +1,17 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, ReactNode } from 'react';
+import { useColorScheme } from 'react-native';
 import { lightTheme, darkTheme, pureBlackTheme, subThemes } from '@/constants/themes';
 import { getUserTheme, saveUserTheme, getPureBlackMode, savePureBlackMode } from '@/utils/mmkv';
-import { useColorScheme } from 'react-native';
+
+type SubTheme = keyof typeof subThemes;
+type PrimaryTheme = "light" | "dark"
+type ThemeName = `${PrimaryTheme}-${SubTheme}`
+
+const isValidTheme = (value: unknown): value is ThemeName => {
+  if (typeof value !== 'string') return false;
+  const [primary, sub] = value.split('-');
+  return (primary === 'light' || primary === 'dark') && sub in subThemes;
+}
 
 type ThemeContextType = {
   theme: string;
@@ -16,49 +26,48 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   const systemTheme = useColorScheme() ?? 'light';
   const [theme, setTheme] = useState<string>(`${systemTheme}-default`);
-  const [isPureBlack, setPureBlack] = useState<boolean | null>(null);
+  const [isPureBlack, setPureBlack] = useState<boolean>(false);
+  const [hydrated, setHydrated] = useState<boolean>(false);
   
   useEffect(() => {
-    const loadSettings = async () => {
-      const savedTheme = await getUserTheme();
-      const savedPureBlack = await getPureBlackMode();
-      if(savedTheme) setTheme(savedTheme);
-      if(savedPureBlack) setPureBlack(savedPureBlack);
-    };
-    loadSettings();
-  }, []);
+    (async() => {
+      try {
+        const [savedTheme, savedPureBlack] = await Promise.all([
+          getUserTheme(),
+          getPureBlackMode(),
+        ]);
+        if (isValidTheme(savedTheme)) setTheme(savedTheme);
+        if (typeof isPureBlack === 'boolean') setPureBlack(savedPureBlack ? savedPureBlack : false);
+      } catch (error) {
+        console.error('Error fetching user theme ',error)
+      } finally {
+        setHydrated(true);
+      }
+    });
+  }, [])
 
   useEffect(() => {
-    saveUserTheme(theme);
-  }, [theme]);
+    if (hydrated) saveUserTheme(theme);
+  },[theme, hydrated]);
 
   useEffect(() => {
-    if (isPureBlack !== null && isPureBlack !== undefined) {
-      savePureBlackMode(isPureBlack);
-    }
-  }, [isPureBlack]);
+    if (hydrated) savePureBlackMode(isPureBlack);
+  },[isPureBlack, hydrated]);
 
-  const [primaryTheme, subThemeName] = theme.split('-') as ['light' | 'dark', 'ruby' | 'aquamarine' | 'citrine'];
+  const appliedTheme = useMemo(() => {
+    const [primary, subName] = theme.split("-") as [PrimaryTheme, SubTheme];
+    let base = primary === 'light' ? lightTheme : darkTheme;
+    if (primary === 'dark' && isPureBlack) base = pureBlackTheme;
+    const sub = subThemes[subName];
+    return {  ...base, ...sub, colors: { ...base.colors, ...sub.colors }};
+  }, [theme, isPureBlack]);
+
+  const value = useMemo(
+    () => ({ theme, setTheme, isPureBlack, setPureBlack, appliedTheme }),
+    [theme, appliedTheme, isPureBlack]
+  )
   
-  let baseTheme = primaryTheme === 'light' ? lightTheme : darkTheme;
-  if (primaryTheme === 'dark' && isPureBlack) {
-    baseTheme = pureBlackTheme;
-  }
-
-  const appliedTheme = {
-    ...baseTheme,
-    ...subThemes[subThemeName],
-    colors: {
-      ...baseTheme.colors,
-      ...(subThemes[subThemeName]?.colors ?? {}),
-    },
-  };
-
-  return (
-    <ThemeContext.Provider value={{ theme, setTheme, appliedTheme, isPureBlack, setPureBlack }}>
-      {children}
-    </ThemeContext.Provider>
-  );
+  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
 };
 
 export const useThemeContext = () => {
