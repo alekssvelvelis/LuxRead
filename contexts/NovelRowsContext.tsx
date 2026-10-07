@@ -9,7 +9,7 @@ type NovelRowsContextType = {
 const NovelRowsContext = createContext<NovelRowsContextType | undefined>(undefined);
 
 export const NovelRowsProvider = ({ children }: { children: ReactNode }) => {
-    const [value, setValue] = useState<number>(1); // Initial value for TS
+    const [value, setValue] = useState<number>(1);
 
     useEffect(() => {
         const loadNovelRows = async () => {
@@ -41,7 +41,7 @@ export const NovelRowsProvider = ({ children }: { children: ReactNode }) => {
 export const useNovelRowsContext = () => {
     const context = useContext(NovelRowsContext);
     if (!context) {
-        throw new Error('useNovelRowsContext must be used within a NovelRowsProvider');
+        throw new Error('useNovelRowsContext must be used within NovelRowsProvider');
     }
     return context;
 };

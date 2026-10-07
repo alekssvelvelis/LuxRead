@@ -1,16 +1,18 @@
 import React, { createContext, useState, useEffect, useContext, ReactNode } from 'react';
 import NetInfo, { NetInfoState } from '@react-native-community/netinfo';
 
-const NetworkContext = createContext({
-    isConnected: true,
-});
+type NetworkContextType = {
+    isConnected: boolean | null,
+}
+const NetworkContext = createContext<NetworkContextType | undefined>(undefined);
 
-export const NetworkProvider = ({children}:  { children: ReactNode } ) => {
-    const [isConnected, setIsConnected] = useState<boolean | null>(null);
+
+export const NetworkProvider = ({children}:  { children: ReactNode }) => {
+    const [isConnected, setIsConnected] = useState<boolean>(true);
 
     useEffect(() => {
         const unsubscribe = NetInfo.addEventListener((state: NetInfoState) => {
-            setIsConnected(state.isConnected);
+            setIsConnected(state.isConnected !== false);
         });
 
         return () => {
@@ -28,5 +30,10 @@ export const NetworkProvider = ({children}:  { children: ReactNode } ) => {
     );
 };
 
-// Custom hook to utilize the network context in other components
-export const useNetwork = () => useContext(NetworkContext);
+export const useNetwork = () => {
+    const context = useContext(NetworkContext);
+    if (!context) {
+        throw new Error('useNetwork must be used within NetworkContext');
+    }
+    return context;
+};
