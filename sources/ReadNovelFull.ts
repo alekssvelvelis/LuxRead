@@ -1,5 +1,4 @@
-// @ts-ignore
-import cheerio from 'react-native-cheerio';
+import * as cheerio from 'cheerio';
 import axios from 'axios';
 const sourceName = 'ReadNovelFull';
 const sourceURL = `https://readnovelfull.com`;
