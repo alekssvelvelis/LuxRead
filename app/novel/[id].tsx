@@ -90,10 +90,7 @@ const Synopsis = () => {
     }
   };
 
-  useEffect(() => {
-    setPage(1);
-  }, [])
-
+  console.log(novelData, 'asdasdasdasdasda');
   const [fetchFunctions, setFetchFunctions] = useState<any>(null);
 
   const finishLoadingTask = () => {
@@ -300,50 +297,6 @@ const Synopsis = () => {
     }
   }
 
-  // const [refreshing, setRefreshing] = useState(false);
-  // const onRefresh = useCallback(async () => {
-  //   setRefreshing(true);
-  //   try {
-  //     const localNovelData: FetchedNovel[] = await getLibraryNovelForUpdateById(novelId);
-  //     const scrapedNovelData = await fetchFunctions.fetchSingleNovel(novelData.novelPageURL);
-      
-  //     let updatedData: any = { ...novelData };
-  
-  //     for (const key in localNovelData[0]) {
-  //       if (Object.prototype.hasOwnProperty.call(localNovelData[0], key)) {
-  //         const typedKey = key as keyof FetchedNovel;
-  //         let scrapedValue = scrapedNovelData[typedKey];
-          
-  //         if (typedKey === 'genres' && Array.isArray(scrapedValue)) {
-  //           scrapedValue = scrapedValue.join(",");
-  //         }
-  
-  //         if (localNovelData[0][typedKey] !== scrapedValue) {
-  //           updatedData[typedKey] = scrapedValue;
-  //         }
-  //       }
-  //     }
-      
-  //     const differences = Object.keys(updatedData).reduce((diff, key) => {
-  //       const typedKey = key as keyof FetchedNovel; 
-        
-  //       if (updatedData[typedKey] !== localNovelData[0][typedKey]) {  
-  //         diff[typedKey] = updatedData[typedKey];
-  //       }
-  //       return diff;
-  //     }, {} as Record<keyof FetchedNovel, any>);
-      
-  //     if (Object.keys(differences).length > 0) {
-  //       await updateNovelData(novelId, differences);
-  //       setNovelData(updatedData);
-  //     }
-  //   } catch (error) {
-  //     console.error('Error during refresh:', error);
-  //   } finally {
-  //     setRefreshing(false);
-  //   }
-  // }, [fetchFunctions, novelData.novelPageURL]);
-
   const RenderChapterItem = ({ item, index }: { item: Chapter, index: number }) => {
     const trueChapterIndex = item.title.match(/Chapter\s+(\d+)/) || '1';
     const chapterIndexOfItem = isConnected ? index+1 : Number(trueChapterIndex[1]);
@@ -403,27 +356,6 @@ const Synopsis = () => {
       }
     } else {
       return;
-      // if(downloadedChapterList.length === 0) return;
-
-      // function extractChapterIndex(chapterTitle: string) {
-      //   const match = chapterTitle.match(/Chapter\s+0*(\d+)/i);
-      //   if (match && match[1]) {
-      //     return parseInt(match[1], 10);
-      //   }
-      //   return null;
-      // }
-
-      // const matchedChapter = downloadedChapterList.find((chapter) => {
-      // const chapterIndex = extractChapterIndex(chapter.title);
-      // return chapterIndex === readingProgress.chapterIndex;
-      // });
-      // if(matchedChapter){
-      //   console.log(matchedChapter);
-      //   handleNavigateToChapter(matchedChapter.chapterPageURL, matchedChapter.id);
-      // }else{
-      //   handleNavigateToChapter(downloadedChapterList[0].chapterPageURL, downloadedChapterList[0].id);
-      // }
-
     }
   
   };

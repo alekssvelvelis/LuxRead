@@ -28,7 +28,7 @@ const popularNovels = async (pageNumber: number) => {
             const author = $(element).find().text().trim();
             const imageURL = `${sourceURL}${$(element).find('.pic a img').attr('src')}`;
             const chapterCount = $(element).find('a.chapter').attr('title');
-            const novelPageURL = $(element).find('.pic a').attr('href');
+            const novelPageURL = `${sourceURL}${$(element).find('.pic a').attr('href')}`;
             const sourceName = `${sourceURL}${novelPageURL}`;
             // console.log($(element).find('h3.tit a').attr("title"));
             return {
@@ -82,33 +82,45 @@ const searchNovels = async (novelName: string, pageNumber: number) => {
 
 const fetchSingleNovel = async (novelPageURL: string) => {
     try {
-        const url = `${novelPageURL}`;
-        const result = await fetchHtml(url);
-        const $ = cheerio.load(result);
-
-        const image = $('div.m-imgtext .pic img').attr('src');
-        const imageURL = `${sourceURL}${image}`;
-        const author = $('div.m-imgtext a.a1').first().text().trim();
-        const genres = $('div.m-imgtext span[title="Genre"]').nextAll('a').map((index: number, element: cheerio.Element) => {
-            $(element).text().trim();
-        }).get();
-        const novelStatus = $('div.m-imgtext span[title="Status"]').next('a').text().trim();
-
-        const title = $('div.m-desc h1.tit').text().trim();
+        const sourceURL = `${novelPageURL}`;
         
-        const description = $('div.m-desc div.txt div.inner').nextAll('p').map((index: number, element: cheerio.Element) => {
-            $(element).text().trim();
-        }).get()
+        const result = await fetchHtml(novelPageURL);
+        
+        const $ = cheerio.load(result);
+        console.log(sourceURL, 'fetchSingleNovel');
+        const image = $('div.m-imgtxt img').attr('src');
+        const imageURL = `${sourceURL}${image}`;
+        const author = $('div.m-imgtxt .txt .item a.a1').first().text().trim();
+        const genres = $('div.m-imgtxt span[title="Genre"]').next('div.right').find('a').map((index: number, element: cheerio.Element) => {
+            return $(element).text().trim();
+        }).get();
+        console.log(imageURL, author, genres);
+        // const image = $('div.m-imgtext .pic img').attr('src');
+        // console.log(image);
+        // const imageURL = `${sourceURL}${image}`;
+        // console.log(imageURL);
+        // const author = $('div.m-imgtext a.a1').first().text().trim();
+        // const genres = $('div.m-imgtext span[title="Genre"]').nextAll('a').map((index: number, element: cheerio.Element) => {
+        //     $(element).text().trim();
+        // }).get();
+        // const novelStatus = $('div.m-imgtext span[title="Status"]').next('a').text().trim();
 
-        return {
-            title,
-            imageURL,
-            description,
-            author,
-            genres,
-            novelPageURL,
-            novelStatus,
-        };
+        // const title = $('div.m-desc h1.tit').text().trim();
+        
+        // const description = $('div.m-desc div.txt div.inner').nextAll('p').map((index: number, element: cheerio.Element) => {
+        //     $(element).text().trim();
+        // }).get()
+        // console.log('allnovelfull');
+        // console.log(title,imageURL,description,author,genres,novelPageURL,novelStatus);
+        // return {
+        //     title,
+        //     imageURL,
+        //     description,
+        //     author,
+        //     genres,
+        //     novelPageURL,
+        //     novelStatus,
+        // };
     } catch (error) {
         console.error('Error fetching single novel:', error);
         return null;

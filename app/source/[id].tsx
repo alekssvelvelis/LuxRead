@@ -169,6 +169,7 @@ const SourceList = () => {
   const handleNavigateToNovel = async (novelPageURL: string) => {
     try {
       const novelData = await fetchFunctions.fetchSingleNovel(novelPageURL);
+      console.log(novelData, novelPageURL, `inside of [id].tsx\source`)
       let novelId: number | undefined;
       const matchedNovel = queriedNovels.find(novel => novel.title === novelData.title);
       novelId = matchedNovel ? Number(matchedNovel.id) : undefined;
@@ -177,7 +178,7 @@ const SourceList = () => {
       }
       router.navigate({ 
         // @ts-ignore since pathname only works this way. Can remove and try to fix error.
-        pathname: `novel/[id]`, 
+        pathname: `/novel/[id]/`, 
         params: {
           ...novelData,
           sourceName: sourceName,
