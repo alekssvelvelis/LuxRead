@@ -132,19 +132,21 @@ const SourceList = () => {
       const allNovelInfo = await fetchFunctions.fetchSingleNovel(novel.novelPageURL);
       const chapterCount = parseInt(allNovelInfo.chapterCount);
       const genres = String(allNovelInfo.genres);
+      console.log(allNovelInfo.descriptionText.toString())
       console.log(allNovelInfo);
       const result = await insertLibraryNovel(
         allNovelInfo.title, 
         allNovelInfo.author, 
-        allNovelInfo.description, 
-        genres, chapterCount, 
+        allNovelInfo.descriptionText, 
+        genres, 
+        chapterCount, 
         allNovelInfo.imageURL, 
         allNovelInfo.novelPageURL, 
         sourceNameString, 
-        allNovelInfo.novelStatus
+        allNovelInfo.status
       );
-      // console.log(result);
-      // typeof result === 'number' ? setQueriedNovels((prevQueriedNovels) => [...prevQueriedNovels, { id: result, title: allNovelInfo.title }]) : false; // Add the saved novel to queriedNovels
+      console.log(result);
+      typeof result === 'number' ? setQueriedNovels((prevQueriedNovels) => [...prevQueriedNovels, { id: result, title: allNovelInfo.title }]) : false; // Add the saved novel to queriedNovels
     } catch (error) {
       console.error('Error saving novel:', error);
     }

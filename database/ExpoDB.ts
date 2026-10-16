@@ -45,7 +45,7 @@ const CREATE_LIBRARY_NOVELS = `
         novelPageURL TEXT NOT NULL,
         novelSource TEXT NOT NULL,
         novelStatus TEXT NOT NULL,
-        UNIQUE(title, author, novelPageURL),
+        UNIQUE(id, novelPageURL),
         FOREIGN KEY (novelSource) REFERENCES sources(sourceName) ON DELETE CASCADE ON UPDATE CASCADE
     );
 `;
@@ -197,7 +197,7 @@ interface NovelRow {
 
 interface ChapterRow {
     id: number;
-    novel_id: number;
+    novel_id: string;
     readerProgress: number;
     chapterIndex: number;
 }
@@ -287,9 +287,9 @@ async function insertLibraryNovel(
     try {
         const db = await getDb();
         const result = await db.runAsync(
-            `INSERT INTO libraryNovels (title, author, description, genres, chapterCount, imageURL, novelPageURL, novelSource, novelStatus)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [title, author, description, genres, chapterCount, imageURL, novelPageURL, novelSource, novelStatus]
+            `INSERT INTO libraryNovels (id, title, author, description, genres, chapterCount, imageURL, novelPageURL, novelSource, novelStatus)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [`${title}-${novelSource}`,title, author, description, genres, chapterCount, imageURL, novelPageURL, novelSource, novelStatus]
         );
         console.log(`Novel "${title}" by ${author} added (rowid ${result.lastInsertRowId})`);
         return result.lastInsertRowId;
@@ -371,17 +371,20 @@ async function deleteLibraryNovel(novelId: number) {
     }
 }
 
-async function upsertNovelChapter(novelTitle: string, readerProgress: number, chapterIndex: number) {
+async function upsertNovelChapter(novelTitle: string, novelSource: string, readerProgress: number, chapterIndex: number) {
     try {
         const db = await getDb();
+        const novelId = `${novelTitle}-${novelSource}`;
+
         const result = await db.runAsync(
             `INSERT INTO novelChapters (novel_id, readerProgress, chapterIndex)
-             SELECT id, ?, ? FROM libraryNovels WHERE title = ? LIMIT 1
-             ON CONFLICT(novel_id)
-             DO UPDATE SET
+            VALUES (?, ?, ?)
+            ON CONFLICT(novel_id)
+            DO UPDATE SET
                 readerProgress = CASE
                     WHEN excluded.chapterIndex > novelChapters.chapterIndex
-                         OR (excluded.chapterIndex = novelChapters.chapterIndex AND excluded.readerProgress > novelChapters.readerProgress)
+                        OR (excluded.chapterIndex = novelChapters.chapterIndex
+                            AND excluded.readerProgress > novelChapters.readerProgress)
                     THEN excluded.readerProgress
                     ELSE novelChapters.readerProgress
                 END,
@@ -390,27 +393,28 @@ async function upsertNovelChapter(novelTitle: string, readerProgress: number, ch
                     THEN excluded.chapterIndex
                     ELSE novelChapters.chapterIndex
                 END;`,
-            [readerProgress, chapterIndex, novelTitle]
+            [novelId, readerProgress, chapterIndex]
         );
+
         if (result.changes === 0) {
             console.log(`No novel saved with the title: ${novelTitle}`);
             return;
         }
-        console.log('Upserted novel chapter');
+        console.log('Upserted novel chapter', novelId, readerProgress, chapterIndex);
     } catch (error) {
         console.error('Error upserting novel chapter: ', error);
     }
 }
 
-async function getAllNovelChapters(novelTitle: string): Promise<ChapterRow[]> {
+async function getAllNovelChapters(novelId: string): Promise<ChapterRow[]> {
     try {
         const db = await getDb();
         return await db.getAllAsync<ChapterRow>(
             `SELECT nc.id, nc.novel_id, nc.readerProgress, nc.chapterIndex
              FROM novelChapters nc
              JOIN libraryNovels ln ON ln.id = nc.novel_id
-             WHERE ln.title = ?`,
-            [novelTitle]
+             WHERE ln.id = ?`,
+            [novelId]
         );
     } catch (error) {
         console.error('Error fetching library novel chapters:', error);

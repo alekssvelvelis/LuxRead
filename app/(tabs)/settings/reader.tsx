@@ -24,7 +24,7 @@ const Reader = () => {
   useEffect(() => {
     const loadReaderOptions = async () => {
       try {
-        const options = await getReaderOptions();
+        const options = getReaderOptions();
         if (options) {
           const parsed = JSON.parse(options);
           setReaderOptions({

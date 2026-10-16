@@ -92,7 +92,7 @@ const fetchSingleNovel = async (novelPageURL: string) => {
             descriptionText, 
             author, 
             genres, 
-            sourceURL: novelPageURL,
+            novelPageURL,
             status,
             chapterCount: totalChapters,
             sourceName,
@@ -166,7 +166,7 @@ const fetchChapterContent = async (chapterPageURL: string) => {
                 chapterContent.closeChapters['prevChapter'] = prevChapterURL;
             }
         }
-        console.log(chapterContent);
+        // console.log(chapterContent);
         return chapterContent;
     } catch (error) {
         console.log(chapterPageURL);

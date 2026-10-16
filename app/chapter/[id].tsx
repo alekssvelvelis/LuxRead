@@ -38,11 +38,11 @@ interface ReaderOptions {
 }
 
 type typeSearchParams = {
-  // id?: string | number;
+  id: string;
   chapterPageURL: string;
   sourceName: string;
   title: string;
-  // readerProgress?: number;
+  readerProgress?: number;
 };
 
 const ChapterPage = () => {
@@ -59,7 +59,7 @@ const ChapterPage = () => {
   const chapterPageURL: string | string[] = propData.chapterPageURL;
   const sourceName: string | string[] = propData.sourceName;
   const title: string | string[] = propData.title;
-  // const readerProgress: number = propData.readerProgress ?? 0;
+  const readerProgress: number = propData.readerProgress ?? 0;
   const router = useRouter();
 
   const [chapterText, setChapterText] = useState<string>('');
@@ -77,13 +77,13 @@ const ChapterPage = () => {
       const loadReaderOptions = async () => {
         try {
           const options = getReaderOptions();
+          console.log(options);
           if (options) {
-            const parsed = JSON.parse(options);
             setReaderOptions({
-              fontSize: parsed.fontSize || 16,
-              lineHeight: parsed.lineHeight || 25,
-              textAlign: parsed.textAlign || 'left',
-              fontFamily: parsed.fontFamily || 'Roboto',
+              fontSize: options.fontSize || 16,
+              lineHeight: options.lineHeight || 25,
+              textAlign: options.textAlign || 'left',
+              fontFamily: options.fontFamily || 'Roboto',
             });
           }
         } catch (error) {
@@ -193,7 +193,7 @@ const ChapterPage = () => {
         // @ts-ignore since pathname only works this way. Can remove and try to fix error.
         pathname: `chapter/[id]`,
         params: {
-          // id: propData.id,
+          id: propData.id,
           chapterPageURL: chapterPageURL,
           title: propData.title,
           sourceName: sourceName,
@@ -235,8 +235,7 @@ const ChapterPage = () => {
 
   const scrollToPosition = () => {
     if (scrollViewRef.current && contentHeight && scrollViewHeight) {
-      // const scrollPosition = ((contentHeight - scrollViewHeight) / 100) * readerProgress;
-      const scrollPosition = ((contentHeight - scrollViewHeight) / 100);
+      const scrollPosition = ((contentHeight - scrollViewHeight) / 100) * readerProgress;
       scrollViewRef.current.scrollTo({ y: scrollPosition, animated: true });
     }
   };
@@ -256,7 +255,7 @@ const ChapterPage = () => {
     //   return;
     // }
     try {
-      await upsertNovelChapter(novelTitle, scrollPercentage, chapterIndex);
+      await upsertNovelChapter(novelTitle, propData.sourceName, scrollPercentage, chapterIndex);
       handleBackPress();
     } catch (error) {
       console.error('Error saving chapter:', error);
@@ -291,8 +290,6 @@ const ChapterPage = () => {
       </View>
     );
   }
-
-  console.log(content);
   
   return (
     <View style={{ flex: 1 }}>

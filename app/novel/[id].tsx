@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { View, Text, StyleSheet, Share, TouchableOpacity, FlatList, ActivityIndicator } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useThemeContext } from '@/contexts/ThemeContext';
@@ -9,6 +9,7 @@ import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import NovelHeader from '@/components/novel/NovelHeader';
 import NovelSkeleton from '@/components/skeletons/NovelSkeleton';
 import { useNetwork } from '@/contexts/NetworkContext';
+import { getAllNovelChapters } from '@/database/ExpoDB';
 
 interface Chapter {
   id: number,
@@ -18,10 +19,11 @@ interface Chapter {
 
 interface novelProgress {
   id: number;
-  novelId: number;
+  novel_id: string;
   readerProgress: number;
   chapterIndex: number;
 };
+
 
 interface FetchedNovel {
   title: string;
@@ -75,7 +77,7 @@ const Synopsis = () => {
     }
   }, [sourceName]);
 
-  let chaptersPerPage = getChapterSizes(sourceName);
+  const chaptersPerPage = getChapterSizes(sourceName);
   const loadingRef = useRef(false);
 
   const loadChapters = async (pageNumber: number) => {
@@ -184,28 +186,35 @@ const Synopsis = () => {
   //   loadDownloadedChapters();
   // }, [novelId]);
 
-  const readingProgress: novelProgress = { id: 0, novelId: 0, readerProgress: 0, chapterIndex: 0 };
-  // useFocusEffect(
-  //   useCallback(() => {
-  //   const fetchNovelProgress = async () => {
-  //     try {
-  //       const novelProgress: novelProgress = await getAllNovelChapters(novelData.title);
-  //       if (!novelProgress) {
-  //         return;
-  //       }
-  //       if (Array.isArray(novelProgress) && novelProgress.length > 0) {
-  //         setReadingProgress(novelProgress[0]);
-  //         return;
-  //       }
+  const [readingProgress, setReadingProgress] = useState<novelProgress>({
+    id: 0, novel_id: '', readerProgress: 0, chapterIndex: 0,
+  });
 
-  //       return;
-  //     } catch (error) {
-  //       console.error('Error fetching progress data about novel', error);
-  //     }
-  //   }
-  //   fetchNovelProgress();
-  //   }, [])
-  // );
+  useEffect(() => {
+    if (!novelData) return; // wait until data exists
+
+    let cancelled = false;
+
+    const fetchNovelProgress = async () => {
+      try {
+        const result = await getAllNovelChapters(
+          `${novelData.title}-${novelData.sourceName}`
+        );
+        if (cancelled) return;
+        if (Array.isArray(result) && result.length > 0) {
+          setReadingProgress(result[0]);
+        }
+      } catch (error) {
+        console.error('Error fetching progress data about novel', error);
+      }
+    };
+
+    fetchNovelProgress();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [novelData?.title, novelData?.sourceName]);
 
   const handleNavigateToChapter = async (chapterPageURL: string, itemId: number) => {
     try {
@@ -213,11 +222,11 @@ const Synopsis = () => {
         // @ts-ignore since pathname only works this way. Can remove and try to fix error.
         pathname: `chapter/[id]`, 
         params: {
+          id: `${novelData?.title}-${novelData?.sourceName}`,
           chapterPageURL: chapterPageURL,
           title: novelData?.title,
           sourceName: sourceName,
-          // ...(readingProgress.chapterIndex === itemId && { readerProgress: readingProgress.readerProgress}),
-          // ...(Number.isInteger(novelId) && { id: novelId}),
+          ...(readingProgress.chapterIndex === itemId && { readerProgress: readingProgress.readerProgress}),
         },
       });
     } catch (error) {
@@ -369,7 +378,7 @@ const Synopsis = () => {
     // }
   };
 
-  // if (isInitialLoading) return <View style={{backgroundColor: appliedTheme.colors.elevation.level2}}><NovelSkeleton/></View>;
+  if (initialLoading) return <View style={{backgroundColor: appliedTheme.colors.elevation.level2}}><NovelSkeleton/></View>;
 
   return (
     <>
