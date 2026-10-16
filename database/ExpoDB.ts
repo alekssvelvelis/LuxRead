@@ -447,7 +447,7 @@ async function getAllLibraryNovels(tableName: string) {
         }
 
         if (allRows.length === 0) {
-            console.log('no data to output getAllLibraryNovels');
+            // console.log('no data to output getAllLibraryNovels');
         }
 
         return librarySavedNovels;

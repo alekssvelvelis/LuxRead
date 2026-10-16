@@ -3,7 +3,7 @@ import { popularNovels as LightNovelPubPopular, searchNovels as LightnovelPubSea
 import { popularNovels as NovelBinPopular, searchNovels as NovelBinSearch, fetchSingleNovel as NovelBinFetchSingle, fetchChapters as NovelBinChapters, fetchChapterContent as NovelBinChapterContent } from '@/sources/NovelBin';
 import { popularNovels as ReadNovelFullPopular, searchNovels as ReadNovelFullSearch, fetchSingleNovel as ReadNovelFullFetchSingle, fetchChapters as ReadNovelFullChapters, fetchChapterContent as ReadNovelFullChapterContent } from '@/sources/ReadNovelFull';
 
-const getSourceFunctions = (sourceName: string) => {
+export const getSourceFunctions = (sourceName: string) => {
   switch (sourceName) {
     case 'AllNovelFull':
         return {
@@ -42,4 +42,15 @@ const getSourceFunctions = (sourceName: string) => {
   }
 };
 
-export default getSourceFunctions;
+export const getChapterSizes = (sourceName: string) => {
+    switch (sourceName) {
+        case 'AllNovelFull':
+            return 50;
+        case 'ReadNovelFull':
+        case 'NovelBin':
+            return 15;
+        default:
+            return 15;
+    }
+}
+

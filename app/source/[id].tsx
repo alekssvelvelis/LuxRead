@@ -6,7 +6,7 @@ import { Image } from 'expo-image'; //  takes priority over react-native image e
 
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { useNetwork } from '@/contexts/NetworkContext';
-import getSourceFunctions from '@/utils/getSourceFunctions'; 
+import { getSourceFunctions } from '@/utils/getSourceFunctions'; 
 import { insertLibraryNovel, getNovelsBySource } from '@/database/ExpoDB';
 
 import SearchBar from '@/components/SearchBar';
@@ -58,6 +58,7 @@ const SourceList = () => {
 
   const router = useRouter();
   const [fetchFunctions, setFetchFunctions] = useState<any>(null);
+
   useEffect(() => {
     if (sourceNameString) {
       try {
@@ -94,9 +95,9 @@ const SourceList = () => {
     }
     setLoading(true);
     setAxiosError(false);
-    const fetchFunction = searchQuery ? fetchFunctions.searchNovels : fetchFunctions.popularNovels;
+    const usingFunction = searchQuery ? fetchFunctions.searchNovels : fetchFunctions.popularNovels;
     try {
-      const novelsData = await fetchFunction(searchQuery || pageNumber, pageNumber);
+      const novelsData = await usingFunction(searchQuery || pageNumber, pageNumber);
       if (!novelsData) {
         setAxiosError(true);
         throw new Error('No data received from source');
@@ -131,7 +132,6 @@ const SourceList = () => {
       const allNovelInfo = await fetchFunctions.fetchSingleNovel(novel.novelPageURL);
       const chapterCount = parseInt(allNovelInfo.chapterCount);
       const genres = String(allNovelInfo.genres);
-      console.log(allNovelInfo);
       const result = await insertLibraryNovel(allNovelInfo.title, allNovelInfo.author, allNovelInfo.description, genres, chapterCount, allNovelInfo.imageURL, allNovelInfo.novelPageURL, sourceNameString, allNovelInfo.novelStatus);
       console.log(result);
       typeof result === 'number' ? setQueriedNovels((prevQueriedNovels) => [...prevQueriedNovels, { id: result, title: allNovelInfo.title }]) : false; // Add the saved novel to queriedNovels
@@ -142,12 +142,9 @@ const SourceList = () => {
   
   useEffect(() => {
     if (searchQuery) {
-      // setNovels([]);
       setLoading(true);
       fetchNovels(searchPage, searchQuery);
     } else {
-      // setNovels([]);
-      // setPage(1);
       setLoading(true);
       fetchNovels(page);
     }
@@ -169,7 +166,6 @@ const SourceList = () => {
   const handleNavigateToNovel = async (novelPageURL: string) => {
     try {
       const novelData = await fetchFunctions.fetchSingleNovel(novelPageURL);
-      console.log(novelData, novelPageURL, `inside of [id].tsx\source`)
       let novelId: number | undefined;
       const matchedNovel = queriedNovels.find(novel => novel.title === novelData.title);
       novelId = matchedNovel ? Number(matchedNovel.id) : undefined;
@@ -180,7 +176,7 @@ const SourceList = () => {
         // @ts-ignore since pathname only works this way. Can remove and try to fix error.
         pathname: `/novel/[id]/`, 
         params: {
-          ...novelData,
+          novelPageURL: novelPageURL,
           sourceName: sourceName,
         },
       }); 

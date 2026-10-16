@@ -24,13 +24,13 @@ const FirstLaunchSetup: React.FC<{ children: React.ReactNode }> = ({ children })
       let isOnboardingDone: number | undefined = undefined;
       try {
         isOnboardingDone = await getOnboardingDone();
-        console.log('checking onboardingDone flag');
+        // console.log('checking onboardingDone flag');
         if(isOnboardingDone){
-          console.log('onboarding already complete');
+          // console.log('onboarding already complete');
           return;
         }
 
-        console.log('first launch = true, running onboarding');
+        // console.log('first launch = true, running onboarding');
         await setupNovelChaptersTable();
         await setupLibraryNovelsTable();
         await setupSourcesTable();
@@ -41,7 +41,7 @@ const FirstLaunchSetup: React.FC<{ children: React.ReactNode }> = ({ children })
         console.error('Error during first launch onboarding', error);
       } finally {
         setIsLoading(false);
-        console.log('first launch onboarding done');
+        // console.log('first launch onboarding done');
       }
     };
 

@@ -10,7 +10,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { useNetwork } from '@/contexts/NetworkContext';
-import getSourceFunctions from '@/utils/getSourceFunctions';
+import { getSourceFunctions} from '@/utils/getSourceFunctions';
 import { getReaderOptions } from '@/utils/mmkv';
 import { rgbToRgba } from '@/utils/rgbToRgba';
 
@@ -38,11 +38,11 @@ interface ReaderOptions {
 }
 
 type typeSearchParams = {
-  id?: string | number;
+  // id?: string | number;
   chapterPageURL: string;
   sourceName: string;
   title: string;
-  readerProgress?: number;
+  // readerProgress?: number;
 };
 
 const ChapterPage = () => {
@@ -59,7 +59,7 @@ const ChapterPage = () => {
   const chapterPageURL: string | string[] = propData.chapterPageURL;
   const sourceName: string | string[] = propData.sourceName;
   const title: string | string[] = propData.title;
-  const readerProgress: number = propData.readerProgress ?? 0;
+  // const readerProgress: number = propData.readerProgress ?? 0;
   const router = useRouter();
 
   const [chapterText, setChapterText] = useState<string>('');
@@ -76,7 +76,7 @@ const ChapterPage = () => {
   useEffect(() => {
       const loadReaderOptions = async () => {
         try {
-          const options = await getReaderOptions();
+          const options = getReaderOptions();
           if (options) {
             const parsed = JSON.parse(options);
             setReaderOptions({
@@ -176,8 +176,11 @@ const ChapterPage = () => {
 
   const pickStatusBarStyle = () => {
     StatusBar.setBackgroundColor(rgbToRgba(appliedTheme.colors.elevation.level3, 0.2), true);
-    if(theme.startsWith('light')) return 'dark';
-    if(theme.startsWith('dark')) return 'light';
+    if(theme.startsWith('light')){
+      return 'dark';
+    }else{
+      return 'light';
+    }
   }
 
   const handleReaderOptionsOpen = () => {
@@ -190,7 +193,7 @@ const ChapterPage = () => {
         // @ts-ignore since pathname only works this way. Can remove and try to fix error.
         pathname: `chapter/[id]`,
         params: {
-          id: propData.id,
+          // id: propData.id,
           chapterPageURL: chapterPageURL,
           title: propData.title,
           sourceName: sourceName,
@@ -232,7 +235,8 @@ const ChapterPage = () => {
 
   const scrollToPosition = () => {
     if (scrollViewRef.current && contentHeight && scrollViewHeight) {
-      const scrollPosition = ((contentHeight - scrollViewHeight) / 100) * readerProgress;
+      // const scrollPosition = ((contentHeight - scrollViewHeight) / 100) * readerProgress;
+      const scrollPosition = ((contentHeight - scrollViewHeight) / 100);
       scrollViewRef.current.scrollTo({ y: scrollPosition, animated: true });
     }
   };
@@ -247,10 +251,10 @@ const ChapterPage = () => {
   const chapterNumber = chapterTitle.match(/\d+/)?.[0];
   const chapterIndex = chapterNumber ? parseInt(chapterNumber, 10) : 1;
   const handleSaveChapterData = async (novelTitle: string, scrollPercentage: number, chapterIndex: number) => {
-    if(propData.id === "[id]"){
-      handleBackPress();
-      return;
-    }
+    // if(propData.id === "[id]"){
+    //   handleBackPress();
+    //   return;
+    // }
     try {
       await upsertNovelChapter(novelTitle, scrollPercentage, chapterIndex);
       handleBackPress();
@@ -287,6 +291,9 @@ const ChapterPage = () => {
       </View>
     );
   }
+
+  console.log(content);
+  
   return (
     <View style={{ flex: 1 }}>
       <SystemBars 
@@ -361,7 +368,6 @@ const ChapterPage = () => {
           </TouchableOpacity>
         </Pressable>
       </ScrollView>
-
 
       {isOverlayVisible && (
         <View style={[styles.footer, { backgroundColor: overlayBackgroundColor }]}>

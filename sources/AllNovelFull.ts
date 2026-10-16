@@ -3,19 +3,6 @@ import { fetchHtml } from '@/utils/axios';
 const sourceName = 'AllNovelFull';
 const sourceURL = `https://allnovelfull.net`;
 
-const fetchNovelImage = async (novelPageURL: string): Promise<string> => {
-    try {
-        const result = await fetchHtml(novelPageURL);
-        const body = result.data;
-        const loadedCheerio = cheerio.load(body);
-        const imageSrc = loadedCheerio('.book img').attr('src');
-        return `${sourceURL}${imageSrc}`;
-    } catch (error) {
-        console.error('Error fetching novel image:', error);
-        return ''; // Return an empty string or a placeholder image URL in case of error
-    }
-};
-
 const popularNovels = async (pageNumber: number) => {
     try {
         const url = `${sourceURL}/most-popular?page=${pageNumber}`;
@@ -23,14 +10,14 @@ const popularNovels = async (pageNumber: number) => {
         const $ = cheerio.load(result);
 
         const novelList = $('.ul-list1 .li-row');
-        const data = novelList.map((index: number, element: cheerio.Element) => {
+        const data = novelList.map((_index: number, element: cheerio.Element) => {
             const title = $(element).find('h3.tit a').attr('title');
             const author = $(element).find().text().trim();
             const imageURL = `${sourceURL}${$(element).find('.pic a img').attr('src')}`;
             const chapterCount = $(element).find('a.chapter').attr('title');
             const novelPageURL = `${sourceURL}${$(element).find('.pic a').attr('href')}`;
             const sourceName = `${sourceURL}${novelPageURL}`;
-            // console.log($(element).find('h3.tit a').attr("title"));
+
             return {
                 title,
                 author,
@@ -40,7 +27,7 @@ const popularNovels = async (pageNumber: number) => {
                 sourceName
             }
         }).get();
-        // console.log(data);
+
         return data;
     } catch (error) {
         console.error('Error fetching popular novels:', error);
@@ -55,14 +42,14 @@ const searchNovels = async (novelName: string, pageNumber: number) => {
         const $ = cheerio.load(result);
 
         const novelList = $('.ul-list1 .li-row');
-        const data = novelList.map((index: number, element: cheerio.Element) => {
+        const data = novelList.map((_index: number, element: cheerio.Element) => {
             const title = $(element).find('h3.tit a').attr('title');
             const author = $(element).find().text().trim();
             const imageURL = `${sourceURL}${$(element).find('.pic a img').attr('src')}`;
             const chapterCount = $(element).find('a.chapter').attr('title');
             const novelPageURL = $(element).find('.pic a').attr('href');
             const sourceName = `${sourceURL}${novelPageURL}`;
-            // console.log($(element).find('h3.tit a').attr("title"));
+
             return {
                 title,
                 author,
@@ -72,7 +59,7 @@ const searchNovels = async (novelName: string, pageNumber: number) => {
                 sourceName
             }
         }).get();
-        console.log(data);
+
         return data;
     } catch (error) {
         console.error('Error searching novels:', error);
@@ -82,45 +69,34 @@ const searchNovels = async (novelName: string, pageNumber: number) => {
 
 const fetchSingleNovel = async (novelPageURL: string) => {
     try {
-        const sourceURL = `${novelPageURL}`;
-        
         const result = await fetchHtml(novelPageURL);
-        
         const $ = cheerio.load(result);
-        console.log(sourceURL, 'fetchSingleNovel');
+
         const image = $('div.m-imgtxt img').attr('src');
-        const imageURL = `${sourceURL}${image}`;
+        const imageURL = image ? new URL(image, sourceURL).toString() : '';
         const author = $('div.m-imgtxt .txt .item a.a1').first().text().trim();
-        const genres = $('div.m-imgtxt span[title="Genre"]').next('div.right').find('a').map((index: number, element: cheerio.Element) => {
+        const genres = $('div.m-imgtxt span[title="Genre"]').next('div.right').find('a').map((_: number, element: cheerio.Element) => {
             return $(element).text().trim();
         }).get();
-        console.log(imageURL, author, genres);
-        // const image = $('div.m-imgtext .pic img').attr('src');
-        // console.log(image);
-        // const imageURL = `${sourceURL}${image}`;
-        // console.log(imageURL);
-        // const author = $('div.m-imgtext a.a1').first().text().trim();
-        // const genres = $('div.m-imgtext span[title="Genre"]').nextAll('a').map((index: number, element: cheerio.Element) => {
-        //     $(element).text().trim();
-        // }).get();
-        // const novelStatus = $('div.m-imgtext span[title="Status"]').next('a').text().trim();
+        const status = $('div.m-imgtxt span[title="Status"]').next('div.right').find('a').attr('title');
+        const descriptionText: string[] = [];
+        $('#novel-summary-inner p').each((_index: number, element: cheerio.Element) => {
+            descriptionText.push($(element).text().trim());
+        });
+        const totalChapters = Number($('#truyen').data('total-chapters')) || 0;
+        const title = $('h1.tit').text().trim();
 
-        // const title = $('div.m-desc h1.tit').text().trim();
-        
-        // const description = $('div.m-desc div.txt div.inner').nextAll('p').map((index: number, element: cheerio.Element) => {
-        //     $(element).text().trim();
-        // }).get()
-        // console.log('allnovelfull');
-        // console.log(title,imageURL,description,author,genres,novelPageURL,novelStatus);
-        // return {
-        //     title,
-        //     imageURL,
-        //     description,
-        //     author,
-        //     genres,
-        //     novelPageURL,
-        //     novelStatus,
-        // };
+        return {
+            title, 
+            imageURL, 
+            descriptionText, 
+            author, 
+            genres, 
+            sourceURL: novelPageURL,
+            status,
+            chapterCount: totalChapters,
+            sourceName,
+        };
     } catch (error) {
         console.error('Error fetching single novel:', error);
         return null;
@@ -134,9 +110,9 @@ const fetchChapters = async (novelPageURL: string, page: number) => {
         const $ = cheerio.load(result);
 
         const chapters =  $('#list-chapter ul li').map((index: number, element: cheerio.Element) => ({
-            id: index+1,
+            id: (50*(page-1))+index+1, // chapter count per page * (page-1 for first page query cases)) +index+1 (iterates from index 0)
             title: $(element).text().trim(),
-            chapterPageURL: `${sourceURL}${$(element).attr('href')}`,
+            chapterPageURL: `${sourceURL}${$(element).find('a').attr('href')}`,
         })).get();
 
         return chapters;
@@ -167,13 +143,13 @@ const fetchChapterContent = async (chapterPageURL: string) => {
         const chapterTitle = $('span.chapter-title span.chapter-text').text().trim();
         chapterContent.title = chapterTitle;
 
-        $('#chapter-content p').each((index: number, element: cheerio.Element) => {
+        $('#chapter-content p').each((_: number, element: cheerio.Element) => {
             chapterContent.content.push($(element).text().trim());
         });
 
         // Add next chapter
         const nextChapterElement = $('li.reader-next-item a');
-        if (nextChapterElement.length && !nextChapterElement.hasClass('disabled')) {
+        if (nextChapterElement.length && !nextChapterElement.hasClass('is-disabled')) {
             const nextChapter = nextChapterElement.attr('href');
             const nextChapterURL = `${sourceURL}${nextChapter}`;
             if (nextChapter) {
@@ -183,16 +159,17 @@ const fetchChapterContent = async (chapterPageURL: string) => {
 
         // Add previous chapter
         const prevChapterElement = $('li.prev a');
-        if (prevChapterElement.length && !prevChapterElement.hasClass('disabled')) {
+        if (prevChapterElement.length && !prevChapterElement.hasClass('is-disabled')) {
             const prevChapter = prevChapterElement.attr('href');
             const prevChapterURL = `${sourceURL}${prevChapter}`;
             if (prevChapter) {
                 chapterContent.closeChapters['prevChapter'] = prevChapterURL;
             }
         }
-
+        console.log(chapterContent);
         return chapterContent;
     } catch (error) {
+        console.log(chapterPageURL);
         console.error('Error fetching chapter content:', error);
         return { title: '', content: [], closeChapters: {} };
     }

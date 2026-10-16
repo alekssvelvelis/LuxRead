@@ -67,7 +67,8 @@ const NovelHeader = ({ appliedTheme, novelData, imageURL, genresArray, shareNove
     //     return () => <MaterialIcons name="file-download" size={24} color={appliedTheme.colors.text} />;
     // }, [appliedTheme.colors.text]);
 
-    let isNovelSaved = novelData.id !== '[id]' ? typeof JSON.parse(novelData.id) === 'number' : false;
+    // let isNovelSaved = novelData.id !== '[id]' ? typeof JSON.parse(novelData.id) === 'number' : false;
+    let isNovelSaved = 1;
     return (
         <View style={{ minWidth: '100%' }}>
             <Appbar.Header mode="small" style={{ backgroundColor: appliedTheme.colors.elevation.level2 }}>

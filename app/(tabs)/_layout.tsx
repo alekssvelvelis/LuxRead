@@ -50,7 +50,6 @@ export default () => {
                     headerShown: false,
                     title: 'Settings',
                     tabBarIcon: ({ color }) => <Ionicons size={28} name="cog" color={color} />,
-                    popToTopOnBlur: true,
                 }}
             />
         </Tabs>
