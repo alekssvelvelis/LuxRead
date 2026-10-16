@@ -10,9 +10,8 @@ import { useRouter, useFocusEffect } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { Image } from 'expo-image'
 
-import { getAllLibraryNovels, deleteLibraryNovel, deleteNovelChapters } from '@/database/ExpoDB';
-import { dropTable, setupDownloadedChaptersTable, setupLibraryNovelsTable, setupNovelChaptersTable, setupSourcesTable } from '@/database/ExpoDB';
-import { mmkv } from '@/utils/mmkv';
+import { getAllLibraryNovels, deleteLibraryNovel, deleteNovelChapters, resetDatabase, setupDatabase, dropAllTables } from '@/database/ExpoDB';
+
 interface Data{
     id: number;
     title: string;
@@ -41,14 +40,9 @@ export default function Library() {
   }, []);
 
   useEffect(() =>{
-    // dropTable('libraryNovels');
-    // dropTable('novelChapters');
-    // dropTable('sources');
-    // dropTable('downloadedChapters');
-    // setupNovelChaptersTable();
-    // setupLibraryNovelsTable();
-    // setupSourcesTable();
-    // setupDownloadedChaptersTable();
+    // resetDatabase();
+    // dropAllTables();
+    // setupDatabase();
   }, [])
 
   const { appliedTheme } = useThemeContext();

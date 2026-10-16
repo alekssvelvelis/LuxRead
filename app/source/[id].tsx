@@ -132,9 +132,19 @@ const SourceList = () => {
       const allNovelInfo = await fetchFunctions.fetchSingleNovel(novel.novelPageURL);
       const chapterCount = parseInt(allNovelInfo.chapterCount);
       const genres = String(allNovelInfo.genres);
-      const result = await insertLibraryNovel(allNovelInfo.title, allNovelInfo.author, allNovelInfo.description, genres, chapterCount, allNovelInfo.imageURL, allNovelInfo.novelPageURL, sourceNameString, allNovelInfo.novelStatus);
-      console.log(result);
-      typeof result === 'number' ? setQueriedNovels((prevQueriedNovels) => [...prevQueriedNovels, { id: result, title: allNovelInfo.title }]) : false; // Add the saved novel to queriedNovels
+      console.log(allNovelInfo);
+      const result = await insertLibraryNovel(
+        allNovelInfo.title, 
+        allNovelInfo.author, 
+        allNovelInfo.description, 
+        genres, chapterCount, 
+        allNovelInfo.imageURL, 
+        allNovelInfo.novelPageURL, 
+        sourceNameString, 
+        allNovelInfo.novelStatus
+      );
+      // console.log(result);
+      // typeof result === 'number' ? setQueriedNovels((prevQueriedNovels) => [...prevQueriedNovels, { id: result, title: allNovelInfo.title }]) : false; // Add the saved novel to queriedNovels
     } catch (error) {
       console.error('Error saving novel:', error);
     }
@@ -237,7 +247,7 @@ const SourceList = () => {
             <FlatList
               data={novels}
               renderItem={renderItem}
-              keyExtractor={(_, index) => index.toString()}
+              keyExtractor={(key, index) => `${key.title}-${key.sourceName}-${index}`}
               numColumns={2}
               contentContainerStyle={styles.scrollViewContent}
               onEndReached={handleLoadMore}
