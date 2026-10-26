@@ -40,9 +40,9 @@ interface ReaderOptions {
 type typeSearchParams = {
   id: string;
   chapterPageURL: string;
-  sourceName: string;
   title: string;
-  readerProgress?: number;
+  novelSource: string;
+  readerProgress?: string | undefined;
 };
 
 const ChapterPage = () => {
@@ -55,11 +55,9 @@ const ChapterPage = () => {
   const { isConnected } = useNetwork();
   const { appliedTheme, theme } = useThemeContext();
   const insets = useSafeAreaInsets();
-  const propData = useLocalSearchParams<typeSearchParams>();
-  const chapterPageURL: string | string[] = propData.chapterPageURL;
-  const sourceName: string | string[] = propData.sourceName;
-  const title: string | string[] = propData.title;
-  const readerProgress: number = propData.readerProgress ?? 0;
+  const initialParameters = useLocalSearchParams<typeSearchParams>();
+  const { id, chapterPageURL, title, novelSource, readerProgress } = initialParameters;
+  const numericReaderProgress = Number(readerProgress)
   const router = useRouter();
 
   const [chapterText, setChapterText] = useState<string>('');
@@ -96,15 +94,15 @@ const ChapterPage = () => {
 
   const [fetchFunctions, setFetchFunctions] = useState<any>(null);
   useEffect(() => {
-    if (sourceName) {
+    if (novelSource) {
       try {
-        const functions = getSourceFunctions(sourceName);
+        const functions = getSourceFunctions(novelSource);
         setFetchFunctions(functions);
       } catch (error) {
         console.error('Error loading source functions:', error);
       }
     }
-  }, [sourceName]);
+  }, [novelSource]);
 
   useEffect(() => {
     const loadChapterContent = async () => {
@@ -153,7 +151,7 @@ const ChapterPage = () => {
             console.error('Chapter content fetched online is invalid or empty.');
           }
         } catch (error) {
-          console.error('Error fetching chapter content', error, chapterPageURL, sourceName);
+          console.error('Error fetching chapter content', error, chapterPageURL, novelSource);
         } finally {
           setLoading(false);
         }
@@ -163,7 +161,7 @@ const ChapterPage = () => {
     if (fetchFunctions) {
       loadChapterContent();
     }
-  }, [fetchFunctions, chapterPageURL, sourceName]);
+  }, [fetchFunctions, chapterPageURL, novelSource]);
 
 
   const handleBackPress = () => {
@@ -193,10 +191,10 @@ const ChapterPage = () => {
         // @ts-ignore since pathname only works this way. Can remove and try to fix error.
         pathname: `chapter/[id]`,
         params: {
-          id: propData.id,
+          id: id,
           chapterPageURL: chapterPageURL,
-          title: propData.title,
-          sourceName: sourceName,
+          title: title,
+          novelSource: novelSource,
         },
       });
     } catch (error) {
@@ -235,7 +233,7 @@ const ChapterPage = () => {
 
   const scrollToPosition = () => {
     if (scrollViewRef.current && contentHeight && scrollViewHeight) {
-      const scrollPosition = ((contentHeight - scrollViewHeight) / 100) * readerProgress;
+      const scrollPosition = ((contentHeight - scrollViewHeight) / 100) * numericReaderProgress;
       scrollViewRef.current.scrollTo({ y: scrollPosition, animated: true });
     }
   };
@@ -255,7 +253,7 @@ const ChapterPage = () => {
     //   return;
     // }
     try {
-      await upsertNovelChapter(novelTitle, propData.sourceName, scrollPercentage, chapterIndex);
+      await upsertNovelChapter(novelTitle, novelSource, scrollPercentage, chapterIndex);
       handleBackPress();
     } catch (error) {
       console.error('Error saving chapter:', error);

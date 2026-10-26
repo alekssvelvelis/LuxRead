@@ -291,7 +291,7 @@ async function insertLibraryNovel(
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [`${title}-${novelSource}`,title, author, description, genres, chapterCount, imageURL, novelPageURL, novelSource, novelStatus]
         );
-        console.log(`Novel "${title}" by ${author} added (rowid ${result.lastInsertRowId})`);
+        console.log(`Novel "${title}" by ${author} added (rowid ${result.lastInsertRowId}), ${novelSource}, ${genres}`);
         return result.lastInsertRowId;
     } catch (error: any) {
         if (error?.message?.includes('UNIQUE constraint failed')) {
@@ -303,23 +303,25 @@ async function insertLibraryNovel(
     }
 }
 
-async function getAllLibraryNovels(tableName: string = 'libraryNovels'): Promise<NovelRow[]> {
+async function getAllLibraryNovels(): Promise<NovelRow[]> {
     try {
         const db = await getDb();
-        return await db.getAllAsync<NovelRow>(`SELECT * FROM ${tableName}`);
+        return await db.getAllAsync<NovelRow>(`SELECT * FROM libraryNovels`);
     } catch (error) {
         console.error('Error fetching library novels:', error);
         return [];
     }
 }
 
-async function getLibraryNovelForUpdateById(novelId: number): Promise<NovelRow[]> {
+async function getLibraryNovelById(novelId: string): Promise<NovelRow[]> {
     try {
         const db = await getDb();
-        return await db.getAllAsync<NovelRow>(
+        const result =  await db.getAllAsync<NovelRow>(
             `SELECT ${NOVEL_COLUMNS} FROM libraryNovels WHERE id = ?`,
             [novelId]
         );
+        console.log(result, '/ExpoDB:getlibraryNovelById');
+        return result;
     } catch (error) {
         console.error('Error fetching library novel by id:', error);
         return [];
@@ -436,7 +438,7 @@ async function insertDownloadedChapter(
     chapterTitle: string,
     chapterText: string,
     chapterPageURL: string,
-    novel_id: number
+    novel_id: string
 ): Promise<number | null> {
     try {
         const db = await getDb();
@@ -498,11 +500,11 @@ async function insertDownloadedChapters(
     }
 }
 
-async function getDownloadedChapters(novelId: number) {
+async function getDownloadedChapters(novelId: string) {
     try {
         const db = await getDb();
         const rows = await db.getAllAsync<DownloadedChapterRow>(
-            `SELECT downloadId, chapterTitle, chapterText, chapterPageURL, novel_id
+            `SELECT chapterTitle, chapterPageURL, novel_id
              FROM downloadedChapters
              WHERE novel_id = ?
              ORDER BY CAST(SUBSTR(chapterTitle, INSTR(chapterTitle, ' ') + 1) AS INTEGER) ASC`,
@@ -526,10 +528,10 @@ async function getDownloadedChapters(novelId: number) {
     }
 }
 
-export async function isChapterDownloaded(chapterPageURL: string, novelId: number): Promise<boolean> {
+export async function isChapterDownloaded(chapterPageURL: string, novelId: string): Promise<boolean> {
     const db = await getDb();
     // EXISTS-style lookup: stops at the first match instead of counting all rows.
-    const row = await db.getFirstAsync<{ found: number }>(
+    const row = await db.getFirstAsync<{ found: string }>(
         `SELECT 1 AS found FROM downloadedChapters WHERE chapterPageURL = ? AND novel_id = ? LIMIT 1`,
         [chapterPageURL, novelId]
     );
@@ -600,7 +602,7 @@ export {
     // library novels
     insertLibraryNovel,
     getAllLibraryNovels,
-    getLibraryNovelForUpdateById,
+    getLibraryNovelById,
     updateNovelData,
     getNovelsBySource,
     deleteLibraryNovel,

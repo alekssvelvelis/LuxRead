@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { View, Text, StyleSheet, Share, TouchableOpacity, FlatList, ActivityIndicator } from 'react-native';
-import { MaterialIcons } from '@expo/vector-icons';
+import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { getSourceFunctions, getChapterSizes } from '@/utils/getSourceFunctions';
 
@@ -9,7 +9,7 @@ import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import NovelHeader from '@/components/novel/NovelHeader';
 import NovelSkeleton from '@/components/skeletons/NovelSkeleton';
 import { useNetwork } from '@/contexts/NetworkContext';
-import { getAllNovelChapters } from '@/database/ExpoDB';
+import { getAllNovelChapters, insertDownloadedChapter, getDownloadedChapters, getLibraryNovelById } from '@/database/ExpoDB';
 
 interface Chapter {
   id: number,
@@ -29,24 +29,29 @@ interface FetchedNovel {
   title: string;
   author: string;
   description: string;
-  genres: string[];
+  genres: string | string[];
   chapterCount: number;
   imageURL: string;
   novelPageURL: string;
-  sourceName: string;
+  novelSource: string;
   novelStatus: string;
 };
+
 
 type typeSearchParams = {
   id: string,
   novelPageURL: string,
-  sourceName: string,
+  novelSource: string,
 };
 
 const Synopsis = () => {
   const { appliedTheme } = useThemeContext();
   const { isConnected } = useNetwork();
+  const isOffline = isConnected === false;
+
   const initialParameters = useLocalSearchParams<typeSearchParams>();
+  const { id, novelPageURL, novelSource } = initialParameters;
+
   const [novelData, setNovelData] = useState<FetchedNovel>();
 
   const [initialLoading, setInitialLoading] = useState<boolean>(true);
@@ -54,17 +59,17 @@ const Synopsis = () => {
   const [loadError, setLoadError] = useState<string | null>(null);
 
   const [chapterList, setChapterList] = useState<Chapter[]>([]);
+  const [downloadedChapters, setDownloadedChapters] = useState<Chapter[]>([]);
   const [hasMoreChapters, setHasMoreChapters] = useState<boolean>(true);
   const [page, setPage] = useState<number>(1);
 
   const router = useRouter();
-  const sourceName = initialParameters.sourceName;
   const [fetchFunctions, setFetchFunctions] = useState<any>(null);
 
   useEffect(() => {
-    if (sourceName) {
+    if (novelSource) {
       try {
-        const functions = getSourceFunctions(sourceName);
+        const functions = getSourceFunctions(novelSource);
         setFetchFunctions(functions);
       } catch (error) {
         console.error('Error loading source functions:', error);
@@ -75,9 +80,9 @@ const Synopsis = () => {
       setLoadError('Novel source is missing.');
       setInitialLoading(false);
     }
-  }, [sourceName]);
+  }, [novelSource]);
 
-  const chaptersPerPage = getChapterSizes(sourceName);
+  const chaptersPerPage = getChapterSizes(novelSource);
   const loadingRef = useRef(false);
 
   const loadChapters = async (pageNumber: number) => {
@@ -104,45 +109,61 @@ const Synopsis = () => {
     void loadChapters(page + 1);
   };
 
+  const fromLocal = (novel: FetchedNovel) => ({
+    title: novel.title ?? '',
+    author: novel.author ?? '',
+    description: novel.description,
+    genres: Array.isArray(novel.genres) ? novel.genres : novel.genres.split(","),
+    chapterCount: novel.chapterCount,
+    imageURL: novel.imageURL ?? '',
+    novelPageURL: novel.novelPageURL,
+    novelSource: novel.novelSource ?? '',
+    novelStatus: novel.novelStatus ?? '',
+  }); 
+
+  const fromRemote = (novel: any, novelPageURL: string, novelSource: string,) => ({
+    title: novel.title ?? '',
+    author: novel.author ?? '',
+    description: Array.isArray(novel.descriptionText)
+            ? novel.descriptionText.join('\n\n')
+            : novel.description ?? '',
+    genres: Array.isArray(novel.genres) ? novel.genres : [],
+    chapterCount:  Number(novel.chapterCount ?? novel.totalChapters ?? 0),
+    imageURL: novel.imageURL ?? '',
+    novelPageURL,
+    novelSource,
+    novelStatus: novel.novelStatus ?? '',
+  }); 
+
   useEffect(() => {
-    const novelPageURL = initialParameters.novelPageURL;
     if (!novelPageURL) {
       setLoadError('Novel URL is missing.');
       setInitialLoading(false);
       return;
     }
-    if (!fetchFunctions) {
+    if (!fetchFunctions && !isOffline) {
       return;
     }
 
     let isActive = true;
-    const fetchNovelData = async () => {
+
+    const loadNovel = async () => {
       setInitialLoading(true);
       setLoadError(null);
       try {
-        const fetchedNovelData = await fetchFunctions.fetchSingleNovel(novelPageURL);
-        if (!fetchedNovelData) {
-          throw new Error('The source returned no novel details.');
+        const [localNovel] = await getLibraryNovelById(id);
+
+        if (localNovel) {
+          if (isActive) {
+            setNovelData(fromLocal(localNovel));
+            return;
+          }
         }
 
-        const description = Array.isArray(fetchedNovelData.descriptionText)
-          ? fetchedNovelData.descriptionText.join('\n\n')
-          : fetchedNovelData.description ?? '';
-        const chapterCount = Number(fetchedNovelData.chapterCount ?? fetchedNovelData.totalChapters ?? 0);
+        const remote = await fetchFunctions!.fetchSingleNovel(novelPageURL);
+        if (!remote) throw new Error('The source returned no novel details.');
+        if (isActive) setNovelData(fromRemote(remote, novelPageURL, novelSource ?? ''));
 
-        if (isActive) {
-          setNovelData({
-            title: fetchedNovelData.title ?? '',
-            author: fetchedNovelData.author ?? '',
-            description,
-            genres: Array.isArray(fetchedNovelData.genres) ? fetchedNovelData.genres : [],
-            chapterCount: Number.isFinite(chapterCount) ? chapterCount : 0,
-            imageURL: fetchedNovelData.imageURL ?? '',
-            novelPageURL,
-            sourceName: sourceName ?? '',
-            novelStatus: fetchedNovelData.novelStatus ?? fetchedNovelData.status ?? '',
-          });
-        }
       } catch (error) {
         console.error('Error loading novel data in novel/[id]:', error);
         if (isActive) {
@@ -155,36 +176,34 @@ const Synopsis = () => {
       }
     };
 
-    void fetchNovelData();
+    const loadDownloadedChapters = async () => {
+      // if (isConnected) {
+      //   return;
+      // }
+      setLoading(true);
+      try {
+        const downloadedChapters = await getDownloadedChapters(id);
+        // console.log(JSON.stringify(downloadedChapters, null, 2));
+        if (downloadedChapters && downloadedChapters.length > 0) {
+          setDownloadedChapters(downloadedChapters);
+        } else {
+          setHasMoreChapters(false);
+        }
+      } catch (error) {
+        console.log('Error thrown inside of novel/[id].tsx at fetchChapters', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    void loadDownloadedChapters();
+    void loadNovel();
     void loadChapters(page);
 
     return () => {
       isActive = false;
     };
-  }, [fetchFunctions, initialParameters.novelPageURL, sourceName]);
-
-  // useEffect(() => {
-  //   const loadDownloadedChapters = async () => {
-  //     // if (isConnected) {
-  //     //   return;
-  //     // }
-  //     setLoading(true);
-  //     try {
-  //       const downloadedChapters = await getDownloadedChapters(novelId);
-  //       // console.log(JSON.stringify(downloadedChapters, null, 2));
-  //       if (downloadedChapters && downloadedChapters.length > 0) {
-  //         setDownloadedChapterList(downloadedChapters);
-  //       } else {
-  //         setHasMoreChapters(false);
-  //       }
-  //     } catch (error) {
-  //       console.log('Error thrown inside of novel/[id].tsx at fetchChapters', error);
-  //     } finally {
-  //       finishLoadingTask();
-  //     }
-  //   };
-  //   loadDownloadedChapters();
-  // }, [novelId]);
+  }, [id, novelPageURL, novelSource, fetchFunctions, isOffline]);
 
   const [readingProgress, setReadingProgress] = useState<novelProgress>({
     id: 0, novel_id: '', readerProgress: 0, chapterIndex: 0,
@@ -198,7 +217,7 @@ const Synopsis = () => {
     const fetchNovelProgress = async () => {
       try {
         const result = await getAllNovelChapters(
-          `${novelData.title}-${novelData.sourceName}`
+          `${novelData.title}-${novelData.novelSource}`
         );
         if (cancelled) return;
         if (Array.isArray(result) && result.length > 0) {
@@ -214,7 +233,9 @@ const Synopsis = () => {
     return () => {
       cancelled = true;
     };
-  }, [novelData?.title, novelData?.sourceName]);
+  }, [novelData?.title, novelData?.novelSource]);
+
+  // console.log(novelData);
 
   const handleNavigateToChapter = async (chapterPageURL: string, itemId: number) => {
     try {
@@ -222,10 +243,10 @@ const Synopsis = () => {
         // @ts-ignore since pathname only works this way. Can remove and try to fix error.
         pathname: `chapter/[id]`, 
         params: {
-          id: `${novelData?.title}-${novelData?.sourceName}`,
+          id: `${novelData?.title}-${novelData?.novelSource}`,
           chapterPageURL: chapterPageURL,
           title: novelData?.title,
-          sourceName: sourceName,
+          novelSource: novelSource,
           ...(readingProgress.chapterIndex === itemId && { readerProgress: readingProgress.readerProgress}),
         },
       });
@@ -234,19 +255,23 @@ const Synopsis = () => {
     }
   };
 
-  // const handleDownloadChapter = async (chapterPageURL: string, novelId: number) => {
-  //   setDownloading(chapterPageURL);
-  //   try {
-  //     const chapters = await fetchFunctions.fetchChapterContent(chapterPageURL);
-  //     console.log(chapters, chapterPageURL, novelId);
-  //     const latestDownloadedRowId = await insertDownloadedChapter(chapters.title, chapters.content, chapterPageURL, novelId);
-  //     typeof latestDownloadedRowId === 'number' ? setDownloadedChapterList((prevList) => [...prevList, {id: latestDownloadedRowId, title: chapters.title, content: chapters.content, chapterPageURL: chapterPageURL, novel_id: novelId}]) : false;
-  //   } catch (error) {
-  //     console.error("Error deleting novel:", error);
-  //   } finally {
-  //     setDownloading(null);
-  //   }
-  // };
+  const [isDownloading, setDownloading] = useState<string>('');
+
+  const handleDownloadChapter = async (chapterPageURL: string, novelId: string) => {
+    setDownloading(chapterPageURL);
+    console.log(novelId);
+    try {
+      const chapters = await fetchFunctions.fetchChapterContent(chapterPageURL);
+      console.log(novelId);
+      await insertDownloadedChapter(chapters.title, chapters.content, chapterPageURL, novelId);
+      const latestDownloadedRowId = await insertDownloadedChapter(chapters.title, chapters.content, chapterPageURL, novelId);
+      typeof latestDownloadedRowId === 'number' ? setDownloadedChapters((prevList) => [...prevList, {id: latestDownloadedRowId, title: chapters.title, chapterPageURL: chapterPageURL, novel_id: novelId}]) : false;
+    } catch (error) {
+      console.error("Error deleting novel:", error);
+    } finally {
+      setDownloading('');
+    }
+  };
 
   const fetchChaptersByPage = async (pageNumber: number) => {
     if (!fetchFunctions) return [];
@@ -260,7 +285,7 @@ const Synopsis = () => {
   };
 
   // const fetchAllRequiredChapters = async (startIndex: number, endIndex: number) => {
-  //   const chaptersPerPage = sourceName === 'LightNovelPub' ? 100 : 50;
+  //   const chaptersPerPage = novelSource === 'LightNovelPub' ? 100 : 50;
   //   const startPage = Math.ceil(startIndex / chaptersPerPage);
   //   const endPage = Math.ceil(endIndex / chaptersPerPage);
   //   let fullChapterList = [...chapterList];
@@ -319,7 +344,7 @@ const Synopsis = () => {
     const trueChapterIndex = item.title.match(/Chapter\s+(\d+)/) || '1';
     const chapterIndexOfItem = isConnected ? index+1 : Number(trueChapterIndex[1]);
     const defaultChapterIndex = readingProgress.chapterIndex || 0;
-    // const isChapterDownloaded = downloadedChapterList.some((chapterData) => chapterData.chapterPageURL === item.chapterPageURL);
+    const isChapterDownloaded = downloadedChapters.some((chapterData) => chapterData.chapterPageURL === item.chapterPageURL);
 
     if(!isConnected){
       return (
@@ -349,33 +374,33 @@ const Synopsis = () => {
         {chapterIndexOfItem === defaultChapterIndex && <Text style={{ position: 'absolute', color: appliedTheme.colors.text, top: 36, left: 28 }}>Reading progress: {readingProgress.readerProgress}%</Text>}
         
         {/* Conditionally render download icon */}
-        {/* {novelData.id !== "[id]" && (  // Check if novelData.id does not equal "[id]"
-          downloading === item.chapterPageURL ? (
+        {/* <Ionicons size={36} name="download-outline" color={chapterIndexOfItem >= defaultChapterIndex ? appliedTheme.colors.text : appliedTheme.colors.text} style={{ zIndex: 3 }} onPress={() => handleDownloadChapter(item.chapterPageURL, `${novelData?.title}-${novelSource}`)} /> */}
+        {id !== "[id]" && (  // Check if novelData.id does not equal "[id]", references the pathname /novel/[id]
+          isDownloading === item.chapterPageURL ? (
             <ActivityIndicator size="large" color={appliedTheme.colors.primary} />
           ) : isChapterDownloaded ? (
             <MaterialIcons size={36} name="file-download-done" color={chapterIndexOfItem >= defaultChapterIndex ? appliedTheme.colors.text : appliedTheme.colors.text} style={{ zIndex: 3 }} />
           ) : (
-            <Ionicons size={36} name="download-outline" color={chapterIndexOfItem >= defaultChapterIndex ? appliedTheme.colors.text : appliedTheme.colors.text} style={{ zIndex: 3 }} onPress={() => handleDownloadChapter(item.chapterPageURL, novelId)} />
+            <Ionicons size={36} name="download-outline" color={chapterIndexOfItem >= defaultChapterIndex ? appliedTheme.colors.text : appliedTheme.colors.text} style={{ zIndex: 3 }} onPress={() => handleDownloadChapter(item.chapterPageURL, id)} />
           )
-        )} */}
+        )}
     </TouchableOpacity>
     );
   };
 
   const routerBack = () => router.back();
   const onReadPress = () => {
-    return;
-    // if(isConnected){
-    //   if(chapterList.length === 0) return;
+    if(isConnected){
+      if(chapterList.length === 0) return;
 
-    //   if (readingProgress.chapterIndex > 0) {
-    //     handleNavigateToChapter(chapterList[readingProgress.chapterIndex - 1].chapterPageURL, chapterList[readingProgress.chapterIndex - 1].id)
-    //   } else {
-    //     handleNavigateToChapter(chapterList[0].chapterPageURL, chapterList[0].id);
-    //   }
-    // } else {
-    //   return;
-    // }
+      if (readingProgress.chapterIndex > 0) {
+        handleNavigateToChapter(chapterList[readingProgress.chapterIndex - 1].chapterPageURL, chapterList[readingProgress.chapterIndex - 1].id)
+      } else {
+        handleNavigateToChapter(chapterList[0].chapterPageURL, chapterList[0].id);
+      }
+    } else {
+      return;
+    }
   };
 
   if (initialLoading) return <View style={{backgroundColor: appliedTheme.colors.elevation.level2}}><NovelSkeleton/></View>;

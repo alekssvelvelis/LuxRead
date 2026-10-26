@@ -37,3 +37,19 @@ export async function fetchHtml(url: string, options: HeaderOptions = {}, timeou
     }
   }
 }
+
+export function htmlToText(html: any) {
+   return html
+    .replace(/<br\s*\/?>/gi, '\n')            // <br> -> single newline
+    .replace(/<\/p>\s*<p[^>]*>/gi, '\n\n')    // paragraph boundary -> blank line
+    .replace(/<\/?p[^>]*>/gi, '')             // drop leftover <p> / </p>
+    .replace(/<[^>]+>/g, '')                  // strip any other tags
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\n{3,}/g, '\n\n')               // collapse 3+ newlines
+    .trim();
+}

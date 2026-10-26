@@ -56,7 +56,7 @@ export default function Library() {
     useCallback(() => {
       const fetchNovels = async () => {
         try {
-          const data: Data[] = await getAllLibraryNovels('libraryNovels');
+          const data: Data[] = await getAllLibraryNovels();
           // console.log(JSON.stringify(data, null,2), ' inside of library.tsx');
           setNovelsData(data);
         } catch (error) {

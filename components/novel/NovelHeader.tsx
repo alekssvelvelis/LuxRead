@@ -12,7 +12,7 @@ interface NovelHeaderProps {
     appliedTheme: any;
     novelData: any;
     imageURL: string;
-    genresArray: string[];
+    genresArray: string | string[];
     shareNovel: () => void;
     chapterList: any[];
     readingProgress: any;
@@ -56,7 +56,6 @@ const NovelHeader = ({ appliedTheme, novelData, imageURL, genresArray, shareNove
         const startingIndex = downloadStartChoice === 'first' ? 1 : readingProgress.chapterIndex;
         downloadMultipleChapters(startingIndex, parseInt(chaptersCountToDownload));
     }
-    
     // React-native-paper uses MaterialCommunityIcons.
     // if you want to use other icons while not having them re-render you can use this
     // const renderShareIcon = useMemo(() => {
@@ -112,7 +111,7 @@ const NovelHeader = ({ appliedTheme, novelData, imageURL, genresArray, shareNove
                     <View style={{ flexDirection: 'row' }}>
                         <MaterialIcons size={24} name="source" style={{ marginHorizontal: 8 }} color={appliedTheme.colors.text} />
                         <Text style={{ color: appliedTheme.colors.onSurfaceVariant, fontSize: 14 }}>
-                            {novelData.sourceName}
+                            {novelData.novelSource}
                         </Text>
                     </View>
                 </View>

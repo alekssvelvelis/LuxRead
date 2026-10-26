@@ -1,5 +1,5 @@
 import * as cheerio from 'cheerio';
-import { fetchHtml } from '@/utils/axios';
+import { fetchHtml, htmlToText } from '@/utils/axios';
 const sourceName = 'AllNovelFull';
 const sourceURL = `https://allnovelfull.net`;
 
@@ -78,24 +78,29 @@ const fetchSingleNovel = async (novelPageURL: string) => {
         const genres = $('div.m-imgtxt span[title="Genre"]').next('div.right').find('a').map((_: number, element: cheerio.Element) => {
             return $(element).text().trim();
         }).get();
-        const status = $('div.m-imgtxt span[title="Status"]').next('div.right').find('a').attr('title');
-        const descriptionText: string[] = [];
+        const novelStatus = $('div.m-imgtxt span[title="Status"]').next('div.right').find('a').attr('title');
+        const paragrahps: string | string[] = [];
         $('#novel-summary-inner p').each((_index: number, element: cheerio.Element) => {
-            descriptionText.push($(element).text().trim());
+            const html = $(element).html();
+            if (!html) return;
+            const text = htmlToText(html);
+            paragrahps.push(text);
         });
+        const description: string = paragrahps.join("\n\n");
+
         const totalChapters = Number($('#truyen').data('total-chapters')) || 0;
         const title = $('h1.tit').text().trim();
 
         return {
             title, 
             imageURL, 
-            descriptionText, 
+            descriptionText: description, 
             author, 
             genres, 
             novelPageURL,
-            status,
+            novelStatus,
             chapterCount: totalChapters,
-            sourceName,
+            novelSource: sourceName,
         };
     } catch (error) {
         console.error('Error fetching single novel:', error);
