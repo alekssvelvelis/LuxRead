@@ -10,17 +10,22 @@ import { useRouter, useFocusEffect } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { Image } from 'expo-image'
 
-import { getAllLibraryNovels, deleteLibraryNovel, deleteNovelChapters, resetDatabase, setupDatabase, dropAllTables } from '@/database/ExpoDB';
+import { handleNavigateToNovel } from '@/utils/navigation';
 
-interface Data{
-    id: number;
-    title: string;
-    author: string;
-    chapterCount: number;
-    imageURL: string;
-    novelPageURL: string;
-    novelSource: string;
-}
+import { getAllLibraryNovels, deleteLibraryNovel, deleteNovelChapters } from '@/database/ExpoDB';
+
+interface FetchedNovel {
+  id: string,
+  title: string;
+  author: string;
+  description: string;
+  genres: string | string[];
+  chapterCount: number;
+  imageURL: string;
+  novelPageURL: string;
+  novelSource: string;
+  novelStatus: string;
+};
 
 export default function Library() {
   const getallKeys = async() => {
@@ -50,13 +55,13 @@ export default function Library() {
   const { value: novelLayout } = useNovelLayoutContext();
   const router = useRouter();
 
-  const [novelsData, setNovelsData] = useState<Data[]>([]);
+  const [novelsData, setNovelsData] = useState<FetchedNovel[]>([]);
 
   useFocusEffect(
     useCallback(() => {
       const fetchNovels = async () => {
         try {
-          const data: Data[] = await getAllLibraryNovels();
+          const data: FetchedNovel[] = await getAllLibraryNovels();
           // console.log(JSON.stringify(data, null,2), ' inside of library.tsx');
           setNovelsData(data);
         } catch (error) {
@@ -80,11 +85,11 @@ export default function Library() {
   }, [query, novelsData]);
   
 
-  const handleDeleteNovel = async (novelId: number) => {
+  const handleDeleteNovel = async (novelId: string) => {
     try {
       await deleteLibraryNovel(novelId);
       await deleteNovelChapters(novelId);
-      const updatedNovelsData = await getAllLibraryNovels('libraryNovels');
+      const updatedNovelsData = await getAllLibraryNovels();
       setNovelsData(updatedNovelsData);
     } catch (error) {
       console.error("Error deleting novel:", error);
@@ -92,7 +97,8 @@ export default function Library() {
   };
   
   const getNovelContainerStyle = () => {
-    const novelsInSingleRow = parseInt(novelRows, 10);
+    // const novelsInSingleRow = parseInt(Number(novelRows), 10);
+    const novelsInSingleRow = Number(novelRows);
     const screenWidth = Dimensions.get('window').width;
     const padding = 24;
     const novelWidth = (screenWidth-padding) / novelsInSingleRow*0.85;
@@ -129,31 +135,13 @@ export default function Library() {
     }
   };
 
-
-  const handleNavigateToNovel = async (novelSource: string, novelId: number) => {
-    try {
-      const relevantNovelData = novelsData.find(novel => novel.id === novelId);
-      // console.log(JSON.stringify(relevantNovelData,null,2));
-      router.navigate({
-        // @ts-ignore since pathname only works this way. Can remove and try to fix error.
-        pathname: `novel/[id]`,
-        params: {
-          ...relevantNovelData,
-          sourceName: novelSource,
-        },
-      });
-    } catch (error) {
-      console.error("Error fetching single novel in library:", error);
-    }
-  }
-
   return (
     <View style={[styles.container, { backgroundColor: appliedTheme.colors.elevation.level2 }]}>
       <View style={styles.header}>
         <SearchBar onSearchChange={handleSearchQuery}/>
       </View>
       <ScrollView contentContainerStyle={styles.scrollViewContent} style={styles.scrollView}>
-        <View style={[styles.novelScrollView, parseInt(novelRows, 10) === 1 && { justifyContent: 'center' }]}>
+        <View style={[styles.novelScrollView, Number(novelRows) === 1 && { justifyContent: 'center' }]}>
           {filteredNovels.length === 0 ? (
             <View style={{ position: 'relative',  justifyContent: 'center',  alignItems: 'center', paddingHorizontal: 50, paddingVertical: 40, marginTop: '50%'}}>
               <Text style={{ color: appliedTheme.colors.text, fontSize: 24, textAlign: 'center'}}>
@@ -167,7 +155,7 @@ export default function Library() {
                 <TouchableOpacity
                   key={index}
                   style={[styles.novelContainer, { width: novelStyle.width }]}
-                  onPress={() => handleNavigateToNovel(novel.novelSource, novel.id)}
+                  onPress={() => handleNavigateToNovel(novel.id, novel.novelSource, novel.novelPageURL, 'Error navigating to novels in /library:handleNavigateToNovel', true)}
                   onLongPress={() => handleDeleteNovel(novel.id)}
                 >
                   <Image

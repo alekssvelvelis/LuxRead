@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions, FlatList } from 'react-native';
 
-import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
+import { Stack, useLocalSearchParams } from 'expo-router';
 import { Image } from 'expo-image'; //  takes priority over react-native image element to read static images
 
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { useNetwork } from '@/contexts/NetworkContext';
 import { getSourceFunctions } from '@/utils/getSourceFunctions'; 
+import { handleNavigateToNovel } from '@/utils/navigation';
+
 import { insertLibraryNovel, getNovelsBySource } from '@/database/ExpoDB';
 
 import SearchBar from '@/components/SearchBar';
@@ -24,7 +26,7 @@ interface Novels {
 }
 
 interface queriedNovels {
-  id: number,
+  id: string,
   title: string,
 }
 
@@ -56,10 +58,10 @@ const SourceList = () => {
   const [searchPage, setSearchPage] = useState<number>(1);
   const [axiosError, setAxiosError] = useState<boolean>(false);
 
-  const router = useRouter();
   const [fetchFunctions, setFetchFunctions] = useState<any>(null);
 
   useEffect(() => {
+    console.log(sourceNameString);
     if (sourceNameString) {
       try {
         const functions = getSourceFunctions(sourceNameString);
@@ -132,7 +134,7 @@ const SourceList = () => {
       const allNovelInfo = await fetchFunctions.fetchSingleNovel(novel.novelPageURL);
       const chapterCount = parseInt(allNovelInfo.chapterCount);
       const genres = String(allNovelInfo.genres);
-      console.log(genres, sourceNameString, '/novel:handleSaveNovel()');
+      
       const result = await insertLibraryNovel(
         allNovelInfo.title, 
         allNovelInfo.author, 
@@ -144,7 +146,8 @@ const SourceList = () => {
         sourceNameString, 
         allNovelInfo.novelStatus
       );
-      typeof result === 'number' ? setQueriedNovels((prevQueriedNovels) => [...prevQueriedNovels, { id: result, title: allNovelInfo.title }]) : false; // Add the saved novel to queriedNovels
+      
+      setQueriedNovels((prev) => [...prev, { id: `${allNovelInfo.title}-${sourceName}`, title: allNovelInfo.title}])
     } catch (error) {
       console.error('Error saving novel:', error);
     }
@@ -173,34 +176,12 @@ const SourceList = () => {
   const screenWidth = Dimensions.get('window').width;
   const novelWidth = screenWidth / 2 - 24;
 
-  const handleNavigateToNovel = async (novelPageURL: string) => {
-    try {
-      const novelData = await fetchFunctions.fetchSingleNovel(novelPageURL);
-      let novelId: number | undefined;
-      const matchedNovel = queriedNovels.find(novel => novel.title === novelData.title);
-      novelId = matchedNovel ? Number(matchedNovel.id) : undefined;
-      if(novelId !== undefined) {
-        novelData.id = novelId;
-      }
-      router.navigate({ 
-        // @ts-ignore since pathname only works this way. Can remove and try to fix error.
-        pathname: `/novel/[id]/`, 
-        params: {
-          novelPageURL: novelPageURL,
-          novelSource: sourceName,
-        },
-      }); 
-    } catch (error) {
-      console.error("Error fetching single novel:", error);
-    }
-  };
-
   const renderItem = ({ item }: { item: Novels}) => {
     const isQueriedNovel = queriedNovels.some(queriedNovel => queriedNovel.title === item.title);
     return (
       <TouchableOpacity
         style={[styles.novelItem, { width: novelWidth }]} 
-        onPress={() => handleNavigateToNovel(item.novelPageURL)} 
+        onPress={() => handleNavigateToNovel(`${item.title}-${sourceName}`, sourceNameString, item.novelPageURL, 'Error navigating to novel in /source:handleNavigateToNovel', isQueriedNovel)} 
         onLongPress={() => isQueriedNovel ? false : handleSaveNovel(item)}
       >
         <Image 

@@ -183,7 +183,7 @@ interface SourcesRows {
 }
 
 interface NovelRow {
-    id: number;
+    id: string;
     title: string;
     author: string;
     description: string;
@@ -207,7 +207,7 @@ interface DownloadedChapterRow {
     chapterTitle: string;
     chapterText: string | string[];
     chapterPageURL: string;
-    novel_id: number;
+    novel_id: string;
 }
 
 interface DownloadedChapterContent {
@@ -291,7 +291,7 @@ async function insertLibraryNovel(
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [`${title}-${novelSource}`,title, author, description, genres, chapterCount, imageURL, novelPageURL, novelSource, novelStatus]
         );
-        console.log(`Novel "${title}" by ${author} added (rowid ${result.lastInsertRowId}), ${novelSource}, ${genres}`);
+        console.log(`Novel "${title}" by ${author} added (rowid ${result.lastInsertRowId}), ${novelSource}`);
         return result.lastInsertRowId;
     } catch (error: any) {
         if (error?.message?.includes('UNIQUE constraint failed')) {
@@ -320,7 +320,6 @@ async function getLibraryNovelById(novelId: string): Promise<NovelRow[]> {
             `SELECT ${NOVEL_COLUMNS} FROM libraryNovels WHERE id = ?`,
             [novelId]
         );
-        console.log(result, '/ExpoDB:getlibraryNovelById');
         return result;
     } catch (error) {
         console.error('Error fetching library novel by id:', error);
@@ -350,7 +349,7 @@ async function updateNovelData(novelId: number, data: Record<string, any>) {
 async function getNovelsBySource(novelSource: string) {
     try {
         const db = await getDb();
-        return await db.getAllAsync<{ id: number; title: string }>(
+        return await db.getAllAsync<{ id: string; title: string }>(
             `SELECT id, title FROM libraryNovels WHERE novelSource = ?`,
             [novelSource]
         );
@@ -360,7 +359,7 @@ async function getNovelsBySource(novelSource: string) {
     }
 }
 
-async function deleteLibraryNovel(novelId: number) {
+async function deleteLibraryNovel(novelId: string) {
     try {
         const db = await getDb();
         await db.withTransactionAsync(async () => {
@@ -424,7 +423,7 @@ async function getAllNovelChapters(novelId: string): Promise<ChapterRow[]> {
     }
 }
 
-async function deleteNovelChapters(novelId: number) {
+async function deleteNovelChapters(novelId: string) {
     try {
         const db = await getDb();
         await db.runAsync(`DELETE FROM novelChapters WHERE novel_id = ?`, [novelId]);

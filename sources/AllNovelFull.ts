@@ -174,7 +174,6 @@ const fetchChapterContent = async (chapterPageURL: string) => {
         // console.log(chapterContent);
         return chapterContent;
     } catch (error) {
-        console.log(chapterPageURL);
         console.error('Error fetching chapter content:', error);
         return { title: '', content: [], closeChapters: {} };
     }

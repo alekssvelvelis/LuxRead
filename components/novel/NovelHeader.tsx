@@ -8,9 +8,24 @@ import { useNetwork } from '@/contexts/NetworkContext';
 import ExpandableDescription from '@/components/novel/ExpandableDescription';
 import ModalComponent from '../ModalComponent';
 
+import { getLibraryNovelById } from '@/database/ExpoDB';
+
+interface FetchedNovel {
+  title: string;
+  author: string;
+  description: string;
+  genres: string | string[];
+  chapterCount: number;
+  imageURL: string;
+  novelPageURL: string;
+  novelSource: string;
+  novelStatus: string;
+};
+
 interface NovelHeaderProps {
+    novelId: string,
     appliedTheme: any;
-    novelData: any;
+    novelData: FetchedNovel;
     imageURL: string;
     genresArray: string | string[];
     shareNovel: () => void;
@@ -21,7 +36,7 @@ interface NovelHeaderProps {
     downloadMultipleChapters: (startIndex: number, endIndex: number) => void;
 }
 
-const NovelHeader = ({ appliedTheme, novelData, imageURL, genresArray, shareNovel, chapterList, readingProgress, onReadPress, routerBack, downloadMultipleChapters }: NovelHeaderProps) => {
+const NovelHeader = ({ novelId, appliedTheme, novelData, imageURL, genresArray, shareNovel, chapterList, readingProgress, onReadPress, routerBack, downloadMultipleChapters }: NovelHeaderProps) => {
     const [modalVisible, setModalVisible] = useState<boolean>(false);
     const [chaptersCountToDownload, setChaptersCountToDownload] = useState<string>('1');
     const [downloadStartChoice, setDownloadStartChoice] = useState<'first' | 'latest'>('first');
@@ -65,9 +80,7 @@ const NovelHeader = ({ appliedTheme, novelData, imageURL, genresArray, shareNove
     // const renderDownloadIcon = useMemo(() => {
     //     return () => <MaterialIcons name="file-download" size={24} color={appliedTheme.colors.text} />;
     // }, [appliedTheme.colors.text]);
-
-    // let isNovelSaved = novelData.id !== '[id]' ? typeof JSON.parse(novelData.id) === 'number' : false;
-    let isNovelSaved = 1;
+    // const isNovelSaved = await getLibraryNovelById(novelId);
     return (
         <View style={{ minWidth: '100%' }}>
             <Appbar.Header mode="small" style={{ backgroundColor: appliedTheme.colors.elevation.level2 }}>
@@ -78,7 +91,7 @@ const NovelHeader = ({ appliedTheme, novelData, imageURL, genresArray, shareNove
                     color={appliedTheme.colors.text}
                     onPress={shareNovel}
                 />
-                { isNovelSaved && isConnected && (
+                {novelId && isConnected && (
                     <Appbar.Action
                         icon="download"
                         color={appliedTheme.colors.text}
