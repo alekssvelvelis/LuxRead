@@ -1,5 +1,4 @@
-// @ts-ignore
-import cheerio from 'react-native-cheerio';
+import * as cheerio from 'cheerio';
 import pLimit from 'p-limit';
 import axios from 'axios';
 import UserAgent from 'user-agents';

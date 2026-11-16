@@ -8,11 +8,26 @@ import { useNetwork } from '@/contexts/NetworkContext';
 import ExpandableDescription from '@/components/novel/ExpandableDescription';
 import ModalComponent from '../ModalComponent';
 
+import { getLibraryNovelById } from '@/database/ExpoDB';
+
+interface FetchedNovel {
+  title: string;
+  author: string;
+  description: string;
+  genres: string | string[];
+  chapterCount: number;
+  imageURL: string;
+  novelPageURL: string;
+  novelSource: string;
+  novelStatus: string;
+};
+
 interface NovelHeaderProps {
+    novelId: string,
     appliedTheme: any;
-    novelData: any;
+    novelData: FetchedNovel;
     imageURL: string;
-    genresArray: string[];
+    genresArray: string | string[];
     shareNovel: () => void;
     chapterList: any[];
     readingProgress: any;
@@ -21,7 +36,7 @@ interface NovelHeaderProps {
     downloadMultipleChapters: (startIndex: number, endIndex: number) => void;
 }
 
-const NovelHeader = ({ appliedTheme, novelData, imageURL, genresArray, shareNovel, chapterList, readingProgress, onReadPress, routerBack, downloadMultipleChapters }: NovelHeaderProps) => {
+const NovelHeader = ({ novelId, appliedTheme, novelData, imageURL, genresArray, shareNovel, chapterList, readingProgress, onReadPress, routerBack, downloadMultipleChapters }: NovelHeaderProps) => {
     const [modalVisible, setModalVisible] = useState<boolean>(false);
     const [chaptersCountToDownload, setChaptersCountToDownload] = useState<string>('1');
     const [downloadStartChoice, setDownloadStartChoice] = useState<'first' | 'latest'>('first');
@@ -56,7 +71,6 @@ const NovelHeader = ({ appliedTheme, novelData, imageURL, genresArray, shareNove
         const startingIndex = downloadStartChoice === 'first' ? 1 : readingProgress.chapterIndex;
         downloadMultipleChapters(startingIndex, parseInt(chaptersCountToDownload));
     }
-    
     // React-native-paper uses MaterialCommunityIcons.
     // if you want to use other icons while not having them re-render you can use this
     // const renderShareIcon = useMemo(() => {
@@ -66,8 +80,7 @@ const NovelHeader = ({ appliedTheme, novelData, imageURL, genresArray, shareNove
     // const renderDownloadIcon = useMemo(() => {
     //     return () => <MaterialIcons name="file-download" size={24} color={appliedTheme.colors.text} />;
     // }, [appliedTheme.colors.text]);
-
-    let isNovelSaved = novelData.id !== '[id]' ? typeof JSON.parse(novelData.id) === 'number' : false;
+    // const isNovelSaved = await getLibraryNovelById(novelId);
     return (
         <View style={{ minWidth: '100%' }}>
             <Appbar.Header mode="small" style={{ backgroundColor: appliedTheme.colors.elevation.level2 }}>
@@ -78,7 +91,7 @@ const NovelHeader = ({ appliedTheme, novelData, imageURL, genresArray, shareNove
                     color={appliedTheme.colors.text}
                     onPress={shareNovel}
                 />
-                { isNovelSaved && isConnected && (
+                {novelId && isConnected && (
                     <Appbar.Action
                         icon="download"
                         color={appliedTheme.colors.text}
@@ -111,7 +124,7 @@ const NovelHeader = ({ appliedTheme, novelData, imageURL, genresArray, shareNove
                     <View style={{ flexDirection: 'row' }}>
                         <MaterialIcons size={24} name="source" style={{ marginHorizontal: 8 }} color={appliedTheme.colors.text} />
                         <Text style={{ color: appliedTheme.colors.onSurfaceVariant, fontSize: 14 }}>
-                            {novelData.sourceName}
+                            {novelData.novelSource}
                         </Text>
                     </View>
                 </View>

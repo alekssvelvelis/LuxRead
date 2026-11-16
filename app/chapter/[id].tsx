@@ -10,7 +10,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { useNetwork } from '@/contexts/NetworkContext';
-import getSourceFunctions from '@/utils/getSourceFunctions';
+import { getSourceFunctions} from '@/utils/getSourceFunctions';
 import { getReaderOptions } from '@/utils/mmkv';
 import { rgbToRgba } from '@/utils/rgbToRgba';
 
@@ -38,11 +38,11 @@ interface ReaderOptions {
 }
 
 type typeSearchParams = {
-  id?: string | number;
+  id: string;
   chapterPageURL: string;
-  sourceName: string;
   title: string;
-  readerProgress?: number;
+  novelSource: string;
+  readerProgress?: string | undefined;
 };
 
 const ChapterPage = () => {
@@ -55,11 +55,9 @@ const ChapterPage = () => {
   const { isConnected } = useNetwork();
   const { appliedTheme, theme } = useThemeContext();
   const insets = useSafeAreaInsets();
-  const propData = useLocalSearchParams<typeSearchParams>();
-  const chapterPageURL: string | string[] = propData.chapterPageURL;
-  const sourceName: string | string[] = propData.sourceName;
-  const title: string | string[] = propData.title;
-  const readerProgress: number = propData.readerProgress ?? 0;
+  const initialParameters = useLocalSearchParams<typeSearchParams>();
+  const { id, chapterPageURL, title, novelSource, readerProgress } = initialParameters;
+  const numericReaderProgress = Number(readerProgress)
   const router = useRouter();
 
   const [chapterText, setChapterText] = useState<string>('');
@@ -76,14 +74,14 @@ const ChapterPage = () => {
   useEffect(() => {
       const loadReaderOptions = async () => {
         try {
-          const options = await getReaderOptions();
+          const options = getReaderOptions();
+          console.log(options);
           if (options) {
-            const parsed = JSON.parse(options);
             setReaderOptions({
-              fontSize: parsed.fontSize || 16,
-              lineHeight: parsed.lineHeight || 25,
-              textAlign: parsed.textAlign || 'left',
-              fontFamily: parsed.fontFamily || 'Roboto',
+              fontSize: options.fontSize || 16,
+              lineHeight: options.lineHeight || 25,
+              textAlign: options.textAlign || 'left',
+              fontFamily: options.fontFamily || 'Roboto',
             });
           }
         } catch (error) {
@@ -96,15 +94,15 @@ const ChapterPage = () => {
 
   const [fetchFunctions, setFetchFunctions] = useState<any>(null);
   useEffect(() => {
-    if (sourceName) {
+    if (novelSource) {
       try {
-        const functions = getSourceFunctions(sourceName);
+        const functions = getSourceFunctions(novelSource);
         setFetchFunctions(functions);
       } catch (error) {
         console.error('Error loading source functions:', error);
       }
     }
-  }, [sourceName]);
+  }, [novelSource]);
 
   useEffect(() => {
     const loadChapterContent = async () => {
@@ -153,7 +151,7 @@ const ChapterPage = () => {
             console.error('Chapter content fetched online is invalid or empty.');
           }
         } catch (error) {
-          console.error('Error fetching chapter content', error, chapterPageURL, sourceName);
+          console.error('Error fetching chapter content', error, chapterPageURL, novelSource);
         } finally {
           setLoading(false);
         }
@@ -163,7 +161,7 @@ const ChapterPage = () => {
     if (fetchFunctions) {
       loadChapterContent();
     }
-  }, [fetchFunctions, chapterPageURL, sourceName]);
+  }, [fetchFunctions, chapterPageURL, novelSource]);
 
 
   const handleBackPress = () => {
@@ -176,8 +174,11 @@ const ChapterPage = () => {
 
   const pickStatusBarStyle = () => {
     StatusBar.setBackgroundColor(rgbToRgba(appliedTheme.colors.elevation.level3, 0.2), true);
-    if(theme.startsWith('light')) return 'dark';
-    if(theme.startsWith('dark')) return 'light';
+    if(theme.startsWith('light')){
+      return 'dark';
+    }else{
+      return 'light';
+    }
   }
 
   const handleReaderOptionsOpen = () => {
@@ -190,10 +191,10 @@ const ChapterPage = () => {
         // @ts-ignore since pathname only works this way. Can remove and try to fix error.
         pathname: `chapter/[id]`,
         params: {
-          id: propData.id,
+          id: id,
           chapterPageURL: chapterPageURL,
-          title: propData.title,
-          sourceName: sourceName,
+          title: title,
+          novelSource: novelSource,
         },
       });
     } catch (error) {
@@ -232,7 +233,7 @@ const ChapterPage = () => {
 
   const scrollToPosition = () => {
     if (scrollViewRef.current && contentHeight && scrollViewHeight) {
-      const scrollPosition = ((contentHeight - scrollViewHeight) / 100) * readerProgress;
+      const scrollPosition = ((contentHeight - scrollViewHeight) / 100) * numericReaderProgress;
       scrollViewRef.current.scrollTo({ y: scrollPosition, animated: true });
     }
   };
@@ -247,12 +248,12 @@ const ChapterPage = () => {
   const chapterNumber = chapterTitle.match(/\d+/)?.[0];
   const chapterIndex = chapterNumber ? parseInt(chapterNumber, 10) : 1;
   const handleSaveChapterData = async (novelTitle: string, scrollPercentage: number, chapterIndex: number) => {
-    if(propData.id === "[id]"){
-      handleBackPress();
-      return;
-    }
+    // if(propData.id === "[id]"){
+    //   handleBackPress();
+    //   return;
+    // }
     try {
-      await upsertNovelChapter(novelTitle, scrollPercentage, chapterIndex);
+      await upsertNovelChapter(novelTitle, novelSource, scrollPercentage, chapterIndex);
       handleBackPress();
     } catch (error) {
       console.error('Error saving chapter:', error);
@@ -287,6 +288,7 @@ const ChapterPage = () => {
       </View>
     );
   }
+  
   return (
     <View style={{ flex: 1 }}>
       <SystemBars 
@@ -361,7 +363,6 @@ const ChapterPage = () => {
           </TouchableOpacity>
         </Pressable>
       </ScrollView>
-
 
       {isOverlayVisible && (
         <View style={[styles.footer, { backgroundColor: overlayBackgroundColor }]}>
