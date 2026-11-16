@@ -31,7 +31,7 @@ const popularNovels = async (pageNumber: number) => {
         return data;
     } catch (error) {
         console.error('Error fetching popular novels:', error);
-        return [];
+        throw error;
     }
 };
 
@@ -63,7 +63,7 @@ const searchNovels = async (novelName: string, pageNumber: number) => {
         return data;
     } catch (error) {
         console.error('Error searching novels:', error);
-        return [];
+        throw error;
     }
 };
 

@@ -12,7 +12,7 @@ import { Image } from 'expo-image'
 
 import { handleNavigateToNovel } from '@/utils/navigation';
 
-import { getAllLibraryNovels, deleteLibraryNovel, deleteNovelChapters } from '@/database/ExpoDB';
+import { getAllLibraryNovels, deleteLibraryNovel, deleteNovelChapters, resetDatabase } from '@/database/ExpoDB';
 
 interface FetchedNovel {
   id: string,
@@ -129,7 +129,7 @@ export default function Library() {
         case 'Title on novel cover':
             return { color: appliedTheme.colors.text, position: 'absolute', bottom: 8, left: 8, };
         case 'No title':
-            return { display: 'none' };
+            return { opacity: 0 };
         default:
             return {};
     }

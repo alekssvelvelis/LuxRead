@@ -192,9 +192,11 @@ const SourceList = () => {
         <Text numberOfLines={2} style={{ color: appliedTheme.colors.text, fontSize: 12 }}>
           {item.title}
         </Text>
-        <View style={[styles.isInLibraryPill,{backgroundColor: appliedTheme.colors.elevation.level2, display: isQueriedNovel ? 'flex' : 'none'}]}>
-          <Text style={{ color: appliedTheme.colors.text, fontSize: 12 }}>In library</Text>
-        </View>
+        {isQueriedNovel && (
+          <View style={[styles.isInLibraryPill, { backgroundColor: appliedTheme.colors.elevation.level2 }]}>
+            <Text style={{ color: appliedTheme.colors.text, fontSize: 12 }}>In library</Text>
+          </View>
+        )}
       </TouchableOpacity>
     );
   };

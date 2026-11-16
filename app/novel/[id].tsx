@@ -35,6 +35,7 @@ interface FetchedNovel {
   novelPageURL: string;
   novelSource: string;
   novelStatus: string;
+  sourceNovelId?: number;
 };
 
 
@@ -49,7 +50,6 @@ type typeSearchParams = {
 const Synopsis = () => {
   const { appliedTheme } = useThemeContext();
   const { isConnected } = useNetwork();
-  const isOffline = isConnected === false;
 
   const initialParameters = useLocalSearchParams<typeSearchParams>();
   const { id, novelPageURL, novelSource, novelIsSaved } = initialParameters;
@@ -88,13 +88,17 @@ const Synopsis = () => {
 
   const chaptersPerPage = getChapterSizes(novelSource);
   const loadingRef = useRef(false);
+  const loadGenerationRef = useRef(0);
+  const remoteNovelLoadedRef = useRef(false);
+  const sourceNovelIdRef = useRef<number | undefined>(undefined);
 
-  const loadChapters = async (pageNumber: number) => {
+  const loadChapters = async (pageNumber: number, generation = loadGenerationRef.current) => {
     if (loadingRef.current) return;
     loadingRef.current = true;
     setLoading(true);
     try {
       const newChapters = await fetchChaptersByPage(pageNumber);
+      if (generation !== loadGenerationRef.current) return;
       if (newChapters && newChapters.length > 0) {
         setChapterList((prev) => [...prev, ...newChapters]);
         setHasMoreChapters(newChapters.length === chaptersPerPage);
@@ -103,8 +107,10 @@ const Synopsis = () => {
         setHasMoreChapters(false);
       }
     } finally {
-      loadingRef.current = false;
-      setLoading(false);
+      if (generation === loadGenerationRef.current) {
+        loadingRef.current = false;
+        setLoading(false);
+      }
     }
   };
 
@@ -112,6 +118,7 @@ const Synopsis = () => {
   const handleLoadMoreChapters = () => {
     if (!hasMoreChapters || loadingRef.current) return;
     void loadChapters(page + 1);
+    console.log(page, 'inside of /novel/[id]:handleLoadMoreChapters');
   };
 
   const fromLocal = (novel: FetchedNovel) => ({
@@ -136,38 +143,66 @@ const Synopsis = () => {
     novelPageURL,
     novelSource,
     novelStatus: novel.novelStatus ?? '',
+    sourceNovelId: novel.sourceNovelId,
   }); 
 
   useEffect(() => {
+    const generation = ++loadGenerationRef.current;
+    loadingRef.current = false;
     if (!novelPageURL) {
       setLoadError('Novel URL is missing.');
       setInitialLoading(false);
       return;
     }
-    if (!fetchFunctions && !isOffline) return;
+    if (!fetchFunctions) return;
 
     let isActive = true;
 
     const loadNovel = async () => {
       setInitialLoading(true);
       setLoadError(null);
+      setChapterList([]);
+      setHasMoreChapters(true);
+      setPage(1);
+      setLoading(true);
+      remoteNovelLoadedRef.current = false;
+      sourceNovelIdRef.current = undefined;
       try {
         const [localNovel] = await getLibraryNovelById(id);
+        if (!isActive) return;
+
+        if (isConnected) {
+          try {
+            const remote = await fetchFunctions.fetchSingleNovel(novelPageURL);
+            if (remote) {
+              const fetchedNovel = fromRemote(remote, novelPageURL, novelSource ?? '');
+              if (!isActive) return;
+              sourceNovelIdRef.current = fetchedNovel.sourceNovelId;
+              remoteNovelLoadedRef.current = true;
+              setNovelData(fetchedNovel);
+              await loadChapters(1, generation);
+              return;
+            }
+          } catch (error) {
+            console.error('Error fetching remote novel details:', error);
+          }
+        }
+
         if (localNovel) {
-          if (isActive) setNovelData(fromLocal(localNovel));
+          if (isActive) {
+            setNovelData(fromLocal(localNovel));
+            setHasMoreChapters(false);
+            setLoading(false);
+          }
           return;
         }
-        const remote = await fetchFunctions!.fetchSingleNovel(novelPageURL);
-        if (!remote) {
-          throw new Error('The source returned no novel details.');
-        }
-        if (isActive) {
-          setNovelData(fromRemote(remote, novelPageURL, novelSource ?? ''));
-        }
+        throw new Error('The source returned no novel details and no local copy is available.');
       } catch (error) {
         console.error('Error loading novel data in novel/[id]:', error);
         if (isActive) {
           setLoadError('Unable to load novel details.');
+          setLoading(false);
+          setHasMoreChapters(false);
         }
       } finally {
         if (isActive) {
@@ -189,12 +224,11 @@ const Synopsis = () => {
 
     void loadNovel();
     void loadDownloadedChapters();
-    void loadChapters(1);
 
     return () => {
       isActive = false;
     };
-  }, [id, novelPageURL, novelSource, fetchFunctions, isOffline]);
+  }, [id, novelPageURL, novelSource, fetchFunctions, isConnected]);
 
   const [readingProgress, setReadingProgress] = useState<novelProgress>({
     id: 0, novel_id: '', readerProgress: 0, chapterIndex: 0,
@@ -247,10 +281,11 @@ const Synopsis = () => {
       console.error("Error fetching single novel:", error);
     }
   };
-
+  // console.log(novelData);
   const [isDownloading, setDownloading] = useState<string>('');
 
   const handleDownloadChapter = async (chapterPageURL: string, novelId: string) => {
+    if (!isConnected || !remoteNovelLoadedRef.current) return;
     setDownloading(chapterPageURL);
     try {
       const chapters = await fetchFunctions.fetchChapterContent(chapterPageURL);
@@ -265,10 +300,9 @@ const Synopsis = () => {
   };
 
   const fetchChaptersByPage = async (pageNumber: number) => {
-    if (!fetchFunctions) return [];
-    if (!isConnected) return [];
+    if (!fetchFunctions || !isConnected || !remoteNovelLoadedRef.current) return [];
     try {
-        return await fetchFunctions.fetchChapters(initialParameters.novelPageURL, pageNumber);
+        return await fetchFunctions.fetchChapters(initialParameters.novelPageURL, pageNumber, sourceNovelIdRef.current);
     } catch (error) {
         console.error('Error fetching chapters for page', pageNumber, error);
         return [];
@@ -291,6 +325,7 @@ const Synopsis = () => {
   };
 
   const handleMultipleChapterDownload = async (startIndex: number, endIndex: number) => {
+    if (!isConnected || !remoteNovelLoadedRef.current) return;
     try {
       const fullChapterList = await fetchAllRequiredChapters(startIndex, endIndex);
       const chaptersToDownload = fullChapterList.slice(startIndex - 1, endIndex);
